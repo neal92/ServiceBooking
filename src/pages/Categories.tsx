@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { PlusCircle, Edit, Trash } from 'lucide-react';
 import { Category } from '../types';
 import NewCategoryModal from '../components/categories/NewCategoryModal';
@@ -14,12 +14,21 @@ const Categories = () => {
   useEffect(() => {
     fetchCategories();
   }, []);
-
   const fetchCategories = async () => {
     try {
       setLoading(true);
       const data = await categoryService.getAll();
-      setCategories(data);
+      
+      // Nettoyer les données pour éviter les erreurs
+      const validCategories = data.map(cat => ({
+        ...cat,
+        id: Number(cat.id),
+        name: cat.name || '',
+        description: cat.description || '',
+        servicesCount: cat.servicesCount || 0
+      }));
+      
+      setCategories(validCategories);
       setLoading(false);
       setError('');
     } catch (err) {
@@ -40,11 +49,11 @@ const Categories = () => {
     // Refresh categories after closing modal
     fetchCategories();
   };
-
   const handleDeleteCategory = async (id: number) => {
     if (window.confirm('Êtes-vous sûr de vouloir supprimer cette catégorie ?')) {
       try {
-        await categoryService.delete(id);
+        // Convertir l'id en chaîne pour l'API
+        await categoryService.delete(id.toString());
         fetchCategories();
       } catch (err) {
         console.error('Error deleting category:', err);

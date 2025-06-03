@@ -9,7 +9,18 @@ interface AppointmentCardProps {
 }
 
 const AppointmentCard = ({ appointment, onDelete, onStatusChange }: AppointmentCardProps) => {
-  const { clientName, clientEmail, clientPhone, serviceName, date, time, duration, status, notes } = appointment;
+  // Extraire les propriétés en vérifiant qu'elles existent
+  const clientName = appointment.clientName || '';
+  const clientEmail = appointment.clientEmail || '';
+  const clientPhone = appointment.clientPhone || '';
+  const serviceName = appointment.serviceName || '';
+  const date = appointment.date || '';
+  const time = appointment.time || '';
+  // Duration is declared but not currently used in this component
+  const duration = appointment.duration || 0; 
+  const status = appointment.status || 'pending';
+  const notes = appointment.notes || '';
+  
   const formattedDate = date ? new Date(date).toLocaleDateString() : '';
   const [showMenu, setShowMenu] = React.useState(false);
 

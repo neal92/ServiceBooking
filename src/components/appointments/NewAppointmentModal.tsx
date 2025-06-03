@@ -7,9 +7,10 @@ interface NewAppointmentModalProps {
   isOpen: boolean;
   onClose: () => void;
   appointment?: Appointment | null;
+  services?: Service[]; // Pour une initialisation directe des services depuis le parent
 }
 
-const NewAppointmentModal = ({ isOpen, onClose, appointment }: NewAppointmentModalProps) => {
+const NewAppointmentModal = ({ isOpen, onClose, appointment, services: initialServices }: NewAppointmentModalProps) => {
   const [serviceId, setServiceId] = useState('');
   const [clientName, setClientName] = useState('');
   const [clientEmail, setClientEmail] = useState('');
@@ -17,17 +18,36 @@ const NewAppointmentModal = ({ isOpen, onClose, appointment }: NewAppointmentMod
   const [date, setDate] = useState('');
   const [time, setTime] = useState('');
   const [notes, setNotes] = useState('');
-  const [services, setServices] = useState<Service[]>([]);
+  const [services, setServices] = useState<Service[]>(initialServices || []);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [validatedServices, setValidatedServices] = useState<Service[]>([]);
 
-  // Fetch services when modal opens
+  // Fetch services when modal opens if no services were provided
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && (!initialServices || initialServices.length === 0)) {
       fetchServices();
+    } else if (isOpen && initialServices && initialServices.length > 0) {
+      setServices(initialServices);
     }
-  }, [isOpen]);
+  }, [isOpen, initialServices]);
+  
+  // Validate and process services data to ensure consistent types
+  useEffect(() => {
+    if (services.length > 0) {
+      // Ensure all service objects have proper types to avoid errors
+      const validated = services.map(service => ({
+        ...service,
+        id: typeof service.id === 'string' ? Number(service.id) : service.id,
+        price: typeof service.price === 'string' ? Number(service.price) : service.price,
+        categoryId: typeof service.categoryId === 'string' ? Number(service.categoryId) : service.categoryId,
+        duration: typeof service.duration === 'string' ? Number(service.duration) : service.duration,
+        description: service.description || ''
+      }));
+      setValidatedServices(validated);
+    }
+  }, [services]);
 
   // Set form values when editing an appointment
   useEffect(() => {
@@ -72,24 +92,31 @@ const NewAppointmentModal = ({ isOpen, onClose, appointment }: NewAppointmentMod
     setError('');
 
     try {
-      // Combine date and time
+      if (!serviceId) {
+        setError('Veuillez sélectionner une prestation');
+        setIsSubmitting(false);
+        return;
+      }
+      
+      // Combine date and time for proper datetime format
       const appointmentDate = new Date(`${date}T${time}`);
       
+      // Create a fully type-compliant appointment object
       const appointmentData = {
+        clientName: clientName || '',
+        clientEmail: clientEmail || '',
+        clientPhone: clientPhone || '',
         serviceId: parseInt(serviceId),
-        clientName,
-        clientEmail,
-        clientPhone,
         date: appointmentDate.toISOString(),
-        time,
-        status: 'pending' as 'pending', // Type assertion for status
-        notes
-      };
-
+        time: time || '',
+        status: 'pending' as const, // Type assertion to ensure correct status type
+        notes: notes || ''
+      } satisfies Omit<Appointment, 'id'>; // Validate against type
+      
       if (appointment && appointment.id) {
-        await appointmentService.update(appointment.id.toString(), appointmentData as any);
+        await appointmentService.update(appointment.id.toString(), appointmentData);
       } else {
-        await appointmentService.create(appointmentData as any);
+        await appointmentService.create(appointmentData);
       }
       onClose();
     } catch (err) {
@@ -113,16 +140,29 @@ const NewAppointmentModal = ({ isOpen, onClose, appointment }: NewAppointmentMod
 
         <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
           <div className="flex justify-between items-center px-4 py-3 border-b border-gray-200 sm:px-6">
-            <h3 className="text-lg font-medium text-gray-900">Nouveau rendez-vous</h3>
+            <h3 className="text-lg font-medium text-gray-900">
+              {appointment ? 'Modifier le rendez-vous' : 'Nouveau rendez-vous'}
+            </h3>
             <button
               type="button"
               className="text-gray-400 hover:text-gray-500"
               onClick={onClose}
+              disabled={isSubmitting}
             >
               <span className="sr-only">Fermer</span>
               <X className="h-6 w-6" aria-hidden="true" />
             </button>
           </div>
+          {error && (
+            <div className="mx-4 mt-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
+              {error}
+            </div>
+          )}
+          {isLoading && (
+            <div className="mx-4 mt-4 text-center py-2">
+              <p>Chargement des données...</p>
+            </div>
+          )}
           <form onSubmit={handleSubmit}>
             <div className="px-4 py-3 sm:px-6">
               <div className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
@@ -134,16 +174,24 @@ const NewAppointmentModal = ({ isOpen, onClose, appointment }: NewAppointmentMod
                     id="service"
                     name="service"
                     className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
-                    value={service}
-                    onChange={(e) => setService(e.target.value)}
+                    value={serviceId}
+                    onChange={(e) => setServiceId(e.target.value)}
                     required
+                    disabled={isLoading}
                   >
                     <option value="">Sélectionner une prestation</option>
-                    {mockServices.map((service) => (
-                      <option key={service.id} value={service.name}>
-                        {service.name} - {service.price}€
-                      </option>
-                    ))}
+                    {validatedServices.length > 0 
+                      ? validatedServices.map((service) => (
+                          <option key={service.id} value={service.id}>
+                            {service.name} - {service.price}€
+                          </option>
+                        ))
+                      : services.map((service) => (
+                          <option key={service.id} value={service.id}>
+                            {service.name} - {service.price}€
+                          </option>
+                        ))
+                    }
                   </select>
                 </div>
 
@@ -199,35 +247,32 @@ const NewAppointmentModal = ({ isOpen, onClose, appointment }: NewAppointmentMod
                 </div>
 
                 <div className="sm:col-span-3">
-                  <label htmlFor="duration" className="block text-sm font-medium text-gray-700">
-                    Durée (minutes)
+                  <label htmlFor="clientEmail" className="block text-sm font-medium text-gray-700">
+                    Email du client
                   </label>
                   <div className="mt-1">
                     <input
-                      type="number"
-                      name="duration"
-                      id="duration"
-                      min="15"
-                      step="15"
-                      value={duration}
-                      onChange={(e) => setDuration(Number(e.target.value))}
+                      type="email"
+                      name="clientEmail"
+                      id="clientEmail"
+                      value={clientEmail}
+                      onChange={(e) => setClientEmail(e.target.value)}
                       className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md"
-                      required
                     />
                   </div>
                 </div>
 
                 <div className="sm:col-span-3">
-                  <label htmlFor="location" className="block text-sm font-medium text-gray-700">
-                    Lieu
+                  <label htmlFor="clientPhone" className="block text-sm font-medium text-gray-700">
+                    Téléphone du client
                   </label>
                   <div className="mt-1">
                     <input
-                      type="text"
-                      name="location"
-                      id="location"
-                      value={location}
-                      onChange={(e) => setLocation(e.target.value)}
+                      type="tel"
+                      name="clientPhone"
+                      id="clientPhone"
+                      value={clientPhone}
+                      onChange={(e) => setClientPhone(e.target.value)}
                       className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md"
                     />
                   </div>
@@ -255,14 +300,16 @@ const NewAppointmentModal = ({ isOpen, onClose, appointment }: NewAppointmentMod
                 type="button"
                 className="mr-2 inline-flex justify-center py-2 px-4 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                 onClick={onClose}
+                disabled={isSubmitting}
               >
                 Annuler
               </button>
               <button
                 type="submit"
                 className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                disabled={isSubmitting}
               >
-                Créer
+                {isSubmitting ? 'En cours...' : appointment ? 'Mettre à jour' : 'Créer'}
               </button>
             </div>
           </form>

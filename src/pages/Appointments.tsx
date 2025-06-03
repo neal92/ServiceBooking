@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { PlusCircle, Filter, Calendar as CalendarIcon } from 'lucide-react';
 import AppointmentList from '../components/appointments/AppointmentList';
 import NewAppointmentModal from '../components/appointments/NewAppointmentModal';
@@ -35,11 +35,11 @@ const Appointments = () => {
       setLoading(false);
     }
   };
-
   const handleDeleteAppointment = async (id: number) => {
     if (window.confirm('Êtes-vous sûr de vouloir supprimer ce rendez-vous ?')) {
       try {
-        await appointmentService.delete(id);
+        // Convertir l'id en chaîne pour l'API
+        await appointmentService.delete(id.toString());
         fetchData();
       } catch (err) {
         console.error("Error deleting appointment:", err);
@@ -50,7 +50,8 @@ const Appointments = () => {
 
   const handleStatusChange = async (id: number, status: string) => {
     try {
-      await appointmentService.updateStatus(id, status);
+      // Convertir l'id en chaîne pour l'API
+      await appointmentService.updateStatus(id.toString(), status);
       fetchData();
     } catch (err) {
       console.error("Error updating appointment status:", err);
@@ -62,8 +63,21 @@ const Appointments = () => {
     setIsModalOpen(false);
     fetchData();
   };
+  // Nettoyer les données d'appointments pour éviter les erreurs
+  const validAppointments = appointments.map(appointment => ({
+    ...appointment,
+    id: Number(appointment.id),
+    serviceId: Number(appointment.serviceId || 0),
+    date: appointment.date || new Date().toISOString(),
+    time: appointment.time || '',
+    status: appointment.status || 'pending',
+    notes: appointment.notes || '',
+    clientName: appointment.clientName || '',
+    clientEmail: appointment.clientEmail || '',
+    clientPhone: appointment.clientPhone || ''
+  }));
 
-  const filteredAppointments = appointments.filter(appointment => {
+  const filteredAppointments = validAppointments.filter(appointment => {
     if (!appointment.date) return false;
     
     const appointmentDate = new Date(appointment.date);

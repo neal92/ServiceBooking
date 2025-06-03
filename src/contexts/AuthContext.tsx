@@ -1,14 +1,17 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import authService from '../services/auth';
 
 interface User {
-  id: string;
+  id: number;
+  name: string;
   email: string;
+  role?: string;
 }
 
 interface AuthContextType {
   user: User | null;
   login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string) => Promise<void>;
+  register: (name: string, email: string, password: string) => Promise<void>;
   logout: () => void;
   loading: boolean;
   error: string | null;
@@ -33,47 +36,42 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
     if (storedUser) {
-      setUser(JSON.parse(storedUser));
+      try {
+        setUser(JSON.parse(storedUser));
+      } catch (err) {
+        console.error('Error parsing stored user:', err);
+        localStorage.removeItem('user');
+      }
     }
     setLoading(false);
   }, []);
 
-  // Mock login function (replace with actual auth implementation)
+  // Login with API
   const login = async (email: string, password: string) => {
     setLoading(true);
     setError(null);
     
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // For demo, just create a user object
-      const user = { id: '1', email };
-      setUser(user);
-      localStorage.setItem('user', JSON.stringify(user));
-    } catch (err) {
-      setError('Échec de la connexion. Veuillez vérifier vos identifiants.');
+      const response = await authService.login({ email, password });
+      setUser(response.user);
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Échec de la connexion. Veuillez vérifier vos identifiants.');
       console.error(err);
     } finally {
       setLoading(false);
     }
   };
 
-  // Mock register function
-  const register = async (email: string, password: string) => {
+  // Register with API
+  const register = async (name: string, email: string, password: string) => {
     setLoading(true);
     setError(null);
     
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // For demo, just create a user object
-      const user = { id: '1', email };
-      setUser(user);
-      localStorage.setItem('user', JSON.stringify(user));
-    } catch (err) {
-      setError("Échec de l'inscription. Veuillez réessayer.");
+      const response = await authService.register({ name, email, password });
+      setUser(response.user);
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Échec de l'inscription. Veuillez réessayer.");
       console.error(err);
     } finally {
       setLoading(false);
@@ -82,8 +80,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   // Logout function
   const logout = () => {
+    authService.logout();
     setUser(null);
-    localStorage.removeItem('user');
   };
 
   const value = {

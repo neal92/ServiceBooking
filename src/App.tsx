@@ -9,10 +9,17 @@ import Categories from './pages/Categories';
 import Appointments from './pages/Appointments';
 import NotFound from './pages/NotFound';
 
-// Protected route component - temporarily commented out for development
-/*
+// Protected route component
+import { useAuth } from './contexts/AuthContext';
+import { Navigate } from 'react-router-dom';
+
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
+  
+  // Show nothing while checking authentication
+  if (loading) {
+    return <div className="loading">Chargement...</div>;
+  }
   
   if (!user) {
     return <Navigate to="/login" replace />;
@@ -20,7 +27,6 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   
   return <>{children}</>;
 };
-*/
 
 function App() {
   return (
@@ -29,8 +35,11 @@ function App() {
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
-          {/* Temporarily removed ProtectedRoute for development */}
-          <Route path="/" element={<Layout />}>
+          <Route path="/" element={
+            <ProtectedRoute>
+              <Layout />
+            </ProtectedRoute>
+          }>
             <Route index element={<Dashboard />} />
             <Route path="services" element={<Services />} />
             <Route path="categories" element={<Categories />} />

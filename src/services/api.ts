@@ -1,5 +1,8 @@
 import axios from 'axios';
 import { Appointment, Service, Category } from '../types';
+// Auth service is imported in this file but currently not used directly
+// It may be needed for future authentication features
+// import authService from './auth';
 
 const API_URL = 'http://localhost:5000/api';
 
@@ -8,6 +11,17 @@ const apiClient = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+});
+
+// Add authentication token to requests
+apiClient.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+}, (error) => {
+  return Promise.reject(error);
 });
 
 // API Service for Categories
@@ -76,12 +90,14 @@ export const serviceService = {
 };
 
 // API Service for Appointments
-export const appointmentService = {
-  getAll: async (): Promise<Appointment[]> => {
+export const appointmentService = {  getAll: async (): Promise<Appointment[]> => {
     const response = await apiClient.get('/appointments');
     return response.data.map((appointment: any) => ({
       ...appointment,
-      service: appointment.serviceName,  // Map backend field to frontend field
+      id: Number(appointment.id),
+      serviceId: Number(appointment.serviceId),
+      // Pour la compatibilité avec l'ancien format
+      service: appointment.serviceName || appointment.serviceId,
     }));
   },
   
@@ -90,40 +106,36 @@ export const appointmentService = {
     const appointment = response.data;
     return {
       ...appointment,
-      service: appointment.serviceName,  // Map backend field to frontend field
+      id: Number(appointment.id),
+      serviceId: Number(appointment.serviceId),
+      // Pour la compatibilité avec l'ancien format
+      service: appointment.serviceName || appointment.serviceId,
     };
   },
-  
-  create: async (appointment: Omit<Appointment, 'id'>): Promise<{ appointmentId: string }> => {
+    create: async (appointment: Omit<Appointment, 'id'>): Promise<{ appointmentId: string }> => {
     const response = await apiClient.post('/appointments', {
-      clientName: appointment.client,
-      clientEmail: '',  // Add these fields as needed in your frontend forms
-      clientPhone: '',
-      serviceId: appointment.service, // This should be the service ID, not name
+      clientName: appointment.clientName,
+      clientEmail: appointment.clientEmail || '',
+      clientPhone: appointment.clientPhone || '',
+      serviceId: appointment.serviceId, 
       date: appointment.date,
-      time: new Date(appointment.date).toLocaleTimeString('fr-FR', {
-        hour: '2-digit',
-        minute: '2-digit'
-      }),
+      time: appointment.time,
       status: appointment.status,
-      notes: ''  // Add this field as needed in your frontend forms
+      notes: appointment.notes || ''
     });
     return response.data;
   },
   
   update: async (id: string, appointment: Omit<Appointment, 'id'>): Promise<void> => {
     await apiClient.put(`/appointments/${id}`, {
-      clientName: appointment.client,
-      clientEmail: '',  // Add these fields as needed in your frontend forms
-      clientPhone: '',
-      serviceId: appointment.service, // This should be the service ID, not name
+      clientName: appointment.clientName,
+      clientEmail: appointment.clientEmail || '',
+      clientPhone: appointment.clientPhone || '',
+      serviceId: appointment.serviceId,
       date: appointment.date,
-      time: new Date(appointment.date).toLocaleTimeString('fr-FR', {
-        hour: '2-digit',
-        minute: '2-digit'
-      }),
+      time: appointment.time,
       status: appointment.status,
-      notes: ''  // Add this field as needed in your frontend forms
+      notes: appointment.notes || ''
     });
   },
   

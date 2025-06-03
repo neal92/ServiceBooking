@@ -18,9 +18,9 @@ async function initDB() {
     const sqlScript = await fs.readFile(sqlFilePath, 'utf8');
 
     // Execute the SQL script
-    console.log('Initializing database...');
+    console.log('Initializing database schema...');
     await connection.query(sqlScript);
-    console.log('Database initialized successfully');
+    console.log('Database schema initialized successfully');
 
     // Close the connection
     await connection.end();

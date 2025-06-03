@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { PlusCircle, Search } from 'lucide-react';
 import ServiceCard from '../components/services/ServiceCard';
 import NewServiceModal from '../components/services/NewServiceModal';
@@ -37,11 +37,11 @@ const Services = () => {
       setLoading(false);
     }
   };
-
   const handleDeleteService = async (id: number) => {
     if (window.confirm('Êtes-vous sûr de vouloir supprimer cette prestation ?')) {
       try {
-        await serviceService.delete(id);
+        // Convertir l'id en chaîne pour l'API
+        await serviceService.delete(id.toString());
         // Refresh services after deletion
         fetchData();
       } catch (err) {
@@ -62,13 +62,22 @@ const Services = () => {
     // Refresh services after modal close
     fetchData();
   };
-
-  const filteredServices = services.filter(
+  // S'assurer que tous les services ont des valeurs valides
+  const validServices = services.map(service => ({
+    ...service,
+    description: service.description || '',
+    categoryId: Number(service.categoryId),
+    id: Number(service.id),
+    price: Number(service.price),
+    duration: Number(service.duration)
+  }));
+  
+  const filteredServices = validServices.filter(
     service => 
       (selectedCategoryId ? service.categoryId === selectedCategoryId : true) &&
       (searchTerm ? 
         service.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-        (service.description && service.description.toLowerCase().includes(searchTerm.toLowerCase()))
+        service.description.toLowerCase().includes(searchTerm.toLowerCase())
         : true)
   );
 
