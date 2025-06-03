@@ -1,18 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
+import { Category } from '../../types';
+import { categoryService } from '../../services/api';
 
-interface Category {
-  id: string;
-  name: string;
-  description: string;
-  servicesCount: number;
-  color: string;
+// Extended Category interface with color field for UI purposes
+interface CategoryWithColor extends Category {
+  color?: string;
 }
 
 interface NewCategoryModalProps {
   isOpen: boolean;
   onClose: () => void;
-  category?: Category | null;
+  category?: CategoryWithColor | null;
 }
 
 const colors = [
@@ -34,7 +33,7 @@ const NewCategoryModal = ({ isOpen, onClose, category }: NewCategoryModalProps) 
     if (category) {
       setName(category.name);
       setDescription(category.description);
-      setColor(category.color);
+      setColor(category.color || 'blue');
     } else {
       setName('');
       setDescription('');
@@ -42,15 +41,32 @@ const NewCategoryModal = ({ isOpen, onClose, category }: NewCategoryModalProps) 
     }
   }, [category, isOpen]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Here you would save the category data
-    console.log({
-      name,
-      description,
-      color
-    });
-    onClose();
+    setIsSubmitting(true);
+    setError('');
+
+    try {
+      const categoryData = {
+        name,
+        description
+      };
+
+      if (category && category.id) {
+        await categoryService.update(category.id.toString(), categoryData);
+      } else {
+        await categoryService.create(categoryData);
+      }
+      onClose();
+    } catch (err) {
+      console.error('Error saving category:', err);
+      setError('Failed to save category. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (!isOpen) return null;
@@ -132,19 +148,26 @@ const NewCategoryModal = ({ isOpen, onClose, category }: NewCategoryModalProps) 
                 </div>
               </div>
             </div>
+            {error && (
+              <div className="px-4 py-2 mb-3 bg-red-100 border border-red-400 text-red-700 rounded relative">
+                {error}
+              </div>
+            )}
             <div className="px-4 py-3 bg-gray-50 text-right sm:px-6">
               <button
                 type="button"
                 className="mr-2 inline-flex justify-center py-2 px-4 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                 onClick={onClose}
+                disabled={isSubmitting}
               >
                 Annuler
               </button>
               <button
                 type="submit"
+                disabled={isSubmitting}
                 className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
               >
-                {category ? 'Mettre à jour' : 'Créer'}
+                {isSubmitting ? 'Chargement...' : category ? 'Mettre à jour' : 'Créer'}
               </button>
             </div>
           </form>

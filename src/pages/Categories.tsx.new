@@ -83,7 +83,6 @@ const Categories = () => {
       {/* Loading state */}
       {loading ? (
         <div className="text-center py-6">
-          <div className="spinner"></div>
           <p className="mt-2">Chargement des catégories...</p>
         </div>
       ) : (

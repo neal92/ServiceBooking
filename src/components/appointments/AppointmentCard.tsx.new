@@ -1,5 +1,6 @@
 import React from 'react';
-import { Clock, Calendar, User, Mail, Phone, MoreHorizontal } from 'lucide-react';
+import { Clock, Calendar, User, MapPin, Mail, Phone, MoreHorizontal } from 'lucide-react';
+import { formatAppointmentDate, formatAppointmentTime, getStatusColor } from '../../utils/formatters';
 import { Appointment } from '../../types';
 
 interface AppointmentCardProps {
@@ -11,24 +12,8 @@ interface AppointmentCardProps {
 const AppointmentCard = ({ appointment, onDelete, onStatusChange }: AppointmentCardProps) => {
   const { clientName, clientEmail, clientPhone, serviceName, date, time, duration, status, notes } = appointment;
   const formattedDate = date ? new Date(date).toLocaleDateString() : '';
-  const [showMenu, setShowMenu] = React.useState(false);
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'pending':
-        return { bgColor: 'bg-yellow-100', textColor: 'text-yellow-800' };
-      case 'confirmed':
-        return { bgColor: 'bg-green-100', textColor: 'text-green-800' };
-      case 'cancelled':
-        return { bgColor: 'bg-red-100', textColor: 'text-red-800' };
-      case 'completed':
-        return { bgColor: 'bg-blue-100', textColor: 'text-blue-800' };
-      default:
-        return { bgColor: 'bg-gray-100', textColor: 'text-gray-800' };
-    }
-  };
-
   const statusColor = getStatusColor(status);
+  const [showMenu, setShowMenu] = React.useState(false);
 
   const handleStatusChange = (newStatus: string) => {
     onStatusChange(newStatus);

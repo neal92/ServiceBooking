@@ -11,7 +11,8 @@ const Services = () => {
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
   const [services, setServices] = useState<Service[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [loading, setLoading] = useState(true);  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [editingService, setEditingService] = useState<Service | null>(null);
 
   useEffect(() => {
@@ -163,9 +164,12 @@ const Services = () => {
             </div>
           )}
         </>
-      )}      <NewServiceModal 
+      )}
+
+      <NewServiceModal 
         isOpen={isModalOpen} 
         onClose={handleCloseModal} 
+        categories={categories}
         service={editingService}
       />
     </div>

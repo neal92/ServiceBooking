@@ -1,26 +1,35 @@
 export interface Appointment {
-  id: string;
-  service: string;
-  client: string;
+  id: number;
+  clientName: string;
+  clientEmail: string;
+  clientPhone: string;
+  serviceId: number;
+  serviceName?: string; // From JOIN with services
   date: string;
-  duration: number;
-  location: string;
-  status: string;
+  time: string;
+  status: 'pending' | 'confirmed' | 'cancelled' | 'completed';
+  notes: string;
+  price?: number; // From JOIN with services
+  duration?: number; // From JOIN with services
+  createdAt?: string;
 }
 
 export interface Service {
-  id: string;
+  id: number;
   name: string;
   description: string;
   price: number;
-  duration: number;
-  category: string;
+  duration: number; // Duration in minutes
+  categoryId: number;
+  categoryName?: string; // From JOIN with categories
+  createdAt?: string;
 }
 
 export interface Category {
-  id: string;
+  id: number;
   name: string;
   description: string;
-  servicesCount: number;
-  color: string;
+  createdAt?: string;
+  // This is a virtual field not in database but can be calculated on frontend
+  servicesCount?: number;
 }

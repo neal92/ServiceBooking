@@ -1,34 +1,103 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
-import { mockServices } from '../../data/mockData';
+import { Appointment, Service } from '../../types';
+import { serviceService, appointmentService } from '../../services/api';
 
 interface NewAppointmentModalProps {
   isOpen: boolean;
   onClose: () => void;
+  appointment?: Appointment | null;
 }
 
-const NewAppointmentModal = ({ isOpen, onClose }: NewAppointmentModalProps) => {
-  const [service, setService] = useState('');
+const NewAppointmentModal = ({ isOpen, onClose, appointment }: NewAppointmentModalProps) => {
+  const [serviceId, setServiceId] = useState('');
   const [clientName, setClientName] = useState('');
+  const [clientEmail, setClientEmail] = useState('');
+  const [clientPhone, setClientPhone] = useState('');
   const [date, setDate] = useState('');
   const [time, setTime] = useState('');
-  const [duration, setDuration] = useState(60);
-  const [location, setLocation] = useState('');
   const [notes, setNotes] = useState('');
+  const [services, setServices] = useState<Service[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Fetch services when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      fetchServices();
+    }
+  }, [isOpen]);
+
+  // Set form values when editing an appointment
+  useEffect(() => {
+    if (appointment) {
+      setServiceId(appointment.serviceId.toString());
+      setClientName(appointment.clientName);
+      setClientEmail(appointment.clientEmail || '');
+      setClientPhone(appointment.clientPhone || '');
+      
+      // Extract date and time from appointment.date
+      const dateObj = new Date(appointment.date);
+      setDate(dateObj.toISOString().split('T')[0]);
+      setTime(appointment.time);
+      setNotes(appointment.notes || '');
+    } else {
+      setServiceId('');
+      setClientName('');
+      setClientEmail('');
+      setClientPhone('');
+      setDate('');
+      setTime('');
+      setNotes('');
+    }
+  }, [appointment, isOpen]);
+
+  const fetchServices = async () => {
+    setIsLoading(true);
+    try {
+      const data = await serviceService.getAll();
+      setServices(data);
+      setIsLoading(false);
+    } catch (err) {
+      console.error("Error fetching services:", err);
+      setError('Failed to load services');
+      setIsLoading(false);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Here you would save the appointment data
-    console.log({
-      service,
-      clientName,
-      date,
-      time,
-      duration,
-      location,
-      notes
-    });
-    onClose();
+    setIsSubmitting(true);
+    setError('');
+
+    try {
+      // Combine date and time
+      const appointmentDate = new Date(`${date}T${time}`);
+      
+      const appointmentData = {
+        serviceId: parseInt(serviceId),
+        clientName,
+        clientEmail,
+        clientPhone,
+        date: appointmentDate.toISOString(),
+        time,
+        status: 'pending' as 'pending', // Type assertion for status
+        notes
+      };
+
+      if (appointment && appointment.id) {
+        await appointmentService.update(appointment.id.toString(), appointmentData as any);
+      } else {
+        await appointmentService.create(appointmentData as any);
+      }
+      onClose();
+    } catch (err) {
+      console.error('Error saving appointment:', err);
+      setError('Failed to save appointment. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (!isOpen) return null;

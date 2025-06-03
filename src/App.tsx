@@ -1,6 +1,5 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { AuthProvider } from './contexts/AuthContext';
 import Layout from './components/layout/Layout';
 import Dashboard from './pages/Dashboard';
 import Login from './pages/Login';
@@ -10,7 +9,8 @@ import Categories from './pages/Categories';
 import Appointments from './pages/Appointments';
 import NotFound from './pages/NotFound';
 
-// Protected route component
+// Protected route component - temporarily commented out for development
+/*
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user } = useAuth();
   
@@ -20,6 +20,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   
   return <>{children}</>;
 };
+*/
 
 function App() {
   return (
@@ -28,11 +29,8 @@ function App() {
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
-          <Route path="/" element={
-            <ProtectedRoute>
-              <Layout />
-            </ProtectedRoute>
-          }>
+          {/* Temporarily removed ProtectedRoute for development */}
+          <Route path="/" element={<Layout />}>
             <Route index element={<Dashboard />} />
             <Route path="services" element={<Services />} />
             <Route path="categories" element={<Categories />} />
