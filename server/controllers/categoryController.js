@@ -28,13 +28,13 @@ exports.getCategoryById = async (req, res) => {
 // Create new category
 exports.createCategory = async (req, res) => {
   try {
-    const { name, description } = req.body;
+    const { name, description, color } = req.body;
     
     if (!name) {
       return res.status(400).json({ message: 'Category name is required' });
     }
     
-    const categoryId = await Category.create({ name, description });
+    const categoryId = await Category.create({ name, description, color });
     res.status(201).json({ 
       message: 'Category created successfully', 
       categoryId 
@@ -49,13 +49,13 @@ exports.createCategory = async (req, res) => {
 exports.updateCategory = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, description } = req.body;
+    const { name, description, color } = req.body;
     
     if (!name) {
       return res.status(400).json({ message: 'Category name is required' });
     }
     
-    const success = await Category.update(id, { name, description });
+    const success = await Category.update(id, { name, description, color });
     
     if (!success) {
       return res.status(404).json({ message: 'Category not found or no changes made' });

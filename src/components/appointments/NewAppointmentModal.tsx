@@ -85,7 +85,6 @@ const NewAppointmentModal = ({ isOpen, onClose, appointment, services: initialSe
       setIsLoading(false);
     }
   };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -98,8 +97,53 @@ const NewAppointmentModal = ({ isOpen, onClose, appointment, services: initialSe
         return;
       }
       
+      // Validate date is not in the past
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const selectedDate = new Date(date);
+      
+      if (selectedDate < today) {
+        setError('Impossible de prendre un rendez-vous à une date passée');
+        setIsSubmitting(false);
+        return;
+      }
+      
       // Combine date and time for proper datetime format
       const appointmentDate = new Date(`${date}T${time}`);
+      
+      // If date is today, check that time is not in the past
+      if (selectedDate.toDateString() === today.toDateString()) {
+        const currentTime = now.getHours() * 60 + now.getMinutes();
+        const selectedTime = parseInt(time.split(':')[0]) * 60 + parseInt(time.split(':')[1]);
+        
+        if (selectedTime < currentTime) {
+          setError('Impossible de prendre un rendez-vous à une heure passée');
+          setIsSubmitting(false);
+          return;
+        }
+      }
+      
+      // Check for existing appointments at the same time
+      try {
+        const allAppointments = await appointmentService.getAll();
+        const existingAppointment = allAppointments.find(apt => {
+          // Skip checking the current appointment when updating
+          if (appointment && appointment.id && apt.id === appointment.id) return false;
+          
+          const aptDate = new Date(apt.date).toDateString() === selectedDate.toDateString();
+          const aptTime = apt.time === time;
+          return aptDate && aptTime;
+        });
+        
+        if (existingAppointment) {
+          setError('Un rendez-vous existe déjà à cette date et heure. Veuillez choisir un autre moment.');
+          setIsSubmitting(false);
+          return;
+        }
+      } catch (err) {
+        console.error('Erreur lors de la vérification des rendez-vous existants:', err);
+        // Continue with the submission even if we couldn't check for conflicts
+      }
       
       // Create a fully type-compliant appointment object
       const appointmentData = {
@@ -138,7 +182,7 @@ const NewAppointmentModal = ({ isOpen, onClose, appointment, services: initialSe
 
         <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
 
-        <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+        <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-xl sm:w-full">
           <div className="flex justify-between items-center px-4 py-3 border-b border-gray-200 sm:px-6">
             <h3 className="text-lg font-medium text-gray-900">
               {appointment ? 'Modifier le rendez-vous' : 'Nouveau rendez-vous'}
@@ -165,15 +209,14 @@ const NewAppointmentModal = ({ isOpen, onClose, appointment, services: initialSe
           )}
           <form onSubmit={handleSubmit}>
             <div className="px-4 py-3 sm:px-6">
-              <div className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
+              <div className="grid grid-cols-1 gap-y-6 gap-x-6 sm:grid-cols-6">
                 <div className="sm:col-span-6">
                   <label htmlFor="service" className="block text-sm font-medium text-gray-700">
                     Prestation
-                  </label>
-                  <select
+                  </label>                  <select
                     id="service"
                     name="service"
-                    className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
+                    className="mt-1 block w-full pl-4 pr-10 py-3 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 rounded-md"
                     value={serviceId}
                     onChange={(e) => setServiceId(e.target.value)}
                     required
@@ -198,15 +241,14 @@ const NewAppointmentModal = ({ isOpen, onClose, appointment, services: initialSe
                 <div className="sm:col-span-6">
                   <label htmlFor="clientName" className="block text-sm font-medium text-gray-700">
                     Nom du client
-                  </label>
-                  <div className="mt-1">
+                  </label>                  <div className="mt-1">
                     <input
                       type="text"
                       name="clientName"
                       id="clientName"
                       value={clientName}
                       onChange={(e) => setClientName(e.target.value)}
-                      className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                      className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full text-base py-3 px-4 border-gray-300 rounded-md"
                       required
                     />
                   </div>
@@ -215,15 +257,14 @@ const NewAppointmentModal = ({ isOpen, onClose, appointment, services: initialSe
                 <div className="sm:col-span-3">
                   <label htmlFor="date" className="block text-sm font-medium text-gray-700">
                     Date
-                  </label>
-                  <div className="mt-1">
-                    <input
+                  </label>                  <div className="mt-1">                    <input
                       type="date"
                       name="date"
                       id="date"
                       value={date}
+                      min={new Date().toISOString().split('T')[0]} // Empêche de sélectionner des dates passées
                       onChange={(e) => setDate(e.target.value)}
-                      className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                      className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full text-base py-3 px-4 border-gray-300 rounded-md"
                       required
                     />
                   </div>
@@ -232,15 +273,14 @@ const NewAppointmentModal = ({ isOpen, onClose, appointment, services: initialSe
                 <div className="sm:col-span-3">
                   <label htmlFor="time" className="block text-sm font-medium text-gray-700">
                     Heure
-                  </label>
-                  <div className="mt-1">
+                  </label>                  <div className="mt-1">
                     <input
                       type="time"
                       name="time"
                       id="time"
                       value={time}
                       onChange={(e) => setTime(e.target.value)}
-                      className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                      className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full text-base py-3 px-4 border-gray-300 rounded-md"
                       required
                     />
                   </div>
@@ -249,15 +289,14 @@ const NewAppointmentModal = ({ isOpen, onClose, appointment, services: initialSe
                 <div className="sm:col-span-3">
                   <label htmlFor="clientEmail" className="block text-sm font-medium text-gray-700">
                     Email du client
-                  </label>
-                  <div className="mt-1">
+                  </label>                  <div className="mt-1">
                     <input
                       type="email"
                       name="clientEmail"
                       id="clientEmail"
                       value={clientEmail}
                       onChange={(e) => setClientEmail(e.target.value)}
-                      className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                      className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full text-base py-3 px-4 border-gray-300 rounded-md"
                     />
                   </div>
                 </div>
@@ -265,15 +304,14 @@ const NewAppointmentModal = ({ isOpen, onClose, appointment, services: initialSe
                 <div className="sm:col-span-3">
                   <label htmlFor="clientPhone" className="block text-sm font-medium text-gray-700">
                     Téléphone du client
-                  </label>
-                  <div className="mt-1">
+                  </label>                  <div className="mt-1">
                     <input
                       type="tel"
                       name="clientPhone"
                       id="clientPhone"
                       value={clientPhone}
                       onChange={(e) => setClientPhone(e.target.value)}
-                      className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                      className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full text-base py-3 px-4 border-gray-300 rounded-md"
                     />
                   </div>
                 </div>
@@ -281,24 +319,22 @@ const NewAppointmentModal = ({ isOpen, onClose, appointment, services: initialSe
                 <div className="sm:col-span-6">
                   <label htmlFor="notes" className="block text-sm font-medium text-gray-700">
                     Notes
-                  </label>
-                  <div className="mt-1">
+                  </label>                  <div className="mt-1">
                     <textarea
                       id="notes"
                       name="notes"
-                      rows={3}
+                      rows={4}
                       value={notes}
                       onChange={(e) => setNotes(e.target.value)}
-                      className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                      className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full text-base py-3 px-4 border-gray-300 rounded-md"
                     ></textarea>
                   </div>
                 </div>
               </div>
             </div>
-            <div className="px-4 py-3 bg-gray-50 text-right sm:px-6">
-              <button
+            <div className="px-4 py-3 bg-gray-50 text-right sm:px-6">              <button
                 type="button"
-                className="mr-2 inline-flex justify-center py-2 px-4 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                className="mr-2 inline-flex justify-center py-3 px-6 border border-gray-300 shadow-sm text-base font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                 onClick={onClose}
                 disabled={isSubmitting}
               >
@@ -306,7 +342,7 @@ const NewAppointmentModal = ({ isOpen, onClose, appointment, services: initialSe
               </button>
               <button
                 type="submit"
-                className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                className="inline-flex justify-center py-3 px-6 border border-transparent shadow-sm text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                 disabled={isSubmitting}
               >
                 {isSubmitting ? 'En cours...' : appointment ? 'Mettre à jour' : 'Créer'}

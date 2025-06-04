@@ -106,8 +106,7 @@ const Categories = () => {
                 <li key={category.id}>
                   <div className="px-4 py-4 sm:px-6">
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center">
-                        <div className="h-10 w-10 rounded-full flex items-center justify-center text-white bg-blue-500">
+                      <div className="flex items-center">                        <div className={`h-10 w-10 rounded-full flex items-center justify-center text-white bg-${category.color || 'blue'}-500`}>
                           {category.name.charAt(0).toUpperCase()}
                         </div>
                         <div className="ml-4">

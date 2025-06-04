@@ -29,7 +29,8 @@ export interface Category {
   id: number;
   name: string;
   description: string;
+  color?: string;
   createdAt?: string;
-  // This is a virtual field not in database but can be calculated on frontend
+  // This is a virtual field not in database but can be calculated on backend via SQL query
   servicesCount?: number;
 }

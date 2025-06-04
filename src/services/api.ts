@@ -36,12 +36,12 @@ export const categoryService = {
     return response.data;
   },
   
-  create: async (category: Omit<Category, 'id' | 'servicesCount'>): Promise<{ categoryId: string }> => {
+  create: async (category: Omit<Category, 'id' | 'servicesCount' | 'createdAt'>): Promise<{ categoryId: string }> => {
     const response = await apiClient.post('/categories', category);
     return response.data;
   },
   
-  update: async (id: string, category: Omit<Category, 'id' | 'servicesCount'>): Promise<void> => {
+  update: async (id: string, category: Omit<Category, 'id' | 'servicesCount' | 'createdAt'>): Promise<void> => {
     await apiClient.put(`/categories/${id}`, category);
   },
   

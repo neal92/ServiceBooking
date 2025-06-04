@@ -1,0 +1,3 @@
+Mot de passe administrateur réinitialisé avec succès.
+Email: admin@example.com
+Mot de passe: admin123

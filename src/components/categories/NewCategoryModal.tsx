@@ -43,7 +43,6 @@ const NewCategoryModal = ({ isOpen, onClose, category }: NewCategoryModalProps) 
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -52,7 +51,8 @@ const NewCategoryModal = ({ isOpen, onClose, category }: NewCategoryModalProps) 
     try {
       const categoryData = {
         name,
-        description
+        description,
+        color
       };
 
       if (category && category.id) {

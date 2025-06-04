@@ -20,8 +20,15 @@ const Appointment = {
     `, [id]);
     return rows[0];
   },
-  
-  create: async (appointmentData) => {
+    create: async (appointmentData) => {
+    // Format the date to YYYY-MM-DD format for MySQL
+    let formattedDate = appointmentData.date;
+    if (formattedDate && formattedDate.includes('T')) {
+      // Extract just the date part from ISO date string
+      formattedDate = appointmentData.date.split('T')[0];
+      console.log(`Formatted date for database: ${formattedDate}`);
+    }
+
     const [result] = await db.query(
       'INSERT INTO appointments (clientName, clientEmail, clientPhone, serviceId, date, time, status, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
       [
@@ -29,7 +36,7 @@ const Appointment = {
         appointmentData.clientEmail,
         appointmentData.clientPhone,
         appointmentData.serviceId,
-        appointmentData.date,
+        formattedDate,  // Using the formatted date
         appointmentData.time,
         appointmentData.status || 'pending',
         appointmentData.notes || ''
@@ -37,8 +44,15 @@ const Appointment = {
     );
     return result.insertId;
   },
-  
-  update: async (id, appointmentData) => {
+    update: async (id, appointmentData) => {
+    // Format the date to YYYY-MM-DD format for MySQL
+    let formattedDate = appointmentData.date;
+    if (formattedDate && formattedDate.includes('T')) {
+      // Extract just the date part from ISO date string
+      formattedDate = appointmentData.date.split('T')[0];
+      console.log(`Formatted date for database update: ${formattedDate}`);
+    }
+
     const [result] = await db.query(
       'UPDATE appointments SET clientName = ?, clientEmail = ?, clientPhone = ?, serviceId = ?, date = ?, time = ?, status = ?, notes = ? WHERE id = ?',
       [
@@ -46,7 +60,7 @@ const Appointment = {
         appointmentData.clientEmail,
         appointmentData.clientPhone,
         appointmentData.serviceId,
-        appointmentData.date,
+        formattedDate,  // Using the formatted date
         appointmentData.time,
         appointmentData.status,
         appointmentData.notes,
@@ -62,6 +76,26 @@ const Appointment = {
       [status, id]
     );
     return result.affectedRows > 0;
+  },
+  
+  getByDateTime: async (date, time) => {
+    // Format the date to YYYY-MM-DD format for MySQL if needed
+    let formattedDate = date;
+    if (formattedDate && formattedDate.includes('T')) {
+      // Extract just the date part from ISO date string
+      formattedDate = date.split('T')[0];
+    }
+    
+    console.log(`Checking for appointments on date: ${formattedDate}, time: ${time}`);
+    
+    const [rows] = await db.query(`
+      SELECT a.*, s.name as serviceName, s.price, s.duration
+      FROM appointments a
+      LEFT JOIN services s ON a.serviceId = s.id
+      WHERE a.date = ? AND a.time = ?
+    `, [formattedDate, time]);
+    
+    return rows;
   },
   
   delete: async (id) => {

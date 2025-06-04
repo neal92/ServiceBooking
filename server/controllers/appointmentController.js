@@ -39,6 +39,10 @@ exports.createAppointment = async (req, res) => {
       notes 
     } = req.body;
     
+    console.log('Creating appointment with data:', { 
+      clientName, clientEmail, clientPhone, serviceId, date, time, status, notes 
+    });
+    
     // Validation
     if (!clientName || !clientEmail || !serviceId || !date || !time) {
       return res.status(400).json({ 
@@ -46,21 +50,63 @@ exports.createAppointment = async (req, res) => {
       });
     }
     
-    const appointmentId = await Appointment.create({ 
-      clientName, 
-      clientEmail, 
-      clientPhone, 
-      serviceId, 
-      date, 
-      time, 
-      status: status || 'pending',
-      notes: notes || ''
-    });
+    // Validate date is not in the past
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const appointmentDate = new Date(date);
     
-    res.status(201).json({ 
-      message: 'Appointment created successfully', 
-      appointmentId 
-    });
+    if (appointmentDate < today) {
+      return res.status(400).json({ 
+        message: 'Impossible de prendre un rendez-vous à une date passée' 
+      });
+    }
+    
+    // If date is today, check that time is not in the past
+    if (appointmentDate.toDateString() === today.toDateString()) {
+      const [hours, minutes] = time.split(':').map(Number);
+      const appointmentTime = hours * 60 + minutes;
+      const currentTime = now.getHours() * 60 + now.getMinutes();
+      
+      if (appointmentTime < currentTime) {
+        return res.status(400).json({ 
+          message: 'Impossible de prendre un rendez-vous à une heure passée' 
+        });
+      }
+    }
+    
+    // Check if there's already an appointment at this date and time
+    const existingAppointments = await Appointment.getByDateTime(date, time);
+    if (existingAppointments && existingAppointments.length > 0) {
+      return res.status(400).json({
+        message: 'Un rendez-vous existe déjà à cette date et heure'
+      });
+    }
+    
+    try {
+      const appointmentId = await Appointment.create({ 
+        clientName, 
+        clientEmail, 
+        clientPhone, 
+        serviceId, 
+        date, 
+        time, 
+        status: status || 'pending',
+        notes: notes || ''
+      });
+      
+      res.status(201).json({ 
+        message: 'Appointment created successfully', 
+        appointmentId 
+      });
+    } catch (dbError) {
+      console.error('Database error creating appointment:', dbError);
+      // Send more detailed error to client for debugging
+      res.status(500).json({ 
+        message: 'Database error while creating appointment', 
+        error: dbError.message,
+        code: dbError.code
+      });
+    }
   } catch (error) {
     console.error('Error creating appointment:', error);
     res.status(500).json({ message: 'Server error while creating appointment' });

@@ -4,8 +4,8 @@ import { Appointment } from '../../types';
 
 interface AppointmentCardProps {
   appointment: Appointment;
-  onDelete: () => void;
-  onStatusChange: (status: string) => void;
+  onDelete?: () => void;
+  onStatusChange?: (status: string) => void;
 }
 
 const AppointmentCard = ({ appointment, onDelete, onStatusChange }: AppointmentCardProps) => {
@@ -40,9 +40,10 @@ const AppointmentCard = ({ appointment, onDelete, onStatusChange }: AppointmentC
   };
 
   const statusColor = getStatusColor(status);
-
   const handleStatusChange = (newStatus: string) => {
-    onStatusChange(newStatus);
+    if (onStatusChange) {
+      onStatusChange(newStatus);
+    }
     setShowMenu(false);
   };
 
@@ -98,9 +99,8 @@ const AppointmentCard = ({ appointment, onDelete, onStatusChange }: AppointmentC
                 >
                   Marquer comme terminé
                 </button>
-                <div className="border-t border-gray-100"></div>
-                <button 
-                  onClick={onDelete}
+                <div className="border-t border-gray-100"></div>                <button 
+                  onClick={() => onDelete && onDelete()}
                   className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
                 >
                   Supprimer
