@@ -1,5 +1,9 @@
 import React from 'react';
-import { Clock, Calendar, User, Mail, Phone, MoreHorizontal } from 'lucide-react';
+import { 
+  Clock, Calendar, User, Mail, Phone, 
+  MoreHorizontal, CheckCircle, AlertTriangle, 
+  XCircle
+} from 'lucide-react';
 import { Appointment } from '../../types';
 
 interface AppointmentCardProps {
@@ -16,30 +20,65 @@ const AppointmentCard = ({ appointment, onDelete, onStatusChange }: AppointmentC
   const serviceName = appointment.serviceName || '';
   const date = appointment.date || '';
   const time = appointment.time || '';
-  // Duration is declared but not currently used in this component
-  const duration = appointment.duration || 0; 
+  const duration = appointment.duration || 0;
   const status = appointment.status || 'pending';
   const notes = appointment.notes || '';
   
-  const formattedDate = date ? new Date(date).toLocaleDateString() : '';
+  const formattedDate = date ? new Date(date).toLocaleDateString('fr-FR', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long'
+  }) : '';
+  
   const [showMenu, setShowMenu] = React.useState(false);
 
-  const getStatusColor = (status: string) => {
+  const getStatusDetails = (status: string) => {
     switch (status) {
       case 'pending':
-        return { bgColor: 'bg-yellow-100', textColor: 'text-yellow-800' };
+        return { 
+          bgColor: 'bg-yellow-100', 
+          textColor: 'text-yellow-800',
+          borderColor: 'border-yellow-200',
+          icon: <Clock className="h-5 w-5 mr-2" />,
+          label: 'En attente'
+        };
       case 'confirmed':
-        return { bgColor: 'bg-green-100', textColor: 'text-green-800' };
+        return { 
+          bgColor: 'bg-green-100', 
+          textColor: 'text-green-800',
+          borderColor: 'border-green-200',
+          icon: <CheckCircle className="h-5 w-5 mr-2" />,
+          label: 'Confirmé'
+        };
       case 'cancelled':
-        return { bgColor: 'bg-red-100', textColor: 'text-red-800' };
+        return { 
+          bgColor: 'bg-red-100', 
+          textColor: 'text-red-800',
+          borderColor: 'border-red-200',
+          icon: <XCircle className="h-5 w-5 mr-2" />,
+          label: 'Annulé'
+        };
       case 'completed':
-        return { bgColor: 'bg-blue-100', textColor: 'text-blue-800' };
+        return { 
+          bgColor: 'bg-blue-100', 
+          textColor: 'text-blue-800',
+          borderColor: 'border-blue-200',
+          icon: <CheckCircle className="h-5 w-5 mr-2" />,
+          label: 'Terminé'
+        };
       default:
-        return { bgColor: 'bg-gray-100', textColor: 'text-gray-800' };
+        return { 
+          bgColor: 'bg-gray-100', 
+          textColor: 'text-gray-800',
+          borderColor: 'border-gray-200',
+          icon: <AlertTriangle className="h-5 w-5 mr-2" />,
+          label: 'Inconnu'
+        };
     }
   };
 
-  const statusColor = getStatusColor(status);
+  const statusDetails = getStatusDetails(status);
+  
   const handleStatusChange = (newStatus: string) => {
     if (onStatusChange) {
       onStatusChange(newStatus);
@@ -47,62 +86,100 @@ const AppointmentCard = ({ appointment, onDelete, onStatusChange }: AppointmentC
     setShowMenu(false);
   };
 
+  // Calculer l'heure de fin en fonction de la durée
+  const calculateEndTime = () => {
+    if (!time || !duration) return '';
+    
+    const [hours, minutes] = time.split(':').map(Number);
+    let endHours = hours;
+    let endMinutes = minutes + duration;
+    
+    if (endMinutes >= 60) {
+      endHours += Math.floor(endMinutes / 60);
+      endMinutes = endMinutes % 60;
+    }
+    
+    // Format avec leading zeros
+    const formattedEndHours = endHours.toString().padStart(2, '0');
+    const formattedEndMinutes = endMinutes.toString().padStart(2, '0');
+    
+    return `${formattedEndHours}:${formattedEndMinutes}`;
+  };
+
   return (
-    <div className="px-4 py-4 sm:px-6 hover:bg-gray-50">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center">
+    <div className="p-4 sm:p-6 hover:bg-gray-50 transition-all duration-150 relative overflow-hidden rounded-lg border border-gray-100 shadow-sm">
+      {/* Status indicator strip */}
+      <div className={`absolute top-0 left-0 w-1.5 h-full ${status === 'pending' ? 'bg-yellow-400' : status === 'confirmed' ? 'bg-green-500' : status === 'cancelled' ? 'bg-red-500' : 'bg-blue-500'}`}></div>
+      
+      <div className="flex items-start justify-between pl-2">
+        <div className="flex items-start">
           <div className="flex-shrink-0">
-            <div className={`h-10 w-10 rounded-full flex items-center justify-center text-white ${statusColor.bgColor}`}>
-              {serviceName ? serviceName.charAt(0).toUpperCase() : 'A'}
+            <div className={`h-14 w-14 rounded-lg flex items-center justify-center text-white ${status === 'cancelled' ? 'bg-gray-400' : 'bg-gradient-to-br from-indigo-500 to-purple-600'} shadow-md`}>
+              <span className="text-xl font-semibold">{serviceName ? serviceName.charAt(0).toUpperCase() : 'A'}</span>
             </div>
           </div>
           <div className="ml-4">
-            <h3 className="text-sm font-medium text-blue-600">{serviceName}</h3>
+            <div className="flex items-center">
+              <h3 className="text-base font-medium text-indigo-700">{serviceName}</h3>              <span className={`ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-opacity-90 border ${statusDetails.bgColor} ${statusDetails.textColor} ${statusDetails.borderColor}`}>
+                {statusDetails.label}
+              </span>
+            </div>
             <div className="mt-1 flex items-center">
-              <User className="flex-shrink-0 mr-1.5 h-4 w-4 text-gray-400" />
-              <p className="text-sm text-gray-500">{clientName}</p>
+              <User className="flex-shrink-0 mr-1.5 h-4 w-4 text-gray-500" />
+              <p className="text-sm font-medium text-gray-700">{clientName}</p>
             </div>
           </div>
         </div>
+        
         <div className="relative">
           <button 
             onClick={() => setShowMenu(!showMenu)}
-            className="p-1.5 text-gray-500 hover:text-gray-700 rounded-full hover:bg-gray-100 transition-all"
+            className="p-2 text-gray-500 hover:text-gray-700 rounded-full hover:bg-gray-100 transition-all"
           >
             <MoreHorizontal className="h-5 w-5" />
           </button>
           
           {showMenu && (
-            <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10">
-              <div className="py-1">
+            <div className="absolute right-0 mt-2 w-52 bg-white rounded-md shadow-lg z-10 border border-gray-100">
+              <div className="py-1 divide-y divide-gray-100">
+                <div className="py-1">
+                  <div className="px-4 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Changer le statut
+                  </div>
+                  <button 
+                    onClick={() => handleStatusChange('pending')}
+                    className="flex w-full items-center px-4 py-2 text-sm text-yellow-700 hover:bg-yellow-50"
+                  >
+                    <Clock className="mr-3 h-4 w-4 text-yellow-500" />
+                    En attente
+                  </button>
+                  <button 
+                    onClick={() => handleStatusChange('confirmed')}
+                    className="flex w-full items-center px-4 py-2 text-sm text-green-700 hover:bg-green-50"
+                  >
+                    <CheckCircle className="mr-3 h-4 w-4 text-green-500" />
+                    Confirmé
+                  </button>
+                  <button 
+                    onClick={() => handleStatusChange('completed')}
+                    className="flex w-full items-center px-4 py-2 text-sm text-blue-700 hover:bg-blue-50"
+                  >
+                    <CheckCircle className="mr-3 h-4 w-4 text-blue-500" />
+                    Terminé
+                  </button>
+                  <button 
+                    onClick={() => handleStatusChange('cancelled')}
+                    className="flex w-full items-center px-4 py-2 text-sm text-red-700 hover:bg-red-50"
+                  >
+                    <XCircle className="mr-3 h-4 w-4 text-red-500" />
+                    Annulé
+                  </button>
+                </div>
                 <button 
-                  onClick={() => handleStatusChange('pending')}
-                  className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                >
-                  Marquer comme en attente
-                </button>
-                <button 
-                  onClick={() => handleStatusChange('confirmed')}
-                  className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                >
-                  Marquer comme confirmé
-                </button>
-                <button 
-                  onClick={() => handleStatusChange('cancelled')}
-                  className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                >
-                  Marquer comme annulé
-                </button>
-                <button 
-                  onClick={() => handleStatusChange('completed')}
-                  className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                >
-                  Marquer comme terminé
-                </button>
-                <div className="border-t border-gray-100"></div>                <button 
                   onClick={() => onDelete && onDelete()}
-                  className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
+                  className="flex w-full items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50"
                 >
+                  <XCircle className="mr-3 h-4 w-4" />
                   Supprimer
                 </button>
               </div>
@@ -111,42 +188,57 @@ const AppointmentCard = ({ appointment, onDelete, onStatusChange }: AppointmentC
         </div>
       </div>
 
-      <div className="mt-4 sm:flex sm:justify-between">
-        <div className="sm:flex">
-          <div className="flex items-center mr-6">
-            <Calendar className="flex-shrink-0 mr-1.5 h-4 w-4 text-gray-400" />
-            <p className="text-sm text-gray-500">{formattedDate}</p>
-          </div>
-          <div className="mt-2 flex items-center sm:mt-0">
-            <Clock className="flex-shrink-0 mr-1.5 h-4 w-4 text-gray-400" />
-            <p className="text-sm text-gray-500">{time}</p>
-          </div>
-        </div>
-        <div className="mt-2 flex items-center sm:mt-0">
-          <div className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${statusColor.bgColor} ${statusColor.textColor}`}>
-            {status}
+      <div className="mt-4 pl-2">
+        <div className="bg-gray-50 rounded-lg p-3 border border-gray-100">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="flex items-center">
+              <div className="p-2 rounded-md bg-indigo-100 mr-3 flex-shrink-0">
+                <Calendar className="h-5 w-5 text-indigo-700" />
+              </div>
+              <div>
+                <div className="text-xs text-gray-500 font-medium">Date</div>
+                <div className="text-sm text-gray-700">{formattedDate}</div>
+              </div>
+            </div>
+            
+            <div className="flex items-center">
+              <div className="p-2 rounded-md bg-indigo-100 mr-3 flex-shrink-0">
+                <Clock className="h-5 w-5 text-indigo-700" />
+              </div>
+              <div>
+                <div className="text-xs text-gray-500 font-medium">Heure</div>
+                <div className="text-sm text-gray-700">
+                  {time} {duration ? `- ${calculateEndTime()}` : ''}
+                  {duration ? <span className="text-xs text-gray-500 ml-1">({duration} min)</span> : ''}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
-      <div className="mt-2">
-        <div className="flex items-center">
-          <Mail className="flex-shrink-0 mr-1.5 h-4 w-4 text-gray-400" />
-          <p className="text-sm text-gray-500">{clientEmail}</p>
+      <div className="mt-3 pl-2 divide-y divide-gray-100">
+        <div className="py-3">
+          <div className="flex items-center">
+            <Mail className="flex-shrink-0 mr-2 h-4 w-4 text-gray-400" />
+            <a href={`mailto:${clientEmail}`} className="text-sm text-blue-600 hover:underline">{clientEmail}</a>
+          </div>
+          
+          {clientPhone && (
+            <div className="mt-1 flex items-center">
+              <Phone className="flex-shrink-0 mr-2 h-4 w-4 text-gray-400" />
+              <a href={`tel:${clientPhone}`} className="text-sm text-blue-600 hover:underline">{clientPhone}</a>
+            </div>
+          )}
         </div>
-        {clientPhone && (
-          <div className="mt-1 flex items-center">
-            <Phone className="flex-shrink-0 mr-1.5 h-4 w-4 text-gray-400" />
-            <p className="text-sm text-gray-500">{clientPhone}</p>
+
+        {notes && (
+          <div className="py-3">
+            <div className="text-xs text-gray-500 font-medium mb-1">Notes</div>
+            <p className="text-sm text-gray-600 italic bg-gray-50 p-2 rounded-md border border-gray-100">{notes}</p>
           </div>
         )}
       </div>
-
-      {notes && (
-        <div className="mt-2 text-sm text-gray-600">
-          <p className="italic">{notes}</p>
-        </div>
-      )}
     </div>
   );
 };
