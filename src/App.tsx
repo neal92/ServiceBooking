@@ -7,6 +7,7 @@ import Register from './pages/Register';
 import Services from './pages/Services';
 import Categories from './pages/Categories';
 import Appointments from './pages/Appointments';
+import Calendar from './pages/Calendar';
 import NotFound from './pages/NotFound';
 
 // Protected route component
@@ -39,11 +40,11 @@ function App() {
             <ProtectedRoute>
               <Layout />
             </ProtectedRoute>
-          }>
-            <Route index element={<Dashboard />} />
+          }>            <Route index element={<Dashboard />} />
             <Route path="services" element={<Services />} />
             <Route path="categories" element={<Categories />} />
             <Route path="appointments" element={<Appointments />} />
+            <Route path="calendar" element={<Calendar />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>

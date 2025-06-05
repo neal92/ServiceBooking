@@ -10,7 +10,8 @@ interface SidebarProps {
 const Sidebar = ({ mobile, closeSidebar }: SidebarProps) => {
   const navigation = [
     { name: 'Tableau de bord', href: '/', icon: LayoutDashboard },
-    { name: 'Mes Rendez-vous', href: '/appointments', icon: Calendar },
+    { name: 'Mes Rendez-vous', href: '/appointments', icon: List },
+    { name: 'Calendrier', href: '/calendar', icon: Calendar },
     { name: 'Prestations', href: '/services', icon: List },
     { name: 'Catégories', href: '/categories', icon: Tag },
   ];

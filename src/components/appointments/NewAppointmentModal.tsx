@@ -8,9 +8,10 @@ interface NewAppointmentModalProps {
   onClose: () => void;
   appointment?: Appointment | null;
   services?: Service[]; // Pour une initialisation directe des services depuis le parent
+  onDelete?: (id: number) => Promise<void>; // Fonction pour supprimer un rendez-vous
 }
 
-const NewAppointmentModal = ({ isOpen, onClose, appointment, services: initialServices }: NewAppointmentModalProps) => {
+const NewAppointmentModal: React.FC<NewAppointmentModalProps> = ({ isOpen, onClose, appointment, services: initialServices, onDelete }) => {
   const [serviceId, setServiceId] = useState('');
   const [clientName, setClientName] = useState('');
   const [clientEmail, setClientEmail] = useState('');
@@ -84,8 +85,7 @@ const NewAppointmentModal = ({ isOpen, onClose, appointment, services: initialSe
       setError('Failed to load services');
       setIsLoading(false);
     }
-  };
-  const handleSubmit = async (e: React.FormEvent) => {
+  };  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     setError('');
@@ -97,24 +97,48 @@ const NewAppointmentModal = ({ isOpen, onClose, appointment, services: initialSe
         return;
       }
       
-      // Validate date is not in the past
-      const now = new Date();
-      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-      const selectedDate = new Date(date);
+      // Normaliser le format de la date
+      let formattedDate = date;
+      if (formattedDate.includes('T')) {
+        formattedDate = formattedDate.split('T')[0];
+      }
       
-      if (selectedDate < today) {
+      console.log('Soumission du formulaire avec date:', { raw: date, formatted: formattedDate });
+      
+      // Variables pour la validation de la date et de l'heure
+      const now = new Date();
+      // Format YYYY-MM-DD pour les comparaisons de chaînes
+      const todayStr = now.toISOString().split('T')[0];
+      
+      // Comparer les chaînes de caractère directement pour éviter les problèmes de fuseau horaire
+      // Seulement bloquer les dates antérieures à aujourd'hui, pas les dates futures
+      if (formattedDate < todayStr) {
         setError('Impossible de prendre un rendez-vous à une date passée');
         setIsSubmitting(false);
         return;
       }
       
-      // Combine date and time for proper datetime format
-      const appointmentDate = new Date(`${date}T${time}`);
-      
-      // If date is today, check that time is not in the past
-      if (selectedDate.toDateString() === today.toDateString()) {
+      // Si la date est aujourd'hui, vérifier que l'heure n'est pas dans le passé
+      if (formattedDate === todayStr) {
+        // S'assurer que time est au format HH:MM
+        if (!time || !time.includes(':')) {
+          setError('Format d\'heure invalide. Utilisez le format HH:MM');
+          setIsSubmitting(false);
+          return;
+        }
+        
         const currentTime = now.getHours() * 60 + now.getMinutes();
-        const selectedTime = parseInt(time.split(':')[0]) * 60 + parseInt(time.split(':')[1]);
+        const timeParts = time.split(':');
+        const selectedTime = parseInt(timeParts[0]) * 60 + parseInt(timeParts[1]);
+        
+        console.log('Validation de l\'heure:', {
+          currentTime,
+          selectedTime,
+          currentHour: now.getHours(),
+          currentMinutes: now.getMinutes(),
+          selectedHour: parseInt(timeParts[0]),
+          selectedMinutes: parseInt(timeParts[1])
+        });
         
         if (selectedTime < currentTime) {
           setError('Impossible de prendre un rendez-vous à une heure passée');
@@ -130,9 +154,10 @@ const NewAppointmentModal = ({ isOpen, onClose, appointment, services: initialSe
           // Skip checking the current appointment when updating
           if (appointment && appointment.id && apt.id === appointment.id) return false;
           
-          const aptDate = new Date(apt.date).toDateString() === selectedDate.toDateString();
+          // Comparer les dates au format ISO pour éviter les problèmes de fuseau horaire
+          const aptDateISO = apt.date.split('T')[0];
           const aptTime = apt.time === time;
-          return aptDate && aptTime;
+          return aptDateISO === formattedDate && aptTime;
         });
         
         if (existingAppointment) {
@@ -144,30 +169,78 @@ const NewAppointmentModal = ({ isOpen, onClose, appointment, services: initialSe
         console.error('Erreur lors de la vérification des rendez-vous existants:', err);
         // Continue with the submission even if we couldn't check for conflicts
       }
-      
-      // Create a fully type-compliant appointment object
+        // Create a fully type-compliant appointment object
       const appointmentData = {
         clientName: clientName || '',
         clientEmail: clientEmail || '',
         clientPhone: clientPhone || '',
         serviceId: parseInt(serviceId),
-        date: appointmentDate.toISOString(),
+        // Utiliser uniquement la partie date (YYYY-MM-DD) sans l'heure
+        date: formattedDate,
         time: time || '',
         status: 'pending' as const, // Type assertion to ensure correct status type
         notes: notes || ''
       } satisfies Omit<Appointment, 'id'>; // Validate against type
       
-      if (appointment && appointment.id) {
+      console.log('Donnée du rendez-vous à envoyer:', appointmentData);      if (appointment && appointment.id) {
         await appointmentService.update(appointment.id.toString(), appointmentData);
+        console.log("Rendez-vous mis à jour avec succès");
+        
+        // Attendre un peu avant de fermer pour permettre à l'API de terminer
+        setTimeout(() => {
+          // Émettre un événement personnalisé pour indiquer que les données ont changé
+          const event = new CustomEvent('appointmentUpdated', { detail: appointmentData });
+          window.dispatchEvent(event);
+          onClose();
+        }, 300);
       } else {
-        await appointmentService.create(appointmentData);
+        const newAppointment = await appointmentService.create(appointmentData);
+        console.log("Nouveau rendez-vous créé avec succès:", newAppointment);
+        
+        // Attendre un peu avant de fermer pour permettre à l'API de terminer
+        setTimeout(() => {
+          // Émettre un événement personnalisé pour indiquer que les données ont changé
+          const event = new CustomEvent('appointmentCreated', { detail: appointmentData });
+          window.dispatchEvent(event);
+          onClose();
+        }, 300);
       }
-      onClose();
     } catch (err) {
       console.error('Error saving appointment:', err);
       setError('Failed to save appointment. Please try again.');
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  // Fonction pour gérer la suppression d'un rendez-vous
+  const handleDeleteAppointment = async () => {
+    if (!appointment || !appointment.id) return;
+    
+    if (window.confirm('Êtes-vous sûr de vouloir supprimer ce rendez-vous ?')) {
+      try {
+        setIsSubmitting(true);
+        
+        if (onDelete) {
+          // Utiliser la fonction de suppression fournie par le parent
+          await onDelete(appointment.id);
+        } else {
+          // Fallback: appeler directement le service si aucune fonction de suppression n'est fournie
+          await appointmentService.delete(appointment.id.toString());
+        }
+        
+        // Fermer la modal après la suppression
+        onClose();
+        
+        // Émettre un événement pour notifier la suppression
+        const event = new CustomEvent('appointmentDeleted', { detail: { id: appointment.id } });
+        window.dispatchEvent(event);
+      } catch (err) {
+        console.error('Erreur lors de la suppression du rendez-vous:', err);
+        setError('Erreur lors de la suppression du rendez-vous');
+      } finally {
+        setIsSubmitting(false);
+      }
     }
   };
 
@@ -263,7 +336,10 @@ const NewAppointmentModal = ({ isOpen, onClose, appointment, services: initialSe
                       id="date"
                       value={date}
                       min={new Date().toISOString().split('T')[0]} // Empêche de sélectionner des dates passées
-                      onChange={(e) => setDate(e.target.value)}
+                      onChange={(e) => {
+                        console.log("Nouvelle date sélectionnée:", e.target.value);
+                        setDate(e.target.value);
+                      }}
                       className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full text-base py-3 px-4 border-gray-300 rounded-md"
                       required
                     />
@@ -332,21 +408,39 @@ const NewAppointmentModal = ({ isOpen, onClose, appointment, services: initialSe
                 </div>
               </div>
             </div>
-            <div className="px-4 py-3 bg-gray-50 text-right sm:px-6">              <button
-                type="button"
-                className="mr-2 inline-flex justify-center py-3 px-6 border border-gray-300 shadow-sm text-base font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                onClick={onClose}
-                disabled={isSubmitting}
-              >
-                Annuler
-              </button>
-              <button
-                type="submit"
-                className="inline-flex justify-center py-3 px-6 border border-transparent shadow-sm text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? 'En cours...' : appointment ? 'Mettre à jour' : 'Créer'}
-              </button>
+            <div className="px-4 py-3 bg-gray-50 sm:px-6">
+              <div className="flex justify-between">
+                <div>
+                  {/* Bouton de suppression - uniquement affiché pour les rendez-vous existants */}
+                  {appointment && appointment.id && (
+                    <button
+                      type="button"
+                      className="inline-flex justify-center py-3 px-6 border border-red-300 shadow-sm text-base font-medium rounded-md text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                      onClick={handleDeleteAppointment}
+                      disabled={isSubmitting}
+                    >
+                      {isSubmitting ? 'Suppression...' : 'Supprimer'}
+                    </button>
+                  )}
+                </div>
+                <div>
+                  <button
+                    type="button"
+                    className="mr-2 inline-flex justify-center py-3 px-6 border border-gray-300 shadow-sm text-base font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                    onClick={onClose}
+                    disabled={isSubmitting}
+                  >
+                    Annuler
+                  </button>
+                  <button
+                    type="submit"
+                    className="inline-flex justify-center py-3 px-6 border border-transparent shadow-sm text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? 'En cours...' : appointment && appointment.id ? 'Mettre à jour' : 'Créer'}
+                  </button>
+                </div>
+              </div>
             </div>
           </form>
         </div>

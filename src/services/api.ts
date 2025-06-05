@@ -91,7 +91,11 @@ export const serviceService = {
 
 // API Service for Appointments
 export const appointmentService = {  getAll: async (): Promise<Appointment[]> => {
-    const response = await apiClient.get('/appointments');
+    // Utilisation de cache: false pour toujours récupérer les données les plus récentes
+    const response = await apiClient.get('/appointments', { 
+      headers: { 'Cache-Control': 'no-cache' },
+      params: { timestamp: new Date().getTime() } // Ajouter un timestamp pour éviter la mise en cache
+    });
     return response.data.map((appointment: any) => ({
       ...appointment,
       id: Number(appointment.id),

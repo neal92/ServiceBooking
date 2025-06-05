@@ -49,13 +49,23 @@ exports.createAppointment = async (req, res) => {
         message: 'Client name, email, service ID, date and time are required' 
       });
     }
-    
-    // Validate date is not in the past
+      // Validate date is not in the past
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const appointmentDate = new Date(date);
     
-    if (appointmentDate < today) {
+    console.log('Validation de date côté serveur:', {
+      date,
+      appointmentDate,
+      today,
+      isInPast: appointmentDate < today
+    });
+    
+    // Comparer uniquement les dates (ignorer les heures)
+    const todayISO = today.toISOString().split('T')[0];
+    const appointmentISO = appointmentDate.toISOString().split('T')[0];
+    
+    if (appointmentISO < todayISO) {
       return res.status(400).json({ 
         message: 'Impossible de prendre un rendez-vous à une date passée' 
       });

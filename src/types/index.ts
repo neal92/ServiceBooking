@@ -12,6 +12,7 @@ export interface Appointment {
   price?: number; // From JOIN with services
   duration?: number; // From JOIN with services
   createdAt?: string;
+  Service?: Service; // Relation avec le service
 }
 
 export interface Service {
