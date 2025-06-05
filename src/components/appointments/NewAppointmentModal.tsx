@@ -182,7 +182,7 @@ const NewAppointmentModal: React.FC<NewAppointmentModalProps> = ({ isOpen, onClo
         notes: notes || ''
       } satisfies Omit<Appointment, 'id'>; // Validate against type
       
-      console.log('Donnée du rendez-vous à envoyer:', appointmentData);      if (appointment && appointment.id) {
+      console.log('Donnée du rendez-vous à envoyer:', appointmentData);      if (appointment && appointment.id && appointment.id !== 0) {
         await appointmentService.update(appointment.id.toString(), appointmentData);
         console.log("Rendez-vous mis à jour avec succès");
         
@@ -212,10 +212,9 @@ const NewAppointmentModal: React.FC<NewAppointmentModalProps> = ({ isOpen, onClo
       setIsSubmitting(false);
     }
   };
-
   // Fonction pour gérer la suppression d'un rendez-vous
   const handleDeleteAppointment = async () => {
-    if (!appointment || !appointment.id) return;
+    if (!appointment || !appointment.id || appointment.id === 0) return;
     
     if (window.confirm('Êtes-vous sûr de vouloir supprimer ce rendez-vous ?')) {
       try {
@@ -253,12 +252,10 @@ const NewAppointmentModal: React.FC<NewAppointmentModalProps> = ({ isOpen, onClo
           <div className="absolute inset-0 bg-gray-500 opacity-75"></div>
         </div>
 
-        <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-
-        <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-xl sm:w-full">
+        <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>        <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-xl sm:w-full">
           <div className="flex justify-between items-center px-4 py-3 border-b border-gray-200 sm:px-6">
             <h3 className="text-lg font-medium text-gray-900">
-              {appointment ? 'Modifier le rendez-vous' : 'Nouveau rendez-vous'}
+              {appointment && appointment.id && appointment.id !== 0 ? 'Modifier le rendez-vous' : 'Nouveau rendez-vous'}
             </h3>
             <button
               type="button"
@@ -410,9 +407,8 @@ const NewAppointmentModal: React.FC<NewAppointmentModalProps> = ({ isOpen, onClo
             </div>
             <div className="px-4 py-3 bg-gray-50 sm:px-6">
               <div className="flex justify-between">
-                <div>
-                  {/* Bouton de suppression - uniquement affiché pour les rendez-vous existants */}
-                  {appointment && appointment.id && (
+                <div>                  {/* Bouton de suppression - uniquement affiché pour les rendez-vous existants */}
+                  {appointment && appointment.id && appointment.id !== 0 && (
                     <button
                       type="button"
                       className="inline-flex justify-center py-3 px-6 border border-red-300 shadow-sm text-base font-medium rounded-md text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
@@ -437,7 +433,7 @@ const NewAppointmentModal: React.FC<NewAppointmentModalProps> = ({ isOpen, onClo
                     className="inline-flex justify-center py-3 px-6 border border-transparent shadow-sm text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                     disabled={isSubmitting}
                   >
-                    {isSubmitting ? 'En cours...' : appointment && appointment.id ? 'Mettre à jour' : 'Créer'}
+                    {isSubmitting ? 'En cours...' : appointment && appointment.id && appointment.id !== 0 ? 'Mettre à jour' : 'Créer'}
                   </button>
                 </div>
               </div>
