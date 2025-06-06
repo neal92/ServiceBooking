@@ -5,6 +5,7 @@ import NewAppointmentModal from '../components/appointments/NewAppointmentModal'
 import { Appointment, Service } from '../types';
 import { appointmentService, serviceService } from '../services/api';
 import PageTransition from '../components/layout/PageTransition';
+import ModalPortal from '../components/layout/ModalPortal';
 
 type AppointmentStatus = 'all' | 'upcoming' | 'ongoing' | 'past';
 
@@ -309,49 +310,53 @@ const Appointments = () => {
         isOpen={isModalOpen} 
         onClose={handleCloseModal} 
         services={services}
-      />      {/* Modal de confirmation de suppression */}
+      />
+      
+      {/* Modal de confirmation de suppression */}
       {isDeleteModalOpen && (
-        <div className="fixed inset-0 z-60 flex items-center justify-center overflow-y-auto modal-backdrop animate-fadeIn" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}>
-          <div className="fixed inset-0 bg-black bg-opacity-40" onClick={handleCancelDelete}></div>
-          
-          <div className="relative bg-white rounded-lg shadow-lg max-w-md w-full mx-4 animate-fadeIn" style={{ maxHeight: 'calc(100vh - 40px)', margin: '20px' }}>
-            <div className="p-6 text-center">
-              <div className="mx-auto mb-4 h-14 w-14 flex items-center justify-center rounded-full bg-red-100">
-                <CalendarX className="h-6 w-6 text-red-600" />
-              </div>
-              <h3 className="mb-3 text-lg font-medium text-gray-900">Confirmer la suppression</h3>
-              <p className="mb-5 text-gray-600">
-                Êtes-vous sûr de vouloir supprimer le rendez-vous 
-                {appointmentToDelete?.clientName && (
-                  <span> avec <strong className="text-gray-700">{appointmentToDelete.clientName}</strong></span>
-                )}
-                {appointmentToDelete?.date && (
-                  <span> prévu le <strong className="text-gray-700">{new Date(appointmentToDelete.date).toLocaleDateString()}</strong></span>
-                )}
-                {appointmentToDelete?.time && (
-                  <span> à <strong className="text-gray-700">{appointmentToDelete.time}</strong></span>
-                )} ?
-              </p>
+        <ModalPortal isOpen={isDeleteModalOpen}>
+          <div className="fixed inset-0 z-60 flex items-center justify-center overflow-y-auto modal-backdrop animate-fadeIn">
+            <div className="fixed inset-0 bg-black bg-opacity-40" onClick={handleCancelDelete}></div>
             
-              <div className="flex justify-center gap-4 mt-6">
-                <button
-                  type="button"
-                  onClick={handleCancelDelete}
-                  className="py-2 px-5 text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-300 transition-all duration-200"
-                >
-                  Annuler
-                </button>
-                <button
-                  type="button"
-                  onClick={handleConfirmDelete}
-                  className="py-2 px-5 text-white bg-red-600 border border-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-300 transition-all duration-200"
-                >
-                  Supprimer
-                </button>
+            <div className="relative bg-white rounded-lg shadow-lg max-w-md w-full mx-4 animate-fadeIn" style={{ maxHeight: 'calc(100vh - 40px)' }}>
+              <div className="p-6 text-center">
+                <div className="mx-auto mb-4 h-14 w-14 flex items-center justify-center rounded-full bg-red-100">
+                  <CalendarX className="h-6 w-6 text-red-600" />
+                </div>
+                <h3 className="mb-3 text-lg font-medium text-gray-900">Confirmer la suppression</h3>
+                <p className="mb-5 text-gray-600">
+                  Êtes-vous sûr de vouloir supprimer le rendez-vous 
+                  {appointmentToDelete?.clientName && (
+                    <span> avec <strong className="text-gray-700">{appointmentToDelete.clientName}</strong></span>
+                  )}
+                  {appointmentToDelete?.date && (
+                    <span> prévu le <strong className="text-gray-700">{new Date(appointmentToDelete.date).toLocaleDateString()}</strong></span>
+                  )}
+                  {appointmentToDelete?.time && (
+                    <span> à <strong className="text-gray-700">{appointmentToDelete.time}</strong></span>
+                  )} ?
+                </p>
+              
+                <div className="flex justify-center gap-4 mt-6">
+                  <button
+                    type="button"
+                    onClick={handleCancelDelete}
+                    className="py-2 px-5 text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-300 transition-all duration-200"
+                  >
+                    Annuler
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleConfirmDelete}
+                    className="py-2 px-5 text-white bg-red-600 border border-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-300 transition-all duration-200"
+                  >
+                    Supprimer
+                  </button>
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        </ModalPortal>
       )}
       </div>
     </PageTransition>
