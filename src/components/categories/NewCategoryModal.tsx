@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import { Category } from '../../types';
 import { categoryService } from '../../services/api';
+import ModalPortal from '../layout/ModalPortal';
 
 // Extended Category interface with color field for UI purposes
 interface CategoryWithColor extends Category {
@@ -43,6 +44,7 @@ const NewCategoryModal = ({ isOpen, onClose, category }: NewCategoryModalProps) 
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
+  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -68,38 +70,39 @@ const NewCategoryModal = ({ isOpen, onClose, category }: NewCategoryModalProps) 
       setIsSubmitting(false);
     }
   };
-
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto">
-      <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-        <div className="fixed inset-0 transition-opacity" aria-hidden="true">
-          <div className="absolute inset-0 bg-gray-500 opacity-75"></div>
-        </div>
-
-        <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-
-        <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-          <div className="flex justify-between items-center px-4 py-3 border-b border-gray-200 sm:px-6">
-            <h3 className="text-lg font-medium text-gray-900">
+    <ModalPortal isOpen={isOpen}>
+      <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto modal-backdrop animate-fadeIn">
+        {/* Overlay semi-transparent */}
+        <div className="fixed inset-0 bg-black bg-opacity-40" onClick={onClose}></div>
+        
+        {/* Modal content */}
+        <div className="relative w-full max-w-lg bg-white rounded-lg overflow-hidden shadow-lg animate-fadeIn mx-4" style={{ maxHeight: 'calc(100vh - 40px)' }}>
+          {/* Header */}
+          <div className="flex justify-between items-center px-4 py-4 border-b border-gray-200 bg-gradient-to-r from-purple-500 to-indigo-600">
+            <h3 className="text-xl font-semibold text-white animate-fadeIn">
               {category ? 'Modifier la catégorie' : 'Nouvelle catégorie'}
             </h3>
             <button
               type="button"
-              className="text-gray-400 hover:text-gray-500"
+              className="text-white hover:text-gray-100 transition-colors duration-200"
               onClick={onClose}
+              disabled={isSubmitting}
             >
               <span className="sr-only">Fermer</span>
               <X className="h-6 w-6" aria-hidden="true" />
             </button>
           </div>
-          <form onSubmit={handleSubmit}>
-            <div className="px-4 py-3 sm:px-6">
-              <div className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
+          
+          {/* Form */}
+          <form onSubmit={handleSubmit} className="overflow-y-auto max-h-[calc(100vh-120px)]">
+            <div className="px-4 py-5">
+              <div className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6 animate-fadeIn animation-delay-400">
                 <div className="sm:col-span-6">
                   <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-                    Nom de la catégorie
+                    Nom de la catégorie <span className="text-red-500">*</span>
                   </label>
                   <div className="mt-1">
                     <input
@@ -108,7 +111,7 @@ const NewCategoryModal = ({ isOpen, onClose, category }: NewCategoryModalProps) 
                       id="name"
                       value={name}
                       onChange={(e) => setName(e.target.value)}
-                      className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                      className="shadow-sm focus:ring-purple-500 focus:border-purple-500 block w-full text-base py-3 px-4 border-gray-300 rounded-md transition-shadow hover:shadow"
                       required
                     />
                   </div>
@@ -125,38 +128,57 @@ const NewCategoryModal = ({ isOpen, onClose, category }: NewCategoryModalProps) 
                       rows={3}
                       value={description}
                       onChange={(e) => setDescription(e.target.value)}
-                      className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                      className="shadow-sm focus:ring-purple-500 focus:border-purple-500 block w-full text-base py-3 px-4 border-gray-300 rounded-md transition-shadow hover:shadow"
+                      placeholder="Description de la catégorie..."
                     ></textarea>
+                    <p className="mt-1 text-xs text-gray-500">
+                      Une bonne description permettra de mieux organiser vos prestations.
+                    </p>
                   </div>
                 </div>
 
                 <div className="sm:col-span-6">
-                  <label htmlFor="color" className="block text-sm font-medium text-gray-700">
+                  <label htmlFor="color" className="block text-sm font-medium text-gray-700 mb-2">
                     Couleur
                   </label>
-                  <div className="mt-1 flex flex-wrap gap-3">
+                  <div className="flex flex-wrap gap-4 mt-2">
                     {colors.map((c) => (
-                      <div
+                      <div 
                         key={c.value}
+                        className="relative"
                         onClick={() => setColor(c.value)}
-                        className={`h-8 w-8 rounded-full bg-${c.value}-500 cursor-pointer ${
-                          color === c.value ? 'ring-2 ring-offset-2 ring-blue-500' : ''
-                        }`}
-                      ></div>
+                      >
+                        <div
+                          className={`h-10 w-10 rounded-full bg-${c.value}-500 cursor-pointer transform transition-transform duration-200 ${
+                            color === c.value 
+                              ? 'ring-4 ring-offset-2 ring-purple-300 scale-110' 
+                              : 'hover:scale-105'
+                          }`}
+                        ></div>
+                        {color === c.value && (
+                          <div className="absolute -top-1 -right-1 bg-white rounded-full p-0.5 shadow">
+                            <svg className="h-4 w-4 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                            </svg>
+                          </div>
+                        )}
+                      </div>
                     ))}
                   </div>
                 </div>
               </div>
             </div>
+            
             {error && (
-              <div className="px-4 py-2 mb-3 bg-red-100 border border-red-400 text-red-700 rounded relative">
+              <div className="mx-4 mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative animate-fadeIn">
                 {error}
               </div>
             )}
-            <div className="px-4 py-3 bg-gray-50 text-right sm:px-6">
+            
+            <div className="px-4 py-4 bg-gray-50 flex justify-end">
               <button
                 type="button"
-                className="mr-2 inline-flex justify-center py-2 px-4 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                className="mr-3 inline-flex justify-center py-3 px-6 border border-gray-300 shadow-sm text-base font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-all duration-200 transform hover:scale-105"
                 onClick={onClose}
                 disabled={isSubmitting}
               >
@@ -164,16 +186,28 @@ const NewCategoryModal = ({ isOpen, onClose, category }: NewCategoryModalProps) 
               </button>
               <button
                 type="submit"
+                className="inline-flex justify-center py-3 px-6 border border-transparent shadow-sm text-base font-medium rounded-md text-white bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-all duration-200 transform hover:scale-105"
                 disabled={isSubmitting}
-                className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
               >
-                {isSubmitting ? 'Chargement...' : category ? 'Mettre à jour' : 'Créer'}
+                {isSubmitting ? (
+                  <>
+                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Chargement...
+                  </>
+                ) : category ? (
+                  'Mettre à jour'
+                ) : (
+                  'Créer la catégorie'
+                )}
               </button>
             </div>
           </form>
         </div>
       </div>
-    </div>
+    </ModalPortal>
   );
 };
 

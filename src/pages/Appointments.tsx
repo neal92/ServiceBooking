@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
-import { PlusCircle, Filter, Calendar as CalendarIcon } from 'lucide-react';
+import { PlusCircle, Filter, Calendar as CalendarIcon, CalendarX } from 'lucide-react';
 import AppointmentList from '../components/appointments/AppointmentList';
 import NewAppointmentModal from '../components/appointments/NewAppointmentModal';
 import { Appointment, Service } from '../types';
 import { appointmentService, serviceService } from '../services/api';
+import PageTransition from '../components/layout/PageTransition';
 
 type AppointmentStatus = 'all' | 'upcoming' | 'ongoing' | 'past';
 
@@ -34,18 +35,36 @@ const Appointments = () => {
       setError('Failed to load appointments or services');
       setLoading(false);
     }
+  };  const [appointmentToDelete, setAppointmentToDelete] = useState<Appointment | null>(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+
+  const handleDeleteClick = (id: number) => {
+    // Trouver le rendez-vous correspondant à cet ID
+    const appointment = validAppointments.find(app => app.id === id);
+    if (appointment) {
+      setAppointmentToDelete(appointment);
+      setIsDeleteModalOpen(true);
+    }
   };
-  const handleDeleteAppointment = async (id: number) => {
-    if (window.confirm('Êtes-vous sûr de vouloir supprimer ce rendez-vous ?')) {
+
+  const handleConfirmDelete = async () => {
+    if (appointmentToDelete) {
       try {
         // Convertir l'id en chaîne pour l'API
-        await appointmentService.delete(id.toString());
+        await appointmentService.delete(appointmentToDelete.id.toString());
+        setIsDeleteModalOpen(false);
+        setAppointmentToDelete(null);
         fetchData();
       } catch (err) {
         console.error("Error deleting appointment:", err);
         setError('Failed to delete appointment');
       }
     }
+  };
+
+  const handleCancelDelete = () => {
+    setIsDeleteModalOpen(false);
+    setAppointmentToDelete(null);
   };
 
   const handleStatusChange = async (id: number, status: string) => {
@@ -93,13 +112,13 @@ const Appointments = () => {
       default:
         return true;
     }
-  });
-  return (
-    <div>
-      <div className="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl shadow-lg mb-8 p-6 relative overflow-hidden">
-        <div className="absolute right-0 top-0 -mt-4 -mr-16 opacity-10">
-          <CalendarIcon className="h-64 w-64 text-white" />
-        </div>
+  });  return (
+    <PageTransition type="slideBottom">
+      <div>
+        <div className="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl shadow-lg mb-8 p-6 relative overflow-hidden">
+          <div className="absolute right-0 top-0 -mt-4 -mr-16 opacity-10">
+            <CalendarIcon className="h-64 w-64 text-white" />
+          </div>
         <div className="md:flex md:items-center md:justify-between relative z-10">
           <div className="flex-1 min-w-0">
             <h2 className="text-2xl font-bold leading-7 text-white sm:text-3xl">
@@ -277,24 +296,65 @@ const Appointments = () => {
                    'Rendez-vous passés'}
                 </span>
               </div>
-              <div className="p-4">
-                <AppointmentList 
+              <div className="p-4">                <AppointmentList 
                   appointments={filteredAppointments} 
-                  onDelete={handleDeleteAppointment} 
+                  onDelete={handleDeleteClick} 
                   onStatusChange={handleStatusChange}
                 />
               </div>
             </div>
           )}
         </>
-      )}
-
-      <NewAppointmentModal 
+      )}      <NewAppointmentModal 
         isOpen={isModalOpen} 
         onClose={handleCloseModal} 
         services={services}
-      />
-    </div>
+      />      {/* Modal de confirmation de suppression */}
+      {isDeleteModalOpen && (
+        <div className="fixed inset-0 z-60 flex items-center justify-center overflow-y-auto modal-backdrop animate-fadeIn" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}>
+          <div className="fixed inset-0 bg-black bg-opacity-40" onClick={handleCancelDelete}></div>
+          
+          <div className="relative bg-white rounded-lg shadow-lg max-w-md w-full mx-4 animate-fadeIn" style={{ maxHeight: 'calc(100vh - 40px)', margin: '20px' }}>
+            <div className="p-6 text-center">
+              <div className="mx-auto mb-4 h-14 w-14 flex items-center justify-center rounded-full bg-red-100">
+                <CalendarX className="h-6 w-6 text-red-600" />
+              </div>
+              <h3 className="mb-3 text-lg font-medium text-gray-900">Confirmer la suppression</h3>
+              <p className="mb-5 text-gray-600">
+                Êtes-vous sûr de vouloir supprimer le rendez-vous 
+                {appointmentToDelete?.clientName && (
+                  <span> avec <strong className="text-gray-700">{appointmentToDelete.clientName}</strong></span>
+                )}
+                {appointmentToDelete?.date && (
+                  <span> prévu le <strong className="text-gray-700">{new Date(appointmentToDelete.date).toLocaleDateString()}</strong></span>
+                )}
+                {appointmentToDelete?.time && (
+                  <span> à <strong className="text-gray-700">{appointmentToDelete.time}</strong></span>
+                )} ?
+              </p>
+            
+              <div className="flex justify-center gap-4 mt-6">
+                <button
+                  type="button"
+                  onClick={handleCancelDelete}
+                  className="py-2 px-5 text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-300 transition-all duration-200"
+                >
+                  Annuler
+                </button>
+                <button
+                  type="button"
+                  onClick={handleConfirmDelete}
+                  className="py-2 px-5 text-white bg-red-600 border border-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-300 transition-all duration-200"
+                >
+                  Supprimer
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      </div>
+    </PageTransition>
   );
 };
 

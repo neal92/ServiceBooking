@@ -1,19 +1,24 @@
 import { useState, useEffect } from 'react';
-import { PlusCircle, Edit, Trash } from 'lucide-react';
+import { PlusCircle, Edit, Trash, Search, Tag } from 'lucide-react';
 import { Category } from '../types';
 import NewCategoryModal from '../components/categories/NewCategoryModal';
 import { categoryService } from '../services/api';
+import PageTransition from '../components/layout/PageTransition';
 
 const Categories = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [categoryToDelete, setCategoryToDelete] = useState<Category | null>(null);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
 
   useEffect(() => {
     fetchCategories();
   }, []);
+  
   const fetchCategories = async () => {
     try {
       setLoading(true);
@@ -49,11 +54,19 @@ const Categories = () => {
     // Refresh categories after closing modal
     fetchCategories();
   };
-  const handleDeleteCategory = async (id: number) => {
-    if (window.confirm('Êtes-vous sûr de vouloir supprimer cette catégorie ?')) {
+  
+  const handleDeleteClick = (category: Category) => {
+    setCategoryToDelete(category);
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (categoryToDelete) {
       try {
         // Convertir l'id en chaîne pour l'API
-        await categoryService.delete(id.toString());
+        await categoryService.delete(categoryToDelete.id.toString());
+        setIsDeleteModalOpen(false);
+        setCategoryToDelete(null);
         fetchCategories();
       } catch (err) {
         console.error('Error deleting category:', err);
@@ -61,10 +74,19 @@ const Categories = () => {
       }
     }
   };
-  return (
-    <div>
-      <div className="bg-gradient-to-r from-blue-600 to-blue-800 rounded-lg shadow-lg mb-8 p-6">
-        <div className="md:flex md:items-center md:justify-between">
+
+  const handleCancelDelete = () => {
+    setIsDeleteModalOpen(false);
+    setCategoryToDelete(null);
+  };
+    return (
+    <PageTransition type="slide">
+      <div>
+        <div className="bg-gradient-to-r from-blue-600 to-blue-800 rounded-xl shadow-lg mb-8 p-6 relative overflow-hidden">
+          <div className="absolute right-0 top-0 -mt-4 -mr-16 opacity-10">
+            <Tag className="h-64 w-64 text-white" />
+          </div>
+        <div className="md:flex md:items-center md:justify-between relative z-10">
           <div className="flex-1 min-w-0">
             <h2 className="text-2xl font-bold leading-7 text-white sm:text-3xl">
               Catégories
@@ -96,7 +118,30 @@ const Categories = () => {
             <span>{error}</span>
           </div>
         </div>
-      )}      {/* Loading state */}
+      )}
+      
+      {/* Search Bar */}
+      <div className="mb-6 bg-white p-5 shadow-md rounded-xl border border-gray-100 animate-fadeIn">
+        <label htmlFor="categorySearch" className="block text-sm font-medium text-gray-700 mb-1">
+          Rechercher une catégorie
+        </label>
+        <div className="relative rounded-md">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <Search className="h-5 w-5 text-blue-500" aria-hidden="true" />
+          </div>
+          <input
+            type="text"
+            name="categorySearch"
+            id="categorySearch"
+            className="focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 py-2 sm:text-sm border-gray-300 rounded-md shadow-sm transition-shadow duration-200 hover:shadow-md"
+            placeholder="Rechercher par nom ou description..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+      </div>
+
+      {/* Loading state */}
       {loading ? (
         <div className="flex flex-col items-center justify-center py-12 bg-white rounded-lg shadow-md">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
@@ -105,31 +150,57 @@ const Categories = () => {
       ) : (
         /* Categories List */
         <div className="bg-white shadow-lg rounded-lg overflow-hidden border border-gray-100">
-          {categories.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 bg-gray-50">
-              <svg className="w-16 h-16 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-              </svg>
-              <p className="mt-4 text-lg font-medium text-gray-500">Aucune catégorie trouvée</p>
+          {categories.length === 0 || categories.filter(category => 
+            category.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+            (category.description && category.description.toLowerCase().includes(searchTerm.toLowerCase()))
+          ).length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 bg-blue-50 animate-fadeIn">
+              <div className="bg-blue-100 rounded-full h-24 w-24 flex items-center justify-center mx-auto mb-6">
+                <Tag className="h-12 w-12 text-blue-500" />
+              </div>
+              <h3 className="text-xl font-medium text-gray-900 mb-2">Aucune catégorie trouvée</h3>
+              <p className="text-gray-500 max-w-md mx-auto mb-8 text-center">
+                {searchTerm 
+                  ? `Aucune catégorie ne correspond à votre recherche "${searchTerm}". Essayez d'autres termes ou créez une nouvelle catégorie.` 
+                  : "Vous n'avez pas encore créé de catégories. Commencez par en ajouter une nouvelle !"}
+              </p>
+              {!searchTerm && (
+                <div className="mt-6">
+                  <button
+                    type="button"
+                    onClick={() => setIsModalOpen(true)}
+                    className="inline-flex items-center px-5 py-3 border border-transparent shadow-md text-base font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-150"
+                  >
+                    <PlusCircle className="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
+                    Créer une catégorie
+                  </button>
+                </div>
+              )}
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
-              {categories.map((category) => (
+              {categories
+                .filter(category => 
+                  category.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                  (category.description && category.description.toLowerCase().includes(searchTerm.toLowerCase()))
+                )
+                .map((category) => (
                 <div 
                   key={category.id}
-                  className="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden"
+                  onClick={() => handleEditCategory(category)}
+                  className="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 overflow-hidden animate-fadeIn cursor-pointer transform group"
                 >
-                  <div className={`w-full h-2 bg-${category.color || 'blue'}-500`}></div>
+                  <div className={`w-full h-2 bg-${category.color || 'blue'}-500 transition-all duration-300 group-hover:h-3`}></div>
                   <div className="p-5">
                     <div className="flex items-center justify-between mb-4">
                       <div className="flex items-center">
-                        <div className={`h-12 w-12 rounded-lg flex items-center justify-center text-white bg-${category.color || 'blue'}-500 font-bold text-lg shadow-sm`}>
+                        <div className={`h-12 w-12 rounded-lg flex items-center justify-center text-white bg-${category.color || 'blue'}-500 font-bold text-lg shadow-sm transition-transform duration-300 group-hover:scale-110`}>
                           {category.name.charAt(0).toUpperCase()}
                         </div>
                         <div className="ml-4">
-                          <h3 className="text-lg font-semibold text-gray-900">{category.name}</h3>
+                          <h3 className="text-lg font-semibold text-gray-900 transition-colors duration-300 group-hover:text-blue-600">{category.name}</h3>
                           <div className="flex items-center mt-1">
-                            <span className="flex items-center px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-600">
+                            <span className={`flex items-center px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-600 transition-colors duration-300 group-hover:bg-${category.color || 'blue'}-100 group-hover:text-${category.color || 'blue'}-600`}>
                               {category.servicesCount || 0} prestations
                             </span>
                           </div>
@@ -137,23 +208,32 @@ const Categories = () => {
                       </div>
                     </div>
                     
-                    <p className="text-gray-600 text-sm mb-5 line-clamp-2">{category.description}</p>
+                    <p className="text-gray-600 text-sm mb-5 line-clamp-2 group-hover:text-gray-700 transition-colors duration-300">{category.description}</p>
                     
-                    <div className="flex justify-end space-x-3 mt-auto">
-                      <button
-                        onClick={() => handleEditCategory(category)}
-                        className="inline-flex items-center px-2.5 py-1.5 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
-                      >
-                        <Edit className="h-3.5 w-3.5 mr-1" />
-                        Modifier
-                      </button>
-                      <button 
-                        onClick={() => handleDeleteCategory(category.id)}
-                        className="inline-flex items-center px-2.5 py-1.5 border border-red-300 rounded-md text-sm font-medium text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors"
-                      >
-                        <Trash className="h-3.5 w-3.5 mr-1" />
-                        Supprimer
-                      </button>
+                    <div className="flex justify-between items-center mt-auto">
+                      <span className="text-xs text-gray-400 italic group-hover:text-blue-500 transition-colors duration-300">Cliquez pour modifier</span>
+                      <div className="flex space-x-3">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation(); // Empêche l'événement de remonter à la carte
+                            handleEditCategory(category);
+                          }}
+                          className="inline-flex items-center px-2.5 py-1.5 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+                        >
+                          <Edit className="h-3.5 w-3.5 mr-1" />
+                          Modifier
+                        </button>
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation(); // Empêche l'événement de remonter à la carte
+                            handleDeleteClick(category);
+                          }}
+                          className="inline-flex items-center px-2.5 py-1.5 border border-red-300 rounded-md text-sm font-medium text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors"
+                        >
+                          <Trash className="h-3.5 w-3.5 mr-1" />
+                          Supprimer
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -167,8 +247,48 @@ const Categories = () => {
         isOpen={isModalOpen} 
         onClose={handleCloseModal} 
         category={editingCategory}
-      />
-    </div>
+      />      {/* Modal de confirmation de suppression */}
+      {isDeleteModalOpen && (
+        <div className="fixed inset-0 z-60 flex items-center justify-center overflow-y-auto modal-backdrop animate-fadeIn" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}>
+          <div className="fixed inset-0 bg-black bg-opacity-40" onClick={handleCancelDelete}></div>
+          
+          <div className="relative bg-white rounded-lg shadow-lg max-w-md w-full mx-4 animate-fadeIn" style={{ maxHeight: 'calc(100vh - 40px)', margin: '20px' }}>
+            <div className="p-6 text-center">
+              <div className="mx-auto mb-4 h-14 w-14 flex items-center justify-center rounded-full bg-red-100">
+                <Trash className="h-6 w-6 text-red-600" />
+              </div>
+              <h3 className="mb-3 text-lg font-medium text-gray-900">Confirmer la suppression</h3>
+              <p className="mb-5 text-gray-600">
+                Êtes-vous sûr de vouloir supprimer la catégorie <strong className="text-gray-700">{categoryToDelete?.name}</strong> ?
+                {categoryToDelete?.servicesCount ? (
+                  <span className="block mt-2 text-amber-600 font-medium">
+                    Cette catégorie contient {categoryToDelete.servicesCount} prestation(s). Leur catégorie sera réinitialisée.
+                  </span>
+                ) : null}
+              </p>
+            
+              <div className="flex justify-center gap-4 mt-6">
+                <button
+                  type="button"
+                  onClick={handleCancelDelete}
+                  className="py-2 px-5 text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-300 transition-all duration-200"
+                >
+                  Annuler
+                </button>
+                <button
+                  type="button"
+                  onClick={handleConfirmDelete}
+                  className="py-2 px-5 text-white bg-red-600 border border-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-300 transition-all duration-200"
+                >
+                  Supprimer
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      </div>
+    </PageTransition>
   );
 };
 

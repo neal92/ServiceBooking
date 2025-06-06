@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 import AppointmentCard from '../components/appointments/AppointmentCard';
 import { Appointment, Service, Category } from '../types';
 import { appointmentService, serviceService, categoryService } from '../services/api';
+import PageTransition from '../components/layout/PageTransition';
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -85,7 +86,7 @@ const Dashboard = () => {
   };
 
   return (
-    <div>
+    <PageTransition type="zoom">
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-gray-900">Tableau de bord</h1>
         <p className="mt-1 text-sm text-gray-500">
@@ -269,7 +270,7 @@ const Dashboard = () => {
           </div>
         </>
       )}
-    </div>
+    </PageTransition>
   );
 };
 

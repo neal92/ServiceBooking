@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import { Category, Service } from '../../types';
 import { categoryService, serviceService } from '../../services/api';
+import ModalPortal from '../layout/ModalPortal';
 
 interface NewServiceModalProps {
   isOpen: boolean;
@@ -83,40 +84,43 @@ const NewServiceModal = ({ isOpen, onClose, service }: NewServiceModalProps) => 
     } finally {
       setIsSubmitting(false);
     }
-  };
-
+  };  
+  
   if (!isOpen) return null;
-
+  
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto">
-      <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-        <div className="fixed inset-0 transition-opacity" aria-hidden="true">
-          <div className="absolute inset-0 bg-gray-500 opacity-75"></div>
-        </div>
-
-        <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-
-        <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-          <div className="flex justify-between items-center px-4 py-3 border-b border-gray-200 sm:px-6">
-            <h3 className="text-lg font-medium text-gray-900">
-              {service ? 'Modifier la prestation' : 'Nouvelle prestation'}
-            </h3>
-            <button
-              type="button"
-              className="text-gray-400 hover:text-gray-500"
-              onClick={onClose}
-              disabled={isSubmitting}
-            >
-              <span className="sr-only">Fermer</span>
-              <X className="h-6 w-6" aria-hidden="true" />
-            </button>
+    <ModalPortal isOpen={isOpen}>
+      <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto modal-backdrop animate-fadeIn">
+        {/* Overlay semi-transparent */}
+        <div className="fixed inset-0 bg-black bg-opacity-40" onClick={onClose}></div>
+        
+        {/* Modal content */}
+        <div className="relative w-full max-w-lg bg-white rounded-lg overflow-hidden shadow-lg animate-fadeIn mx-4" style={{ maxHeight: 'calc(100vh - 40px)' }}>
+          {/* Header */}
+          <div className="bg-gradient-to-r from-teal-500 to-blue-500 px-4 py-4">
+            <div className="flex justify-between items-center">
+              <h3 className="text-lg font-semibold text-white">
+                {service ? 'Modifier la prestation' : 'Nouvelle prestation'}
+              </h3>
+              <button
+                type="button"
+                className="text-white hover:text-gray-200 transition-colors"
+                onClick={onClose}
+                disabled={isSubmitting}
+              >
+                <span className="sr-only">Fermer</span>
+                <X className="h-6 w-6" aria-hidden="true" />
+              </button>
+            </div>
           </div>
-          <form onSubmit={handleSubmit}>
-            <div className="px-4 py-3 sm:px-6">
-              <div className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
+          
+          {/* Form */}
+          <form onSubmit={handleSubmit} className="overflow-y-auto max-h-[calc(100vh-120px)]">
+            <div className="px-6 py-5">
+              <div className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6 animate-fadeIn animation-delay-400">
                 <div className="sm:col-span-6">
                   <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-                    Nom de la prestation
+                    Nom de la prestation <span className="text-red-500">*</span>
                   </label>
                   <div className="mt-1">
                     <input
@@ -125,7 +129,8 @@ const NewServiceModal = ({ isOpen, onClose, service }: NewServiceModalProps) => 
                       id="name"
                       value={name}
                       onChange={(e) => setName(e.target.value)}
-                      className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                      className="shadow-sm focus:ring-teal-500 focus:border-teal-500 block w-full sm:text-sm border-gray-300 rounded-md transition-shadow hover:shadow"
+                      placeholder="Ex: Massage relaxant"
                       required
                     />
                   </div>
@@ -142,16 +147,20 @@ const NewServiceModal = ({ isOpen, onClose, service }: NewServiceModalProps) => 
                       rows={3}
                       value={description}
                       onChange={(e) => setDescription(e.target.value)}
-                      className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                      className="shadow-sm focus:ring-teal-500 focus:border-teal-500 block w-full sm:text-sm border-gray-300 rounded-md transition-shadow hover:shadow"
+                      placeholder="Décrivez cette prestation en détail..."
                     ></textarea>
+                    <p className="mt-1 text-xs text-gray-500">
+                      La description sera visible par vos clients et les aidera à comprendre votre prestation.
+                    </p>
                   </div>
                 </div>
 
                 <div className="sm:col-span-3">
                   <label htmlFor="price" className="block text-sm font-medium text-gray-700">
-                    Prix (€)
+                    Prix (€) <span className="text-red-500">*</span>
                   </label>
-                  <div className="mt-1">
+                  <div className="mt-1 relative">
                     <input
                       type="number"
                       name="price"
@@ -160,17 +169,20 @@ const NewServiceModal = ({ isOpen, onClose, service }: NewServiceModalProps) => 
                       step="0.01"
                       value={price}
                       onChange={(e) => setPrice(e.target.value)}
-                      className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                      className="shadow-sm focus:ring-teal-500 focus:border-teal-500 block w-full pr-12 sm:text-sm border-gray-300 rounded-md transition-shadow hover:shadow"
                       required
                     />
+                    <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                      <span className="text-gray-500 sm:text-sm">€</span>
+                    </div>
                   </div>
                 </div>
 
                 <div className="sm:col-span-3">
                   <label htmlFor="duration" className="block text-sm font-medium text-gray-700">
-                    Durée (minutes)
+                    Durée (minutes) <span className="text-red-500">*</span>
                   </label>
-                  <div className="mt-1">
+                  <div className="mt-1 relative">
                     <input
                       type="number"
                       name="duration"
@@ -179,20 +191,23 @@ const NewServiceModal = ({ isOpen, onClose, service }: NewServiceModalProps) => 
                       step="15"
                       value={duration}
                       onChange={(e) => setDuration(e.target.value)}
-                      className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                      className="shadow-sm focus:ring-teal-500 focus:border-teal-500 block w-full pr-12 sm:text-sm border-gray-300 rounded-md transition-shadow hover:shadow"
                       required
                     />
+                    <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                      <span className="text-gray-500 sm:text-sm">min</span>
+                    </div>
                   </div>
                 </div>
 
                 <div className="sm:col-span-6">
                   <label htmlFor="categoryId" className="block text-sm font-medium text-gray-700">
-                    Catégorie
+                    Catégorie <span className="text-red-500">*</span>
                   </label>
                   <select
                     id="categoryId"
                     name="categoryId"
-                    className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
+                    className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-teal-500 focus:border-teal-500 sm:text-sm rounded-md shadow-sm transition-shadow hover:shadow"
                     value={categoryId}
                     onChange={(e) => setCategoryId(e.target.value)}
                     required
@@ -205,19 +220,32 @@ const NewServiceModal = ({ isOpen, onClose, service }: NewServiceModalProps) => 
                       </option>
                     ))}
                   </select>
-                  {isLoading && <p className="mt-1 text-sm text-gray-500">Chargement des catégories...</p>}
+                  {isLoading && (
+                    <div className="mt-1 flex items-center text-sm text-gray-500">
+                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-teal-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Chargement des catégories...
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
+            
             {error && (
-              <div className="px-4 py-2 mb-3 bg-red-100 border border-red-400 text-red-700 rounded relative">
+              <div className="px-6 py-3 mb-3 bg-red-50 border-l-4 border-red-500 text-red-700 flex items-center animate-fadeIn">
+                <svg className="h-5 w-5 text-red-500 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
                 {error}
               </div>
             )}
-            <div className="px-4 py-3 bg-gray-50 text-right sm:px-6">
+            
+            <div className="px-6 py-4 bg-gray-50 flex justify-end space-x-3">
               <button
                 type="button"
-                className="mr-2 inline-flex justify-center py-2 px-4 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                className="inline-flex justify-center py-2 px-4 border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 transition-all duration-200 transform hover:scale-105"
                 onClick={onClose}
                 disabled={isSubmitting}
               >
@@ -225,16 +253,28 @@ const NewServiceModal = ({ isOpen, onClose, service }: NewServiceModalProps) => 
               </button>
               <button
                 type="submit"
-                className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                className="inline-flex justify-center items-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-lg text-white bg-gradient-to-r from-teal-500 to-blue-500 hover:from-teal-600 hover:to-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 transition-all duration-200 transform hover:scale-105"
                 disabled={isSubmitting}
               >
-                {isSubmitting ? 'Chargement...' : service ? 'Mettre à jour' : 'Créer'}
+                {isSubmitting ? (
+                  <>
+                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Chargement...
+                  </>
+                ) : service ? (
+                  <>Mettre à jour</>
+                ) : (
+                  <>Créer la prestation</>
+                )}
               </button>
             </div>
           </form>
         </div>
       </div>
-    </div>
+    </ModalPortal>
   );
 };
 
