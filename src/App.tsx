@@ -9,6 +9,7 @@ import Categories from './pages/Categories';
 import Appointments from './pages/Appointments';
 import Calendar from './pages/Calendar';
 import NotFound from './pages/NotFound';
+import Profile from './pages/Profile';
 
 // Protected route component
 import { useAuth } from './contexts/AuthContext';
@@ -45,6 +46,7 @@ function App() {
             <Route path="categories" element={<Categories />} />
             <Route path="appointments" element={<Appointments />} />
             <Route path="calendar" element={<Calendar />} />
+            <Route path="profile" element={<Profile />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>

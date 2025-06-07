@@ -1,5 +1,7 @@
-import { useState, useEffect } from 'react';
-import { Menu, Bell, Sun, Moon } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Menu, Bell, Sun, Moon, User, LogOut } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface HeaderProps {
   openSidebar: () => void;
@@ -7,6 +9,24 @@ interface HeaderProps {
 
 const Header = ({ openSidebar }: HeaderProps) => {
   const [darkMode, setDarkMode] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  // Fermer le menu quand on clique en dehors
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setShowUserMenu(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   // Effect to check initial theme preference
   useEffect(() => {
@@ -68,6 +88,43 @@ const Header = ({ openSidebar }: HeaderProps) => {
             <span className="sr-only">View notifications</span>
             <Bell className="h-5 w-5" aria-hidden="true" />
           </button>
+
+          {/* User menu */}
+          <div className="relative" ref={menuRef}>
+            <button
+              type="button"
+              onClick={() => setShowUserMenu(!showUserMenu)}
+              className="bg-white dark:bg-gray-700 p-1.5 rounded-full text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            >
+              <span className="sr-only">Open user menu</span>
+              <User className="h-5 w-5" aria-hidden="true" />
+            </button>
+
+            {/* Menu déroulant */}
+            {showUserMenu && (
+              <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white dark:bg-gray-700 ring-1 ring-black ring-opacity-5 z-50">
+                <button
+                  onClick={() => {
+                    setShowUserMenu(false);
+                    navigate('/profile');
+                  }}
+                  className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600"
+                >
+                  Mon Profil
+                </button>
+                <button
+                  onClick={() => {
+                    setShowUserMenu(false);
+                    logout();
+                    navigate('/login');
+                  }}
+                  className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600"
+                >
+                  Déconnexion
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </header>

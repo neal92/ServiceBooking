@@ -42,8 +42,8 @@ const Login = () => {
 
   return (
     <PageTransition type="zoom" className="w-full h-screen">
-      <div className="h-screen w-full bg-gray-100 flex justify-center items-center auth-fullscreen-page">
-        <div className="flex w-full max-w-6xl rounded-xl shadow-lg overflow-hidden h-auto auth-container">
+      <div className="h-screen w-full bg-gray-100 dark:bg-gray-900 flex justify-center items-center auth-fullscreen-page">
+        <div className="flex w-full max-w-6xl rounded-xl shadow-lg overflow-hidden h-auto bg-white dark:bg-gray-800 auth-container">
           {/* Partie gauche avec slider d'images */}
           <div className="hidden md:block md:w-1/2 relative auth-image-slider">
             {slideImages.map((image, index) => (
@@ -67,16 +67,16 @@ const Login = () => {
           </div>
           
           {/* Partie droite avec formulaire */}
-          <div className="w-full md:w-1/2 bg-white p-8 md:p-12">
+          <div className="w-full md:w-1/2 bg-white dark:bg-gray-800 p-8 md:p-12">
             <div className="flex justify-center md:justify-start">
-              <Calendar className="h-10 w-10 text-blue-600" />
+              <Calendar className="h-10 w-10 text-blue-600 dark:text-blue-400" />
             </div>
-            <h2 className="mt-6 text-3xl font-extrabold text-gray-900 md:text-left">
+            <h2 className="mt-6 text-3xl font-extrabold text-gray-900 dark:text-white md:text-left">
               Connexion
             </h2>
-            <p className="mt-2 text-sm text-gray-600 md:text-left">
+            <p className="mt-2 text-sm text-gray-600 dark:text-gray-400 md:text-left">
               Ou{' '}
-              <Link to="/register" className="font-medium text-blue-600 hover:text-blue-500">
+              <Link to="/register" className="font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300">
                 créez un nouveau compte
               </Link>
             </p>
@@ -93,7 +93,7 @@ const Login = () => {
               )}
               
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                   Adresse email
                 </label>
                 <div className="mt-1 relative">
@@ -106,13 +106,13 @@ const Login = () => {
                     placeholder="exemple@email.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="appearance-none block w-full px-3 py-3 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    className="appearance-none block w-full px-3 py-3 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   />
                 </div>
               </div>
 
               <div>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                   Mot de passe
                 </label>
                 <div className="mt-1 relative">
@@ -125,7 +125,7 @@ const Login = () => {
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="appearance-none block w-full px-3 py-3 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    className="appearance-none block w-full px-3 py-3 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   />
                 </div>
               </div>
@@ -138,13 +138,13 @@ const Login = () => {
                     type="checkbox"
                     className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                   />
-                  <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900">
+                  <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900 dark:text-gray-300">
                     Se souvenir de moi
                   </label>
                 </div>
 
                 <div className="text-sm">
-                  <a href="#" className="font-medium text-blue-600 hover:text-blue-500">
+                  <a href="#" className="font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300">
                     Mot de passe oublié?
                   </a>
                 </div>
@@ -171,9 +171,9 @@ const Login = () => {
               </div>
               
               <div className="mt-6 text-center">
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-gray-600 dark:text-gray-400">
                   Pas encore de compte ?{' '}
-                  <Link to="/register" className="font-medium text-blue-600 hover:text-blue-500 hover:underline">
+                  <Link to="/register" className="font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300 hover:underline">
                     Inscrivez-vous
                   </Link>
                 </p>

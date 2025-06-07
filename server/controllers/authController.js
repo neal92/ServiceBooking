@@ -1,6 +1,8 @@
 const User = require('../models/user');
 const jwt = require('jsonwebtoken');
 const { validationResult } = require('express-validator');
+const path = require('path');
+const fs = require('fs');
 
 // Get JWT secret from environment variable or use a default (for development only)
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
@@ -183,9 +185,42 @@ exports.changePassword = async (req, res) => {
     // Change password
     await User.changePassword(req.user.userId, newPassword);
     
-    res.json({ message: 'Password changed successfully' });
-  } catch (error) {
+    res.json({ message: 'Password changed successfully' });  } catch (error) {
     console.error('Change password error:', error);
     res.status(500).json({ message: 'Server error changing password' });
+  }
+};
+
+// Upload avatar
+exports.uploadAvatar = async (req, res) => {
+  try {
+    if (!req.files || !req.files.avatar) {
+      return res.status(400).json({ message: 'No file uploaded' });
+    }
+
+    const avatarFile = req.files.avatar;
+    const fileExtension = avatarFile.name.split('.').pop();
+    const fileName = `avatar-${req.user.userId}-${Date.now()}.${fileExtension}`;
+    const uploadPath = path.join(__dirname, '..', 'public', 'uploads', fileName);
+
+    // Create uploads directory if it doesn't exist
+    const uploadsDir = path.join(__dirname, '..', 'public', 'uploads');
+    if (!fs.existsSync(uploadsDir)) {
+      fs.mkdirSync(uploadsDir, { recursive: true });
+    }
+
+    // Move the file
+    await avatarFile.mv(uploadPath);
+
+    // Update user's avatar in database
+    await User.update(req.user.userId, { avatar: `/uploads/${fileName}` });
+
+    res.json({ 
+      message: 'Avatar uploaded successfully',
+      avatarUrl: `/uploads/${fileName}`
+    });
+  } catch (error) {
+    console.error('Upload avatar error:', error);
+    res.status(500).json({ message: 'Server error uploading avatar' });
   }
 };

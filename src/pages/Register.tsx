@@ -99,8 +99,8 @@ const Register = () => {
 
   return (
     <PageTransition type="zoom" className="w-full h-screen">
-      <div className="h-screen w-full bg-gray-100 flex justify-center items-center auth-fullscreen-page">
-        <div className="flex w-full max-w-6xl rounded-xl shadow-lg overflow-hidden h-auto auth-container">
+      <div className="h-screen w-full bg-gray-100 dark:bg-gray-900 flex justify-center items-center auth-fullscreen-page">
+        <div className="flex w-full max-w-6xl rounded-xl shadow-lg overflow-hidden h-auto bg-white dark:bg-gray-800 auth-container">
           {/* Partie gauche avec slider d'images */}
           <div className="hidden md:block md:w-1/2 relative auth-image-slider">
             {slideImages.map((image, index) => (
@@ -124,16 +124,16 @@ const Register = () => {
           </div>
           
           {/* Partie droite avec formulaire */}
-          <div className="w-full md:w-1/2 bg-white p-8 md:p-12">
+          <div className="w-full md:w-1/2 bg-white dark:bg-gray-800 p-8 md:p-12">
             <div className="flex justify-center md:justify-start">
-              <Calendar className="h-10 w-10 text-blue-600" />
+              <Calendar className="h-10 w-10 text-blue-600 dark:text-blue-400" />
             </div>
-            <h2 className="mt-6 text-3xl font-extrabold text-gray-900 md:text-left">
+            <h2 className="mt-6 text-3xl font-extrabold text-gray-900 dark:text-white md:text-left">
               Créer un compte
             </h2>
-            <p className="mt-2 text-sm text-gray-600 md:text-left">
+            <p className="mt-2 text-sm text-gray-600 dark:text-gray-400 md:text-left">
               Ou{' '}
-              <Link to="/login" className="font-medium text-blue-600 hover:text-blue-500">
+              <Link to="/login" className="font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300">
                 connectez-vous à votre compte existant
               </Link>
             </p>
@@ -150,7 +150,7 @@ const Register = () => {
               )}
               
               <div>
-                <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                   Nom complet
                 </label>
                 <div className="mt-1 relative">
@@ -168,22 +168,22 @@ const Register = () => {
                     }}
                     onBlur={(e) => validateName(e.target.value)}
                     className={`appearance-none block w-full px-3 py-3 border ${
-                      nameError ? 'border-red-300' : 'border-gray-300'
-                    } rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm`}
+                      nameError ? 'border-red-300 dark:border-red-500' : 'border-gray-300 dark:border-gray-600'
+                    } rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white`}
                   />
                   {name && !nameError && (
                     <Check className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-green-500" />
                   )}
                 </div>
                 {nameError && (
-                  <p className="mt-1 text-sm text-red-600 flex items-center">
+                  <p className="mt-1 text-sm text-red-600 dark:text-red-400 flex items-center">
                     <AlertCircle className="w-4 h-4 mr-1" /> {nameError}
                   </p>
                 )}
               </div>
               
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                   Adresse email
                 </label>
                 <div className="mt-1 relative">
@@ -201,22 +201,22 @@ const Register = () => {
                     }}
                     onBlur={(e) => validateEmail(e.target.value)}
                     className={`appearance-none block w-full px-3 py-3 border ${
-                      emailError ? 'border-red-300' : 'border-gray-300'
-                    } rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm`}
+                      emailError ? 'border-red-300 dark:border-red-500' : 'border-gray-300 dark:border-gray-600'
+                    } rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white`}
                   />
                   {email && !emailError && (
                     <Check className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-green-500" />
                   )}
                 </div>
                 {emailError && (
-                  <p className="mt-1 text-sm text-red-600 flex items-center">
+                  <p className="mt-1 text-sm text-red-600 dark:text-red-400 flex items-center">
                     <AlertCircle className="w-4 h-4 mr-1" /> {emailError}
                   </p>
                 )}
               </div>
 
               <div>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                   Mot de passe
                 </label>
                 <div className="mt-1 relative">
@@ -225,7 +225,7 @@ const Register = () => {
                     name="password"
                     type="password"
                     autoComplete="new-password"
-                    placeholder="Minimum 6 caractères" 
+                    placeholder="Votre mot de passe"
                     required
                     value={password}
                     onChange={(e) => {
@@ -234,34 +234,22 @@ const Register = () => {
                     }}
                     onBlur={(e) => validatePassword(e.target.value)}
                     className={`appearance-none block w-full px-3 py-3 border ${
-                      passwordError && !confirmPassword ? 'border-red-300' : 'border-gray-300'
-                    } rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm`}
+                      passwordError ? 'border-red-300 dark:border-red-500' : 'border-gray-300 dark:border-gray-600'
+                    } rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white`}
                   />
-                  {password && PASSWORD_REGEX.test(password) && (
+                  {password && !passwordError && (
                     <Check className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-green-500" />
                   )}
                 </div>
-                {passwordError && !confirmPassword && (
-                  <p className="mt-1 text-sm text-red-600 flex items-center">
+                {passwordError && (
+                  <p className="mt-1 text-sm text-red-600 dark:text-red-400 flex items-center">
                     <AlertCircle className="w-4 h-4 mr-1" /> {passwordError}
                   </p>
                 )}
-                <div className="mt-2 space-y-1">
-                  <p className="text-xs text-gray-500">Votre mot de passe doit contenir :</p>
-                  <p className={`text-xs flex items-center ${password.length >= 6 ? 'text-green-500' : 'text-gray-400'}`}>
-                    <Check className="w-3 h-3 mr-1" /> Au moins 6 caractères
-                  </p>
-                  <p className={`text-xs flex items-center ${/[A-Za-z]/.test(password) ? 'text-green-500' : 'text-gray-400'}`}>
-                    <Check className="w-3 h-3 mr-1" /> Au moins une lettre
-                  </p>
-                  <p className={`text-xs flex items-center ${/\d/.test(password) ? 'text-green-500' : 'text-gray-400'}`}>
-                    <Check className="w-3 h-3 mr-1" /> Au moins un chiffre
-                  </p>
-                </div>
               </div>
-
+              
               <div>
-                <label htmlFor="confirm-password" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="confirm-password" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                   Confirmer le mot de passe
                 </label>
                 <div className="mt-1 relative">
@@ -279,25 +267,20 @@ const Register = () => {
                     }}
                     onBlur={(e) => validateConfirmPassword(password, e.target.value)}
                     className={`appearance-none block w-full px-3 py-3 border ${
-                      passwordError && confirmPassword ? 'border-red-300' : 'border-gray-300'
-                    } rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm`}
+                      passwordError ? 'border-red-300 dark:border-red-500' : 'border-gray-300 dark:border-gray-600'
+                    } rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white`}
                   />
-                  {confirmPassword && password === confirmPassword && (
+                  {confirmPassword && !passwordError && (
                     <Check className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-green-500" />
                   )}
                 </div>
-                {passwordError && confirmPassword && (
-                  <p className="mt-1 text-sm text-red-600 flex items-center">
-                    <AlertCircle className="w-4 h-4 mr-1" /> {passwordError}
-                  </p>
-                )}
               </div>
-
+              
               <div>
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition-all"
+                  className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition-all"
                 >
                   {loading ? (
                     <span className="flex items-center">
@@ -308,15 +291,15 @@ const Register = () => {
                       Inscription en cours...
                     </span>
                   ) : (
-                    "Créer mon compte"
+                    "S'inscrire"
                   )}
                 </button>
               </div>
               
               <div className="mt-6 text-center">
-                <p className="text-sm text-gray-600">
-                  Déjà inscrit ?{' '}
-                  <Link to="/login" className="font-medium text-blue-600 hover:text-blue-500 hover:underline">
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Déjà un compte ?{' '}
+                  <Link to="/login" className="font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300 hover:underline">
                     Connectez-vous
                   </Link>
                 </p>

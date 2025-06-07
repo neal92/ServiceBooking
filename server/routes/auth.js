@@ -28,8 +28,10 @@ router.put('/profile', authenticate, [
 
 // Change password (protected route)
 router.put('/password', authenticate, [
-  body('currentPassword').notEmpty().withMessage('Current password is required'),
-  body('newPassword').isLength({ min: 6 }).withMessage('New password must be at least 6 characters long')
+  body('currentPassword').notEmpty().withMessage('Current password is required'),  body('newPassword').isLength({ min: 6 }).withMessage('New password must be at least 6 characters long')
 ], authController.changePassword);
+
+// Upload avatar (protected route)
+router.post('/avatar', authenticate, authController.uploadAvatar);
 
 module.exports = router;

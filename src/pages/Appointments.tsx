@@ -20,6 +20,8 @@ const Appointments = () => {
   const [error, setError] = useState('');
   const [appointmentToDelete, setAppointmentToDelete] = useState<Appointment | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  // Nouvel état pour activer/désactiver la mise à jour automatique du statut
+  const [autoUpdateStatus, setAutoUpdateStatus] = useState<boolean>(true);
 
   useEffect(() => {
     fetchData();
@@ -53,6 +55,54 @@ const Appointments = () => {
       window.removeEventListener('appointmentUpdated', handleAppointmentUpdated);
     };
   }, []);
+    // Effet pour mettre automatiquement les rendez-vous en statut "en cours" quand l'heure arrive
+  useEffect(() => {
+    // Ne rien faire si la mise à jour automatique est désactivée
+    if (!autoUpdateStatus) return;
+    
+    // Fonction pour vérifier et mettre à jour les statuts des rendez-vous
+    const checkAndUpdateAppointments = async () => {
+      // Récupérer les rendez-vous à jour
+      const currentAppointments = await appointmentService.getAll();
+      const now = new Date();
+      const confirmedAppointments = currentAppointments.filter(app => 
+        app.status === 'confirmed' && 
+        new Date(app.date).setHours(0, 0, 0, 0) === now.setHours(0, 0, 0, 0)
+      );
+      
+      let hasUpdates = false;
+      for (const appointment of confirmedAppointments) {
+        // Extraire l'heure et les minutes du rendez-vous
+        const [hours, minutes] = appointment.time.split(':').map(Number);
+        const appointmentTime = new Date();
+        appointmentTime.setHours(hours, minutes, 0, 0);
+        
+        // Si l'heure du rendez-vous est passée (avec une tolérance de 5 minutes avant)
+        const fiveMinutesBeforeAppt = new Date(appointmentTime);
+        fiveMinutesBeforeAppt.setMinutes(fiveMinutesBeforeAppt.getMinutes() - 5);
+        
+        if (now >= fiveMinutesBeforeAppt && appointment.status === 'confirmed') {
+          console.log(`Mise à jour automatique du statut pour le rendez-vous #${appointment.id} à ${hours}h${minutes}`);
+          await appointmentService.updateStatus(appointment.id.toString(), 'in-progress');
+          hasUpdates = true;
+        }
+      }
+      
+      // Recharger les données seulement si des mises à jour ont été effectuées
+      if (hasUpdates) {
+        fetchData();
+      }
+    };
+    
+    // Vérifier immédiatement
+    checkAndUpdateAppointments();
+    
+    // Vérifier toutes les minutes
+    const intervalId = setInterval(checkAndUpdateAppointments, 60000);
+    
+    // Nettoyage
+    return () => clearInterval(intervalId);
+  }, [autoUpdateStatus]);
   
   const handleStatusChange = async (id: number, status: string) => {
     try {
@@ -125,7 +175,10 @@ const Appointments = () => {
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Mes rendez-vous</h1>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Gérez vos rendez-vous existants ou ajoutez-en de nouveaux.</p>
-      </div>      {error && (
+      </div>
+  
+
+      {error && (
         <div className="mb-6 bg-red-100 dark:bg-red-900/20 border-l-4 border-red-500 dark:border-red-700 text-red-700 dark:text-red-300 p-4">
           <p>{error}</p>
         </div>
@@ -202,16 +255,31 @@ const Appointments = () => {
               Annulé
             </button>
           </div>
-          
-          {/* Bouton "Nouveau rendez-vous" à droite */}
-          <button
-            type="button"
-            className="inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:bg-blue-700 dark:hover:bg-blue-600"
-            onClick={() => setIsModalOpen(true)}
-          >
-            <PlusCircle className="-ml-1 mr-2 h-5 w-5" />
-            Nouveau rendez-vous
-          </button>
+            {/* Bouton "Nouveau rendez-vous" à droite */}          <div className="flex flex-col space-y-4 items-end">
+            <button
+              type="button"
+              className="inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:bg-blue-700 dark:hover:bg-blue-600"
+              onClick={() => setIsModalOpen(true)}
+            >
+              <PlusCircle className="-ml-1 mr-2 h-5 w-5" />
+              Nouveau rendez-vous
+            </button>
+            {/* Interrupteur pour l'auto-mise à jour des statuts */}
+            <div className="flex items-center">
+              <span className="mr-3 text-sm text-gray-600 dark:text-gray-400">
+                Mise à jour automatique du statut
+              </span>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input 
+                  type="checkbox" 
+                  className="sr-only peer" 
+                  checked={autoUpdateStatus}
+                  onChange={(e) => setAutoUpdateStatus(e.target.checked)}
+                />
+                <div className="w-11 h-6 bg-gray-200 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+              </label>
+            </div>
+          </div>
         </div>
         
         {/* Filtre par période (all, upcoming, ongoing, past) - placé en dessous du bouton */}

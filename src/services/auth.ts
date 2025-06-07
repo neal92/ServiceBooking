@@ -3,8 +3,11 @@ import axios from 'axios';
 interface User {
   id: number;
   name: string;
+  firstName: string;
+  lastName: string;
   email: string;
   role: string;
+  avatar?: string;
 }
 
 interface RegisterData {
@@ -33,6 +36,10 @@ interface PasswordChangeData {
   newPassword: string;
 }
 
+interface UploadAvatarResponse {
+  avatarUrl: string;
+}
+
 const API_URL = 'http://localhost:5000/api';
 
 const apiClient = axios.create({
@@ -53,7 +60,8 @@ apiClient.interceptors.request.use((config) => {
   return Promise.reject(error);
 });
 
-export const authService = {  register: async (userData: RegisterData): Promise<AuthResponse> => {
+export const authService = {  
+  register: async (userData: RegisterData): Promise<AuthResponse> => {
     try {
       const response = await apiClient.post<AuthResponse>('/auth/register', userData);
       
@@ -70,7 +78,8 @@ export const authService = {  register: async (userData: RegisterData): Promise<
       const errorMessage = error.response?.data?.message || "Échec de l'inscription. Veuillez réessayer.";
       throw new Error(errorMessage);
     }
-  },    login: async (credentials: LoginCredentials): Promise<AuthResponse> => {
+  },    
+  login: async (credentials: LoginCredentials): Promise<AuthResponse> => {
     try {
       const response = await apiClient.post<AuthResponse>('/auth/login', credentials);
       
@@ -119,7 +128,29 @@ export const authService = {  register: async (userData: RegisterData): Promise<
     const response = await apiClient.put<{ message: string }>('/auth/password', passwordData);
     return response.data;
   },
-    isAuthenticated: (): boolean => {
+  
+  uploadAvatar: async (file: File): Promise<UploadAvatarResponse> => {
+    const formData = new FormData();
+    formData.append('avatar', file);
+
+    const response = await apiClient.post<UploadAvatarResponse>('/auth/avatar', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+
+    // Update stored user data
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      const user = JSON.parse(storedUser);
+      user.avatar = response.data.avatarUrl;
+      localStorage.setItem('user', JSON.stringify(user));
+    }
+
+    return response.data;
+  },
+
+  isAuthenticated: (): boolean => {
     return localStorage.getItem('token') !== null;
   },
   

@@ -1,12 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import authService from '../services/auth';
 
-interface User {
-  id: number;
-  name: string;
-  email: string;
-  role?: string;
-}
+import { User } from '../types';
 
 interface AuthContextType {
   user: User | null;
@@ -15,6 +10,9 @@ interface AuthContextType {
   logout: () => void;
   loading: boolean;
   error: string | null;
+  updateUser: (userData: Partial<User>) => Promise<void>;
+  uploadAvatar: (file: File) => Promise<void>;
+  changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -31,6 +29,39 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const updateUser = async (userData: Partial<User>) => {
+    if (!user) return;
+    try {
+      const { user: updatedUser } = await authService.updateProfile(userData);
+      setUser(updatedUser);
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+    } catch (err) {
+      console.error('Error updating user:', err);
+      throw err;
+    }
+  };
+
+  const uploadAvatar = async (file: File) => {
+    if (!user) return;
+    try {
+      const response = await authService.uploadAvatar(file);
+      const updatedUser = { ...user, avatar: response.avatarUrl };
+      setUser(updatedUser);
+    } catch (err) {
+      console.error('Error uploading avatar:', err);
+      throw err;
+    }
+  };
+
+  const changePassword = async (currentPassword: string, newPassword: string) => {
+    try {
+      await authService.changePassword({ currentPassword, newPassword });
+    } catch (err) {
+      console.error('Error changing password:', err);
+      throw err;
+    }
+  };
 
   // Check for stored user on initial load
   useEffect(() => {
@@ -83,14 +114,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     authService.logout();
     setUser(null);
   };
-
   const value = {
     user,
     login,
     register,
     logout,
     loading,
-    error
+    error,
+    updateUser,
+    uploadAvatar,
+    changePassword
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

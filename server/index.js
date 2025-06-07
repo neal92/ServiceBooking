@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const fileUpload = require('express-fileupload');
 require('dotenv').config();
 
 // Log environment variables (without sensitive data)
@@ -16,6 +17,8 @@ const PORT = process.env.PORT || 5000;
 // Middleware
 app.use(cors());
 app.use(express.json());
+app.use(fileUpload());
+app.use('/uploads', express.static('public/uploads'));
 
 // Add request logging middleware
 app.use((req, res, next) => {

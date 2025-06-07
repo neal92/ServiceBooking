@@ -74,17 +74,29 @@ const Sidebar = ({ mobile, closeSidebar }: SidebarProps) => {
             {user?.email?.charAt(0).toUpperCase() || 'U'}
           </div>
           <div className="flex-1">
-            <p className="text-sm font-medium text-gray-900 dark:text-gray-200">{user?.name || 'Utilisateur'}</p>
+            <p className="text-sm font-medium text-gray-900 dark:text-gray-200">
+              {user ? `${user.firstName} ${user.lastName}` : 'Utilisateur'}
+            </p>
             <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{user?.email || 'email@exemple.com'}</p>
           </div>
         </div>
         
         {showUserMenu && (
           <div className="mt-3 space-y-1">
-            <a href="#" className="flex items-center px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700">
+            <NavLink
+              to="/profile"
+              className={({ isActive }) =>
+                `flex items-center px-3 py-2 text-sm font-medium rounded-md ${
+                  isActive
+                    ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-300'
+                    : 'text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700'
+                }`
+              }
+              onClick={mobile ? closeSidebar : undefined}
+            >
               <User className="mr-3 h-5 w-5 text-gray-500 dark:text-gray-400" />
               Profil
-            </a>
+            </NavLink>
             <a href="#" className="flex items-center px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700">
               <Settings className="mr-3 h-5 w-5 text-gray-500 dark:text-gray-400" />
               Paramètres

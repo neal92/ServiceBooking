@@ -35,3 +35,12 @@ export interface Category {
   // This is a virtual field not in database but can be calculated on backend via SQL query
   servicesCount?: number;
 }
+
+export interface User {
+  id: number;
+  email: string;
+  firstName: string;
+  lastName: string;
+  role: string;
+  avatar?: string;
+}
