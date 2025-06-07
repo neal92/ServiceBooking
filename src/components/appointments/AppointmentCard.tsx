@@ -2,9 +2,10 @@ import React from 'react';
 import { 
   Clock, Calendar, User, Mail, Phone, 
   MoreHorizontal, CheckCircle, AlertTriangle, 
-  XCircle
+  XCircle, Trash
 } from 'lucide-react';
 import { Appointment } from '../../types';
+import AppointmentRecapModal from './AppointmentRecapModal';
 
 interface AppointmentCardProps {
   appointment: Appointment;
@@ -31,215 +32,263 @@ const AppointmentCard = ({ appointment, onDelete, onStatusChange }: AppointmentC
   }) : '';
   
   const [showMenu, setShowMenu] = React.useState(false);
+  const [showRecapModal, setShowRecapModal] = React.useState(false);
+  const menuRef = React.useRef<HTMLDivElement>(null);
+  const buttonRef = React.useRef<HTMLButtonElement>(null);
+  
+  // Gestionnaire pour fermer le menu quand on clique en dehors
+  React.useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (showMenu && 
+          menuRef.current && 
+          !menuRef.current.contains(event.target as Node) &&
+          buttonRef.current && 
+          !buttonRef.current.contains(event.target as Node)) {
+        setShowMenu(false);
+      }
+    };
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showMenu]);
 
   const getStatusDetails = (status: string) => {
     switch (status) {
       case 'pending':
         return { 
-          bgColor: 'bg-yellow-100', 
-          textColor: 'text-yellow-800',
-          borderColor: 'border-yellow-200',
-          icon: <Clock className="h-5 w-5 mr-2" />,
-          label: 'En attente'
+          bgColor: 'bg-yellow-100 dark:bg-yellow-900/30', 
+          textColor: 'text-yellow-800 dark:text-yellow-300',
+          borderColor: 'border-yellow-200 dark:border-yellow-800',
+          icon: <AlertTriangle className="h-5 w-5 text-yellow-500" />
         };
       case 'confirmed':
         return { 
-          bgColor: 'bg-green-100', 
-          textColor: 'text-green-800',
-          borderColor: 'border-green-200',
-          icon: <CheckCircle className="h-5 w-5 mr-2" />,
-          label: 'Confirmé'
+          bgColor: 'bg-green-100 dark:bg-green-900/30', 
+          textColor: 'text-green-800 dark:text-green-300',
+          borderColor: 'border-green-200 dark:border-green-800',
+          icon: <CheckCircle className="h-5 w-5 text-green-500" />
+        };      case 'in-progress':
+        return { 
+          bgColor: 'bg-orange-100 dark:bg-orange-900/30', 
+          textColor: 'text-orange-800 dark:text-orange-300',
+          borderColor: 'border-orange-200 dark:border-orange-800',
+          icon: <Clock className="h-5 w-5 text-orange-500" />
         };
       case 'cancelled':
         return { 
-          bgColor: 'bg-red-100', 
-          textColor: 'text-red-800',
-          borderColor: 'border-red-200',
-          icon: <XCircle className="h-5 w-5 mr-2" />,
-          label: 'Annulé'
+          bgColor: 'bg-red-100 dark:bg-red-900/30', 
+          textColor: 'text-red-800 dark:text-red-300',
+          borderColor: 'border-red-200 dark:border-red-800',
+          icon: <XCircle className="h-5 w-5 text-red-500" />
         };
       case 'completed':
         return { 
-          bgColor: 'bg-blue-100', 
-          textColor: 'text-blue-800',
-          borderColor: 'border-blue-200',
-          icon: <CheckCircle className="h-5 w-5 mr-2" />,
-          label: 'Terminé'
+          bgColor: 'bg-blue-100 dark:bg-blue-900/30', 
+          textColor: 'text-blue-800 dark:text-blue-300',
+          borderColor: 'border-blue-200 dark:border-blue-800',
+          icon: <CheckCircle className="h-5 w-5 text-blue-500" />
         };
       default:
         return { 
-          bgColor: 'bg-gray-100', 
-          textColor: 'text-gray-800',
-          borderColor: 'border-gray-200',
-          icon: <AlertTriangle className="h-5 w-5 mr-2" />,
-          label: 'Inconnu'
+          bgColor: 'bg-gray-100 dark:bg-gray-800', 
+          textColor: 'text-gray-800 dark:text-gray-300',
+          borderColor: 'border-gray-200 dark:border-gray-700',
+          icon: <AlertTriangle className="h-5 w-5 text-gray-500" />
         };
     }
   };
+  // Récupérer les couleurs et icône en fonction du statut
+  const { bgColor, textColor, icon } = getStatusDetails(status);
 
-  const statusDetails = getStatusDetails(status);
-  
-  const handleStatusChange = (newStatus: string) => {
-    if (onStatusChange) {
-      onStatusChange(newStatus);
-    }
-    setShowMenu(false);
+  // Fonction pour formater la durée
+  const formatDuration = (minutes: number) => {
+    if (minutes < 60) return `${minutes} min`;
+    const hours = Math.floor(minutes / 60);
+    const remainingMinutes = minutes % 60;
+    if (remainingMinutes === 0) return `${hours}h`;
+    return `${hours}h${remainingMinutes}`;
   };
-
-  // Calculer l'heure de fin en fonction de la durée
-  const calculateEndTime = () => {
-    if (!time || !duration) return '';
-    
-    const [hours, minutes] = time.split(':').map(Number);
-    let endHours = hours;
-    let endMinutes = minutes + duration;
-    
-    if (endMinutes >= 60) {
-      endHours += Math.floor(endMinutes / 60);
-      endMinutes = endMinutes % 60;
-    }
-    
-    // Format avec leading zeros
-    const formattedEndHours = endHours.toString().padStart(2, '0');
-    const formattedEndMinutes = endMinutes.toString().padStart(2, '0');
-    
-    return `${formattedEndHours}:${formattedEndMinutes}`;
+  
+  // Stopper la propagation du clic sur le menu pour éviter d'ouvrir le modal de récap
+  const handleMenuClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
   };
 
   return (
-    <div className="p-4 sm:p-6 hover:bg-gray-50 transition-all duration-150 relative overflow-hidden rounded-lg border border-gray-100 shadow-sm">
-      {/* Status indicator strip */}
-      <div className={`absolute top-0 left-0 w-1.5 h-full ${status === 'pending' ? 'bg-yellow-400' : status === 'confirmed' ? 'bg-green-500' : status === 'cancelled' ? 'bg-red-500' : 'bg-blue-500'}`}></div>
-      
-      <div className="flex items-start justify-between pl-2">
-        <div className="flex items-start">
-          <div className="flex-shrink-0">
-            <div className={`h-14 w-14 rounded-lg flex items-center justify-center text-white ${status === 'cancelled' ? 'bg-gray-400' : 'bg-gradient-to-br from-indigo-500 to-purple-600'} shadow-md`}>
-              <span className="text-xl font-semibold">{serviceName ? serviceName.charAt(0).toUpperCase() : 'A'}</span>
-            </div>
+    <>
+      <div 
+        className="px-4 py-4 sm:px-6 border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/60 transition-colors cursor-pointer"
+        onClick={() => setShowRecapModal(true)}
+      >
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm font-medium text-blue-600 dark:text-blue-400 truncate">
+              {serviceName}
+            </p>
+            <p className="mt-1 flex items-center text-sm text-gray-500 dark:text-gray-400">
+              <User className="flex-shrink-0 mr-1.5 h-4 w-4 text-gray-400 dark:text-gray-500" aria-hidden="true" />
+              <span className="truncate">{clientName}</span>
+            </p>
           </div>
-          <div className="ml-4">
-            <div className="flex items-center">
-              <h3 className="text-base font-medium text-indigo-700">{serviceName}</h3>              <span className={`ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-opacity-90 border ${statusDetails.bgColor} ${statusDetails.textColor} ${statusDetails.borderColor}`}>
-                {statusDetails.label}
-              </span>
-            </div>
-            <div className="mt-1 flex items-center">
-              <User className="flex-shrink-0 mr-1.5 h-4 w-4 text-gray-500" />
-              <p className="text-sm font-medium text-gray-700">{clientName}</p>
-            </div>
+          <div className="ml-2 flex-shrink-0 flex">
+            <p className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${bgColor} ${textColor}`}>
+              {icon && <span className="mr-1">{icon}</span>}
+              {status === 'pending' && 'En attente'}
+              {status === 'confirmed' && 'Confirmé'}
+              {status === 'in-progress' && 'En cours'}
+              {status === 'cancelled' && 'Annulé'}
+              {status === 'completed' && 'Terminé'}
+            </p>
           </div>
         </div>
         
-        <div className="relative">
-          <button 
-            onClick={() => setShowMenu(!showMenu)}
-            className="p-2 text-gray-500 hover:text-gray-700 rounded-full hover:bg-gray-100 transition-all"
-          >
-            <MoreHorizontal className="h-5 w-5" />
-          </button>
-          
-          {showMenu && (
-            <div className="absolute right-0 mt-2 w-52 bg-white rounded-md shadow-lg z-10 border border-gray-100">
-              <div className="py-1 divide-y divide-gray-100">
-                <div className="py-1">
-                  <div className="px-4 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Changer le statut
-                  </div>
-                  <button 
-                    onClick={() => handleStatusChange('pending')}
-                    className="flex w-full items-center px-4 py-2 text-sm text-yellow-700 hover:bg-yellow-50"
-                  >
-                    <Clock className="mr-3 h-4 w-4 text-yellow-500" />
-                    En attente
-                  </button>
-                  <button 
-                    onClick={() => handleStatusChange('confirmed')}
-                    className="flex w-full items-center px-4 py-2 text-sm text-green-700 hover:bg-green-50"
-                  >
-                    <CheckCircle className="mr-3 h-4 w-4 text-green-500" />
-                    Confirmé
-                  </button>
-                  <button 
-                    onClick={() => handleStatusChange('completed')}
-                    className="flex w-full items-center px-4 py-2 text-sm text-blue-700 hover:bg-blue-50"
-                  >
-                    <CheckCircle className="mr-3 h-4 w-4 text-blue-500" />
-                    Terminé
-                  </button>
-                  <button 
-                    onClick={() => handleStatusChange('cancelled')}
-                    className="flex w-full items-center px-4 py-2 text-sm text-red-700 hover:bg-red-50"
-                  >
-                    <XCircle className="mr-3 h-4 w-4 text-red-500" />
-                    Annulé
-                  </button>
-                </div>
-                <button 
-                  onClick={() => onDelete && onDelete()}
-                  className="flex w-full items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50"
-                >
-                  <XCircle className="mr-3 h-4 w-4" />
-                  Supprimer
-                </button>
+        <div className="mt-3 flex justify-between">
+          <div className="sm:flex sm:justify-start">
+            <div className="mr-6 pl-4">
+              <div className="flex items-center text-sm text-gray-500 dark:text-white">
+                <Calendar className="flex-shrink-0 mr-2 h-4 w-4 text-gray-400 dark:text-gray-500" aria-hidden="true" />
+                <p className="font-medium">{formattedDate}</p>
               </div>
-            </div>
-          )}
-        </div>
-      </div>
-
-      <div className="mt-4 pl-2">
-        <div className="bg-gray-50 rounded-lg p-3 border border-gray-100">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <div className="flex items-center">
-              <div className="p-2 rounded-md bg-indigo-100 mr-3 flex-shrink-0">
-                <Calendar className="h-5 w-5 text-indigo-700" />
-              </div>
-              <div>
-                <div className="text-xs text-gray-500 font-medium">Date</div>
-                <div className="text-sm text-gray-700">{formattedDate}</div>
+              <div className="mt-1 flex items-center text-sm text-gray-500 dark:text-gray-400">
+                <Clock className="flex-shrink-0 mr-2 h-4 w-4 text-gray-400 dark:text-gray-500" aria-hidden="true" />
+                <p>{time ? time.substring(0, 5) : ''} ({formatDuration(duration)})</p>
               </div>
             </div>
             
-            <div className="flex items-center">
-              <div className="p-2 rounded-md bg-indigo-100 mr-3 flex-shrink-0">
-                <Clock className="h-5 w-5 text-indigo-700" />
-              </div>
-              <div>
-                <div className="text-xs text-gray-500 font-medium">Heure</div>
-                <div className="text-sm text-gray-700">
-                  {time} {duration ? `- ${calculateEndTime()}` : ''}
-                  {duration ? <span className="text-xs text-gray-500 ml-1">({duration} min)</span> : ''}
+            <div>
+              {clientEmail && (
+                <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
+                  <Mail className="flex-shrink-0 mr-1.5 h-4 w-4 text-gray-400 dark:text-gray-500" aria-hidden="true" />
+                  <p>{clientEmail}</p>
                 </div>
-              </div>
+              )}
+              {clientPhone && (
+                <div className="mt-1 flex items-center text-sm text-gray-500 dark:text-gray-400">
+                  <Phone className="flex-shrink-0 mr-1.5 h-4 w-4 text-gray-400 dark:text-gray-500" aria-hidden="true" />
+                  <p>{clientPhone}</p>
+                </div>
+              )}
             </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="mt-3 pl-2 divide-y divide-gray-100">
-        <div className="py-3">
-          <div className="flex items-center">
-            <Mail className="flex-shrink-0 mr-2 h-4 w-4 text-gray-400" />
-            <a href={`mailto:${clientEmail}`} className="text-sm text-blue-600 hover:underline">{clientEmail}</a>
           </div>
           
-          {clientPhone && (
-            <div className="mt-1 flex items-center">
-              <Phone className="flex-shrink-0 mr-2 h-4 w-4 text-gray-400" />
-              <a href={`tel:${clientPhone}`} className="text-sm text-blue-600 hover:underline">{clientPhone}</a>
-            </div>
-          )}
+          <div className="relative" onClick={handleMenuClick}>
+            {onDelete && onStatusChange && (
+              <>
+                <button
+                  ref={buttonRef}
+                  type="button"
+                  className="inline-flex items-center p-1.5 border border-transparent rounded-full shadow-sm text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowMenu(!showMenu);
+                  }}
+                >
+                  <MoreHorizontal className="h-5 w-5" />
+                </button>
+                
+                {showMenu && (
+                  <div ref={menuRef} className="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 z-10">
+                    <div className="py-1" role="menu" aria-orientation="vertical" aria-labelledby="options-menu">
+                      {status !== 'confirmed' && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onStatusChange('confirmed');
+                            setShowMenu(false);
+                          }}
+                          className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+                          role="menuitem"
+                        >
+                          <CheckCircle className="inline mr-2 h-4 w-4 text-green-500" />
+                          Confirmer
+                        </button>
+                      )}
+                        {status !== 'in-progress' && status !== 'completed' && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onStatusChange('in-progress');
+                            setShowMenu(false);
+                          }}
+                          className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+                          role="menuitem"
+                        >
+                          <Clock className="inline mr-2 h-4 w-4 text-orange-500" />
+                          En cours
+                        </button>
+                      )}
+                      
+                      {status !== 'completed' && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onStatusChange('completed');
+                            setShowMenu(false);
+                          }}
+                          className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+                          role="menuitem"
+                        >
+                          <CheckCircle className="inline mr-2 h-4 w-4 text-blue-500" />
+                          Terminé
+                        </button>
+                      )}
+                      
+                      {status !== 'cancelled' && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onStatusChange('cancelled');
+                            setShowMenu(false);
+                          }}
+                          className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+                          role="menuitem"
+                        >
+                          <XCircle className="inline mr-2 h-4 w-4 text-red-500" />
+                          Annuler
+                        </button>
+                      )}
+                      
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onDelete();
+                          setShowMenu(false);
+                        }}
+                        className="block w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30"
+                        role="menuitem"
+                      >
+                        <Trash className="inline mr-2 h-4 w-4 text-red-500" />
+                        Supprimer
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
         </div>
-
+        
         {notes && (
-          <div className="py-3">
-            <div className="text-xs text-gray-500 font-medium mb-1">Notes</div>
-            <p className="text-sm text-gray-600 italic bg-gray-50 p-2 rounded-md border border-gray-100">{notes}</p>
+          <div className="mt-2 sm:flex sm:justify-start">
+            <div className="text-sm text-gray-600 dark:text-gray-400 border-t border-gray-100 dark:border-gray-700 pt-2 w-full">
+              <p className="font-medium text-xs text-gray-500 dark:text-gray-400 mb-1">Notes:</p>
+              <p className="whitespace-pre-wrap">{notes}</p>
+            </div>
           </div>
         )}
       </div>
-    </div>
+      
+      {/* Modal de récapitulatif */}
+      {showRecapModal && (
+        <AppointmentRecapModal 
+          isOpen={showRecapModal}
+          onClose={() => setShowRecapModal(false)}
+          appointment={appointment}
+        />
+      )}
+    </>
   );
 };
 

@@ -7,7 +7,7 @@ export interface Appointment {
   serviceName?: string; // From JOIN with services
   date: string;
   time: string;
-  status: 'pending' | 'confirmed' | 'cancelled' | 'completed';
+  status: 'pending' | 'confirmed' | 'in-progress' | 'cancelled' | 'completed';
   notes: string;
   price?: number; // From JOIN with services
   duration?: number; // From JOIN with services

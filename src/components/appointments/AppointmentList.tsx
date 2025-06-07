@@ -55,34 +55,34 @@ const AppointmentList = ({ appointments, onDelete, onStatusChange }: Appointment
       return dateA - dateB;
     });
   };
-
-  if (appointments.length === 0) {
-    return (
+  if (appointments.length === 0) {    return (
       <div className="flex flex-col items-center justify-center py-12">
-        <div className="bg-gray-100 rounded-full p-6 mb-4">
-          <CalendarX className="h-12 w-12 text-gray-400" />
+        <div className="bg-gray-100 dark:bg-gray-700 rounded-full p-6 mb-4">
+          <CalendarX className="h-12 w-12 text-gray-400 dark:text-gray-500" />
         </div>
-        <p className="text-lg font-medium text-gray-700 mb-1">Aucun rendez-vous trouvé</p>
-        <p className="text-gray-500 text-sm max-w-md text-center">
+        <p className="text-lg font-medium text-gray-700 dark:text-gray-300 mb-1">Aucun rendez-vous trouvé</p>
+        <p className="text-gray-500 dark:text-gray-400 text-sm max-w-md text-center">
           Aucun rendez-vous ne correspond aux critères sélectionnés. Vous pouvez créer un nouveau rendez-vous ou modifier vos filtres.
         </p>
       </div>
     );
-  }
-
-  const groupedAppointments = groupAppointmentsByDate();
-  const sortedDates = sortDates(Object.keys(groupedAppointments));
-
-  return (
-    <div className="space-y-6">
+  }  const groupedAppointments = groupAppointmentsByDate();
+  const sortedDates = sortDates(Object.keys(groupedAppointments));  return (
+    <div className="space-y-0">
       {sortedDates.map((date) => (
-        <div key={date} className="border-b border-gray-200 pb-6 last:border-b-0 last:pb-0">
-          <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider sticky top-0 bg-white py-3 px-3 -mx-3 border-b border-gray-100">
+        <div 
+          key={date} 
+          className={`border-b border-gray-200 dark:border-gray-700 last:border-b-0`}
+        >          
+          <h3 className="text-sm font-semibold text-gray-700 dark:text-white uppercase tracking-wider sticky top-0 bg-white dark:bg-gray-800 px-4 py-5 border-b border-gray-200 dark:border-gray-700 sm:px-6 z-10 shadow-sm">
             {formatDate(date)}
           </h3>
-          <div className="mt-4 grid grid-cols-1 gap-4">
+          <div className="px-4 py-5 sm:px-6 grid grid-cols-1 gap-5">
             {groupedAppointments[date].map((appointment) => (
-              <div key={appointment.id}>
+              <div 
+                key={appointment.id} 
+                className="bg-white dark:bg-gray-800 shadow-sm rounded-md overflow-hidden border border-gray-100 dark:border-gray-700 transition-all hover:shadow-md"
+              >
                 <AppointmentCard 
                   appointment={appointment} 
                   onDelete={() => onDelete(appointment.id)} 

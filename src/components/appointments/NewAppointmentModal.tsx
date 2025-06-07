@@ -260,9 +260,9 @@ const NewAppointmentModal: React.FC<NewAppointmentModalProps> = ({ isOpen, onClo
           <div className="fixed inset-0 bg-black bg-opacity-40" onClick={onClose}></div>
           
           {/* Modal content */}
-          <div className="relative w-full max-w-xl bg-white rounded-lg overflow-hidden shadow-lg animate-fadeIn mx-4" style={{ maxHeight: 'calc(100vh - 40px)' }}>
+          <div className="relative w-full max-w-xl bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow-lg animate-fadeIn mx-4" style={{ maxHeight: 'calc(100vh - 40px)' }}>
             {/* Header */}
-            <div className="flex justify-between items-center px-4 py-4 border-b border-gray-200 bg-gradient-to-r from-blue-500 to-indigo-600">
+            <div className="flex justify-between items-center px-4 py-4 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-blue-500 to-indigo-600">
               <h3 className="text-xl font-semibold text-white animate-fadeIn">
                 {appointment && appointment.id && appointment.id !== 0 ? 'Modifier le rendez-vous' : 'Nouveau rendez-vous'}
               </h3>
@@ -278,13 +278,13 @@ const NewAppointmentModal: React.FC<NewAppointmentModalProps> = ({ isOpen, onClo
             </div>
             
             {error && (
-              <div className="mx-4 mt-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative animate-fadeIn">
+              <div className="mx-4 mt-4 bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-700 text-red-700 dark:text-red-300 px-4 py-3 rounded relative animate-fadeIn">
                 {error}
               </div>
             )}
             
             {isLoading && (
-              <div className="mx-4 mt-4 text-center py-2 animate-fadeIn">
+              <div className="mx-4 mt-4 text-center py-2 animate-fadeIn text-gray-700 dark:text-gray-300">
                 <p>Chargement des données...</p>
               </div>
             )}
@@ -293,13 +293,13 @@ const NewAppointmentModal: React.FC<NewAppointmentModalProps> = ({ isOpen, onClo
               <div className="px-4 py-3">
                 <div className="grid grid-cols-1 gap-y-6 gap-x-6 sm:grid-cols-6 animate-fadeIn animation-delay-400">
                   <div className="sm:col-span-6">
-                    <label htmlFor="service" className="block text-sm font-medium text-gray-700">
+                    <label htmlFor="service" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                       Prestation
                     </label>
                     <select
                       id="service"
                       name="service"
-                      className="mt-1 block w-full pl-4 pr-10 py-3 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 rounded-md"
+                      className="mt-1 block w-full pl-4 pr-10 py-3 text-base border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500 rounded-md"
                       value={serviceId}
                       onChange={(e) => setServiceId(e.target.value)}
                       required
@@ -322,7 +322,7 @@ const NewAppointmentModal: React.FC<NewAppointmentModalProps> = ({ isOpen, onClo
                   </div>
 
                   <div className="sm:col-span-6">
-                    <label htmlFor="clientName" className="block text-sm font-medium text-gray-700">
+                    <label htmlFor="clientName" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                       Nom du client
                     </label>
                     <div className="mt-1">
@@ -332,14 +332,14 @@ const NewAppointmentModal: React.FC<NewAppointmentModalProps> = ({ isOpen, onClo
                         id="clientName"
                         value={clientName}
                         onChange={(e) => setClientName(e.target.value)}
-                        className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full text-base py-3 px-4 border-gray-300 rounded-md"
+                        className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full text-base py-3 px-4 border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md"
                         required
                       />
                     </div>
                   </div>
 
                   <div className="sm:col-span-3">
-                    <label htmlFor="date" className="block text-sm font-medium text-gray-700">
+                    <label htmlFor="date" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                       Date
                     </label>
                     <div className="mt-1">
@@ -353,14 +353,14 @@ const NewAppointmentModal: React.FC<NewAppointmentModalProps> = ({ isOpen, onClo
                           console.log("Nouvelle date sélectionnée:", e.target.value);
                           setDate(e.target.value);
                         }}
-                        className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full text-base py-3 px-4 border-gray-300 rounded-md"
+                        className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full text-base py-3 px-4 border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md"
                         required
                       />
                     </div>
                   </div>
 
                   <div className="sm:col-span-3">
-                    <label htmlFor="time" className="block text-sm font-medium text-gray-700">
+                    <label htmlFor="time" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                       Heure
                     </label>
                     <div className="mt-1">
@@ -370,14 +370,14 @@ const NewAppointmentModal: React.FC<NewAppointmentModalProps> = ({ isOpen, onClo
                         id="time"
                         value={time}
                         onChange={(e) => setTime(e.target.value)}
-                        className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full text-base py-3 px-4 border-gray-300 rounded-md"
+                        className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full text-base py-3 px-4 border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md"
                         required
                       />
                     </div>
                   </div>
 
                   <div className="sm:col-span-3">
-                    <label htmlFor="clientEmail" className="block text-sm font-medium text-gray-700">
+                    <label htmlFor="clientEmail" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                       Email du client
                     </label>
                     <div className="mt-1">
@@ -387,13 +387,13 @@ const NewAppointmentModal: React.FC<NewAppointmentModalProps> = ({ isOpen, onClo
                         id="clientEmail"
                         value={clientEmail}
                         onChange={(e) => setClientEmail(e.target.value)}
-                        className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full text-base py-3 px-4 border-gray-300 rounded-md"
+                        className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full text-base py-3 px-4 border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md"
                       />
                     </div>
                   </div>
 
                   <div className="sm:col-span-3">
-                    <label htmlFor="clientPhone" className="block text-sm font-medium text-gray-700">
+                    <label htmlFor="clientPhone" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                       Téléphone du client
                     </label>
                     <div className="mt-1">
@@ -403,13 +403,13 @@ const NewAppointmentModal: React.FC<NewAppointmentModalProps> = ({ isOpen, onClo
                         id="clientPhone"
                         value={clientPhone}
                         onChange={(e) => setClientPhone(e.target.value)}
-                        className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full text-base py-3 px-4 border-gray-300 rounded-md"
+                        className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full text-base py-3 px-4 border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md"
                       />
                     </div>
                   </div>
 
                   <div className="sm:col-span-6">
-                    <label htmlFor="notes" className="block text-sm font-medium text-gray-700">
+                    <label htmlFor="notes" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                       Notes
                     </label>
                     <div className="mt-1">
@@ -419,20 +419,20 @@ const NewAppointmentModal: React.FC<NewAppointmentModalProps> = ({ isOpen, onClo
                         rows={4}
                         value={notes}
                         onChange={(e) => setNotes(e.target.value)}
-                        className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full text-base py-3 px-4 border-gray-300 rounded-md"
+                        className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full text-base py-3 px-4 border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md"
                       ></textarea>
                     </div>
                   </div>
                 </div>
               </div>
               
-              <div className="px-4 py-4 bg-gray-50">
+              <div className="px-4 py-4 bg-gray-50 dark:bg-gray-700">
                 <div className="flex justify-between animate-fadeIn animation-delay-400">
                   <div>
                     {appointment && appointment.id && appointment.id !== 0 && (
                       <button
                         type="button"
-                        className="inline-flex justify-center py-3 px-6 border border-red-300 shadow-sm text-base font-medium rounded-md text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all duration-200 transform hover:scale-105"
+                        className="inline-flex justify-center py-3 px-6 border border-red-300 dark:border-red-600 shadow-sm text-base font-medium rounded-md text-red-700 dark:text-red-300 bg-white dark:bg-gray-800 hover:bg-red-50 dark:hover:bg-red-900/30 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all duration-200 transform hover:scale-105"
                         onClick={() => setIsDeleteModalOpen(true)}
                         disabled={isSubmitting}
                       >
@@ -443,7 +443,7 @@ const NewAppointmentModal: React.FC<NewAppointmentModalProps> = ({ isOpen, onClo
                   <div>
                     <button
                       type="button"
-                      className="mr-3 inline-flex justify-center py-3 px-6 border border-gray-300 shadow-sm text-base font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 transform hover:scale-105"
+                      className="mr-3 inline-flex justify-center py-3 px-6 border border-gray-300 dark:border-gray-600 shadow-sm text-base font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 transform hover:scale-105"
                       onClick={onClose}
                       disabled={isSubmitting}
                     >
@@ -463,25 +463,24 @@ const NewAppointmentModal: React.FC<NewAppointmentModalProps> = ({ isOpen, onClo
           </div>
         </div>
       </ModalPortal>
-      
-      {/* Modal de confirmation de suppression */}
+        {/* Modal de confirmation de suppression */}
       {isDeleteModalOpen && (
         <ModalPortal isOpen={isDeleteModalOpen}>
           <div className="fixed inset-0 z-60 flex items-center justify-center overflow-y-auto modal-backdrop animate-fadeIn">
             <div className="fixed inset-0 bg-black bg-opacity-40" onClick={() => setIsDeleteModalOpen(false)}></div>
             
-            <div className="relative bg-white rounded-lg shadow-2xl max-w-md w-full mx-4 animate-fadeIn" style={{ maxHeight: 'calc(100vh - 40px)' }}>
+            <div className="relative bg-white dark:bg-gray-800 rounded-lg shadow-2xl max-w-md w-full mx-4 animate-fadeIn" style={{ maxHeight: 'calc(100vh - 40px)' }}>
               <div className="p-6 text-center">
                 <svg className="mx-auto mb-4 text-red-500 w-14 h-14" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                 </svg>
-                <h3 className="mb-5 text-lg font-medium text-gray-900">Êtes-vous sûr de vouloir supprimer ce rendez-vous ?</h3>
-                <p className="mb-5 text-gray-600">Cette action est irréversible et supprimera définitivement le rendez-vous.</p>
+                <h3 className="mb-5 text-lg font-medium text-gray-900 dark:text-white">Êtes-vous sûr de vouloir supprimer ce rendez-vous ?</h3>
+                <p className="mb-5 text-gray-600 dark:text-gray-400">Cette action est irréversible et supprimera définitivement le rendez-vous.</p>
                 <div className="flex justify-center gap-4">
                   <button
                     type="button"
                     onClick={() => setIsDeleteModalOpen(false)}
-                    className="py-2 px-5 text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-300 transition-all duration-200"
+                    className="py-2 px-5 text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-500 transition-all duration-200"
                   >
                     Annuler
                   </button>
@@ -489,7 +488,7 @@ const NewAppointmentModal: React.FC<NewAppointmentModalProps> = ({ isOpen, onClo
                     type="button"
                     onClick={handleDeleteAppointment}
                     disabled={isSubmitting}
-                    className="py-2 px-5 text-white bg-red-600 border border-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-300 transition-all duration-200"
+                    className="py-2 px-5 text-white bg-red-600 dark:bg-red-700 border border-red-600 dark:border-red-700 rounded-lg hover:bg-red-700 dark:hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-300 dark:focus:ring-red-500 transition-all duration-200"
                   >
                     {isSubmitting ? 'Suppression...' : 'Supprimer'}
                   </button>

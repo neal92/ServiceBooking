@@ -107,60 +107,54 @@ const Categories = () => {
             </button>
           </div>
         </div>
-      </div>
-
-      {/* Error message */}
+      </div>      {/* Error message */}
       {error && (
-        <div className="mb-6 bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-md shadow">
+        <div className="mb-6 bg-red-100 dark:bg-red-900/20 border-l-4 border-red-500 dark:border-red-700 text-red-700 dark:text-red-400 p-4 rounded-md shadow">
           <div className="flex items-center">
-            <svg className="h-5 w-5 text-red-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="h-5 w-5 text-red-500 dark:text-red-400 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
             </svg>
             <span>{error}</span>
           </div>
         </div>
       )}
-      
-      {/* Search Bar */}
-      <div className="mb-6 bg-white p-5 shadow-md rounded-xl border border-gray-100 animate-fadeIn">
-        <label htmlFor="categorySearch" className="block text-sm font-medium text-gray-700 mb-1">
+        {/* Search Bar */}
+      <div className="mb-6 bg-white dark:bg-gray-800 p-5 shadow-md rounded-xl border border-gray-100 dark:border-gray-700 animate-fadeIn">
+        <label htmlFor="categorySearch" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
           Rechercher une catégorie
         </label>
         <div className="relative rounded-md">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <Search className="h-5 w-5 text-blue-500" aria-hidden="true" />
+            <Search className="h-5 w-5 text-blue-500 dark:text-blue-400" aria-hidden="true" />
           </div>
           <input
             type="text"
             name="categorySearch"
             id="categorySearch"
-            className="focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 py-2 sm:text-sm border-gray-300 rounded-md shadow-sm transition-shadow duration-200 hover:shadow-md"
+            className="focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 py-2 sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md shadow-sm transition-shadow duration-200 hover:shadow-md"
             placeholder="Rechercher par nom ou description..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-      </div>
-
-      {/* Loading state */}
+      </div>      {/* Loading state */}
       {loading ? (
-        <div className="flex flex-col items-center justify-center py-12 bg-white rounded-lg shadow-md">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-          <p className="mt-4 text-gray-600 font-medium">Chargement des catégories...</p>
+        <div className="flex flex-col items-center justify-center py-12 bg-white dark:bg-gray-800 rounded-lg shadow-md">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 dark:border-blue-400"></div>
+          <p className="mt-4 text-gray-600 dark:text-gray-300 font-medium">Chargement des catégories...</p>
         </div>
       ) : (
         /* Categories List */
-        <div className="bg-white shadow-lg rounded-lg overflow-hidden border border-gray-100">
+        <div className="bg-white dark:bg-gray-800 shadow-lg rounded-lg overflow-hidden border border-gray-100 dark:border-gray-700">
           {categories.length === 0 || categories.filter(category => 
             category.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
             (category.description && category.description.toLowerCase().includes(searchTerm.toLowerCase()))
-          ).length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 bg-blue-50 animate-fadeIn">
-              <div className="bg-blue-100 rounded-full h-24 w-24 flex items-center justify-center mx-auto mb-6">
-                <Tag className="h-12 w-12 text-blue-500" />
+          ).length === 0 ? (            <div className="flex flex-col items-center justify-center py-16 bg-blue-50 dark:bg-blue-900/10 animate-fadeIn">
+              <div className="bg-blue-100 dark:bg-blue-800 rounded-full h-24 w-24 flex items-center justify-center mx-auto mb-6">
+                <Tag className="h-12 w-12 text-blue-500 dark:text-blue-300" />
               </div>
-              <h3 className="text-xl font-medium text-gray-900 mb-2">Aucune catégorie trouvée</h3>
-              <p className="text-gray-500 max-w-md mx-auto mb-8 text-center">
+              <h3 className="text-xl font-medium text-gray-900 dark:text-gray-100 mb-2">Aucune catégorie trouvée</h3>
+              <p className="text-gray-500 dark:text-gray-400 max-w-md mx-auto mb-8 text-center">
                 {searchTerm 
                   ? `Aucune catégorie ne correspond à votre recherche "${searchTerm}". Essayez d'autres termes ou créez une nouvelle catégorie.` 
                   : "Vous n'avez pas encore créé de catégories. Commencez par en ajouter une nouvelle !"}
@@ -185,11 +179,10 @@ const Categories = () => {
                   category.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
                   (category.description && category.description.toLowerCase().includes(searchTerm.toLowerCase()))
                 )
-                .map((category) => (
-                <div 
+                .map((category) => (                <div 
                   key={category.id}
                   onClick={() => handleEditCategory(category)}
-                  className="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 overflow-hidden animate-fadeIn cursor-pointer transform group"
+                  className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 overflow-hidden animate-fadeIn cursor-pointer transform group"
                 >
                   <div className={`w-full h-2 bg-${category.color || 'blue'}-500 transition-all duration-300 group-hover:h-3`}></div>
                   <div className="p-5">
@@ -198,10 +191,9 @@ const Categories = () => {
                         <div className={`h-12 w-12 rounded-lg flex items-center justify-center text-white bg-${category.color || 'blue'}-500 font-bold text-lg shadow-sm transition-transform duration-300 group-hover:scale-110`}>
                           {category.name.charAt(0).toUpperCase()}
                         </div>
-                        <div className="ml-4">
-                          <h3 className="text-lg font-semibold text-gray-900 transition-colors duration-300 group-hover:text-blue-600">{category.name}</h3>
+                        <div className="ml-4">                          <h3 className="text-lg font-semibold text-gray-900 dark:text-white transition-colors duration-300 group-hover:text-blue-600 dark:group-hover:text-blue-400">{category.name}</h3>
                           <div className="flex items-center mt-1">
-                            <span className={`flex items-center px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-600 transition-colors duration-300 group-hover:bg-${category.color || 'blue'}-100 group-hover:text-${category.color || 'blue'}-600`}>
+                            <span className={`flex items-center px-2 py-1 text-xs font-medium rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 transition-colors duration-300 group-hover:bg-${category.color || 'blue'}-100 dark:group-hover:bg-${category.color || 'blue'}-900/30 group-hover:text-${category.color || 'blue'}-600 dark:group-hover:text-${category.color || 'blue'}-400`}>
                               {category.servicesCount || 0} prestations
                             </span>
                           </div>
@@ -209,17 +201,16 @@ const Categories = () => {
                       </div>
                     </div>
                     
-                    <p className="text-gray-600 text-sm mb-5 line-clamp-2 group-hover:text-gray-700 transition-colors duration-300">{category.description}</p>
+                    <p className="text-gray-600 dark:text-gray-400 text-sm mb-5 line-clamp-2 group-hover:text-gray-700 dark:group-hover:text-gray-300 transition-colors duration-300">{category.description}</p>
                     
-                    <div className="flex justify-between items-center mt-auto">
-                      <span className="text-xs text-gray-400 italic group-hover:text-blue-500 transition-colors duration-300">Cliquez pour modifier</span>
+                    <div className="flex justify-between items-center mt-auto">                    <span className="text-xs text-gray-400 dark:text-gray-500 italic group-hover:text-blue-500 dark:group-hover:text-blue-400 transition-colors duration-300">Cliquez pour modifier</span>
                       <div className="flex space-x-3">
                         <button
                           onClick={(e) => {
                             e.stopPropagation(); // Empêche l'événement de remonter à la carte
                             handleEditCategory(category);
                           }}
-                          className="inline-flex items-center px-2.5 py-1.5 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+                          className="inline-flex items-center px-2.5 py-1.5 border border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
                         >
                           <Edit className="h-3.5 w-3.5 mr-1" />
                           Modifier
@@ -229,7 +220,7 @@ const Categories = () => {
                             e.stopPropagation(); // Empêche l'événement de remonter à la carte
                             handleDeleteClick(category);
                           }}
-                          className="inline-flex items-center px-2.5 py-1.5 border border-red-300 rounded-md text-sm font-medium text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors"
+                          className="inline-flex items-center px-2.5 py-1.5 border border-red-300 dark:border-red-700 rounded-md text-sm font-medium text-red-700 dark:text-red-400 bg-white dark:bg-gray-700 hover:bg-red-50 dark:hover:bg-red-900/30 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors"
                         >
                           <Trash className="h-3.5 w-3.5 mr-1" />
                           Supprimer
@@ -250,37 +241,35 @@ const Categories = () => {
       
       {/* Modal de confirmation de suppression */}
       {isDeleteModalOpen && (
-        <ModalPortal isOpen={isDeleteModalOpen}>
-          <div className="fixed inset-0 z-60 flex items-center justify-center overflow-y-auto modal-backdrop animate-fadeIn">
+        <ModalPortal isOpen={isDeleteModalOpen}>            <div className="fixed inset-0 z-60 flex items-center justify-center overflow-y-auto modal-backdrop animate-fadeIn">
             <div className="fixed inset-0 bg-black bg-opacity-40" onClick={handleCancelDelete}></div>
             
-            <div className="relative bg-white rounded-lg shadow-lg max-w-md w-full mx-4 animate-fadeIn" style={{ maxHeight: 'calc(100vh - 40px)' }}>
+            <div className="relative bg-white dark:bg-gray-800 rounded-lg shadow-lg max-w-md w-full mx-4 animate-fadeIn" style={{ maxHeight: 'calc(100vh - 40px)' }}>
               <div className="p-6 text-center">
-                <div className="mx-auto mb-4 h-14 w-14 flex items-center justify-center rounded-full bg-red-100">
-                  <Trash className="h-6 w-6 text-red-600" />
+                <div className="mx-auto mb-4 h-14 w-14 flex items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30">
+                  <Trash className="h-6 w-6 text-red-600 dark:text-red-400" />
                 </div>
-                <h3 className="mb-3 text-lg font-medium text-gray-900">Confirmer la suppression</h3>
-                <p className="mb-5 text-gray-600">
-                  Êtes-vous sûr de vouloir supprimer la catégorie <strong className="text-gray-700">{categoryToDelete?.name}</strong> ?
+                <h3 className="mb-3 text-lg font-medium text-gray-900 dark:text-white">Confirmer la suppression</h3>
+                <p className="mb-5 text-gray-600 dark:text-gray-400">
+                  Êtes-vous sûr de vouloir supprimer la catégorie <strong className="text-gray-700 dark:text-gray-300">{categoryToDelete?.name}</strong> ?
                   {categoryToDelete?.servicesCount ? (
-                    <span className="block mt-2 text-amber-600 font-medium">
+                    <span className="block mt-2 text-amber-600 dark:text-amber-500 font-medium">
                       Cette catégorie contient {categoryToDelete.servicesCount} prestation(s). Leur catégorie sera réinitialisée.
                     </span>
                   ) : null}
                 </p>
               
-                <div className="flex justify-center gap-4 mt-6">
-                  <button
+                <div className="flex justify-center gap-4 mt-6">                  <button
                     type="button"
                     onClick={handleCancelDelete}
-                    className="py-2 px-5 text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-300 transition-all duration-200"
+                    className="py-2 px-5 text-gray-500 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-500 transition-all duration-200"
                   >
                     Annuler
                   </button>
                   <button
                     type="button"
                     onClick={handleConfirmDelete}
-                    className="py-2 px-5 text-white bg-red-600 border border-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-300 transition-all duration-200"
+                    className="py-2 px-5 text-white bg-red-600 dark:bg-red-700 border border-red-600 dark:border-red-700 rounded-lg hover:bg-red-700 dark:hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-300 dark:focus:ring-red-500 transition-all duration-200"
                   >
                     Supprimer
                   </button>

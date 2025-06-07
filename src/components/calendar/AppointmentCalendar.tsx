@@ -237,6 +237,7 @@ const AppointmentCalendar: React.FC<AppointmentCalendarProps> = ({
     switch (status) {
       case 'confirmed': return '#4CAF50'; // Vert
       case 'pending': return '#FF9800'; // Orange
+      case 'in-progress': return '#FF9800'; // Orange
       case 'cancelled': return '#F44336'; // Rouge
       case 'completed': return '#2196F3'; // Bleu
       default: return '#9E9E9E'; // Gris
@@ -323,17 +324,16 @@ const AppointmentCalendar: React.FC<AppointmentCalendarProps> = ({
       loadAppointments();
     }
   };
-
   return (
     <div className="appointment-calendar h-full">
       {error && (
-        <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4" role="alert">
+        <div className="bg-red-100 dark:bg-red-900/20 border-l-4 border-red-500 dark:border-red-700 text-red-700 dark:text-red-400 p-4 mb-4" role="alert">
           <p>{error}</p>
         </div>
       )}
         {loading ? (
         <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 dark:border-blue-400"></div>
         </div>
       ) : (
         <div className="flex-grow h-full">
