@@ -7,6 +7,90 @@
     0% { opacity: 0; transform: scale(0.9); }
     100% { opacity: 1; transform: scale(1); }
   }
+  
+  /* Styles pour les pages de connexion et inscription */
+  .auth-slider-transition {
+    transition: opacity 1s ease, transform 1.2s ease;
+  }
+  
+  .auth-form-container {
+    min-height: 95vh;
+  }
+  
+  /* Styles pour corriger l'affichage des images du slider */
+  .auth-image-slider {
+    height: 100%;
+    min-height: 600px;
+    position: relative;
+  }
+  
+  .auth-image-slide {
+    min-height: 600px;
+    background-size: cover !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+  }
+  
+  .auth-container {
+    min-height: 600px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  }
+  
+  /* Ajouter un filtre pour améliorer la lisibilité du texte sur les images */
+  .auth-image-overlay {
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 0) 60%);
+  }
+  
+  /* Styles pour le calendrier en plein écran */
+  .fc {
+    height: 100% !important;
+    min-height: 100% !important;
+  }
+  
+  .appointment-calendar, 
+  .appointment-calendar > div {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  /* Assurer que les conteneurs du calendrier prennent tout l'espace */
+  .fc-view-harness,
+  .fc-view,
+  .fc-scrollgrid,
+  .fc-scroller {
+    min-height: 500px !important;
+    height: 100% !important;
+  }
+  
+  /* Styles améliorés pour le calendrier */
+  .fc .fc-toolbar-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #374151;
+  }
+  
+  .fc .fc-button-primary {
+    background-color: #3b82f6;
+    border-color: #3b82f6;
+  }
+  
+  .fc .fc-button-primary:not(:disabled):hover {
+    background-color: #2563eb;
+    border-color: #2563eb;
+  }
+  
+  .fc .fc-button-primary:disabled {
+    background-color: #bfdbfe;
+    border-color: #bfdbfe;
+  }
+  
+  .fc .fc-button-active,
+  .fc .fc-button-active:focus {
+    background-color: #1d4ed8 !important;
+    border-color: #1d4ed8 !important;
+    box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.25) !important;
+  }
 
   @keyframes slideInFromRight {
     0% { opacity: 0; transform: translateX(30px); }
@@ -62,5 +146,86 @@
 
   .page-transition {
     animation: fadeIn 0.5s ease-out forwards;
+  }
+  
+  /* Styles pour les événements du calendrier */
+  .fc-event {
+    border-radius: 6px;
+    border-width: 0;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    overflow: hidden;
+  }
+  
+  .fc-event:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    z-index: 5;
+  }
+  
+  .fc-event-main {
+    padding: 4px 6px;
+  }
+  
+  .fc-event-title {
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  /* Status colors */
+  .event-status-confirmed {
+    border-left: 3px solid #4CAF50;
+  }
+  
+  .event-status-pending {
+    border-left: 3px solid #FF9800;
+  }
+  
+  .event-status-cancelled {
+    border-left: 3px solid #F44336;
+    opacity: 0.7;
+  }
+  
+  .event-status-completed {
+    border-left: 3px solid #2196F3;
+  }
+  
+  /* Today highlight */
+  .fc .fc-day-today {
+    background-color: rgba(59, 130, 246, 0.05) !important;
+  }
+  
+  /* Mobile optimizations */
+  @media (max-width: 640px) {
+    .fc .fc-toolbar {
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    
+    .fc .fc-toolbar-chunk {
+      display: flex;
+      justify-content: center;
+    }
+    
+    .fc .fc-toolbar-title {
+      font-size: 1.25rem;
+      margin-bottom: 0.5rem;
+    }
+    
+    .fc-event-main {
+      padding: 2px 4px;
+    }
+    
+    .fc-event-title {
+      font-size: 0.75rem;
+    }
+  }
+  
+  /* Style pour le tooltip des événements */
+  .calendar-tooltip {
+    max-width: 300px;
+    font-size: 0.875rem;
   }
 }

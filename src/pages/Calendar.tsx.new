@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import AppointmentCalendar from '../components/calendar/AppointmentCalendar';
 import PageTransition from '../components/layout/PageTransition';
 import { Info } from 'lucide-react';
@@ -23,10 +23,11 @@ const Calendar = () => {
     
     return () => clearTimeout(timeoutId);
   }, [refreshKey]);
-    return (
+  
+  return (
     <PageTransition type="zoom">
-      <div className="h-screen flex flex-col">
-        <div className="mb-4">
+      <div>
+        <div className="mb-8">
           <h1 className="text-2xl font-bold text-gray-900">Calendrier des rendez-vous</h1>
           <p className="mt-1 text-sm text-gray-500">
             Consultez, ajoutez ou modifiez vos rendez-vous dans le calendrier.
@@ -57,14 +58,16 @@ const Calendar = () => {
               Terminé
             </div>
           </div>
-        </div>          <div className="bg-white shadow rounded-lg p-6 flex-grow flex flex-col h-full">
-            <div className="flex-grow h-full" ref={calendarContainerRef}>
-              <AppointmentCalendar 
-                key={refreshKey}
-                onAppointmentUpdated={handleAppointmentUpdated}
-              />
-            </div>
+        </div>
+        
+        <div className="bg-white shadow rounded-lg p-6">
+          <div className="h-[700px]" ref={calendarContainerRef}>
+            <AppointmentCalendar 
+              key={refreshKey}
+              onAppointmentUpdated={handleAppointmentUpdated}
+            />
           </div>
+        </div>
       </div>
     </PageTransition>
   );
