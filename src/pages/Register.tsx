@@ -5,20 +5,22 @@ import { useAuth } from '../contexts/AuthContext';
 import PageTransition from '../components/layout/PageTransition';
 
 const Register = () => {
-  const [name, setName] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [passwordError, setPasswordError] = useState('');
   const [emailError, setEmailError] = useState('');
-  const [nameError, setNameError] = useState('');
+  const [firstNameError, setFirstNameError] = useState('');
+  const [lastNameError, setLastNameError] = useState('');
   const [slideIndex, setSlideIndex] = useState(0);
   const { register, user, loading, error } = useAuth();
   
   // Regex validations
   const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   const PASSWORD_REGEX = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6,}$/; // Au moins 6 caractères, avec 1 lettre et 1 chiffre
-  const NAME_REGEX = /^[A-Za-zÀ-ÖØ-öø-ÿ\s']{3,}$/; // Au moins 3 caractères, lettres et espaces
+  const NAME_REGEX = /^[A-Za-zÀ-ÖØ-öø-ÿ\s']{2,}$/; // Au moins 2 caractères, lettres et espaces
   
   // Images pour le slider (thème rendez-vous professionnels et entreprise)
   const slideImages = [
@@ -42,12 +44,21 @@ const Register = () => {
   }, []);
 
   // Validation des champs
-  const validateName = (value: string) => {
+  const validateFirstName = (value: string) => {
     if (!NAME_REGEX.test(value)) {
-      setNameError('Le nom doit contenir au moins 3 caractères (lettres et espaces)');
+      setFirstNameError('Le prénom doit contenir au moins 2 caractères (lettres et espaces)');
       return false;
     }
-    setNameError('');
+    setFirstNameError('');
+    return true;
+  };
+  
+  const validateLastName = (value: string) => {
+    if (!NAME_REGEX.test(value)) {
+      setLastNameError('Le nom doit contenir au moins 2 caractères (lettres et espaces)');
+      return false;
+    }
+    setLastNameError('');
     return true;
   };
   
@@ -82,14 +93,15 @@ const Register = () => {
     e.preventDefault();
     
     // Validation de tous les champs
-    const isNameValid = validateName(name);
+    const isFirstNameValid = validateFirstName(firstName);
+    const isLastNameValid = validateLastName(lastName);
     const isEmailValid = validateEmail(email);
     const isPasswordValid = validatePassword(password);
     const isConfirmPasswordValid = validateConfirmPassword(password, confirmPassword);
     
     // Si validation ok, procéder à l'inscription
-    if (isNameValid && isEmailValid && isPasswordValid && isConfirmPasswordValid) {
-      await register(name, email, password);
+    if (isFirstNameValid && isLastNameValid && isEmailValid && isPasswordValid && isConfirmPasswordValid) {
+      await register(firstName, lastName, email, password);
     }
   };
 
@@ -149,37 +161,72 @@ const Register = () => {
                 </div>
               )}
               
-              <div>
-                <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Nom complet
-                </label>
-                <div className="mt-1 relative">
-                  <input
-                    id="name"
-                    name="name"
-                    type="text"
-                    autoComplete="name"
-                    placeholder="Votre nom complet"
-                    required
-                    value={name}
-                    onChange={(e) => {
-                      setName(e.target.value);
-                      validateName(e.target.value);
-                    }}
-                    onBlur={(e) => validateName(e.target.value)}
-                    className={`appearance-none block w-full px-3 py-3 border ${
-                      nameError ? 'border-red-300 dark:border-red-500' : 'border-gray-300 dark:border-gray-600'
-                    } rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white`}
-                  />
-                  {name && !nameError && (
-                    <Check className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-green-500" />
-                  )}
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                <div>
+                  <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Prénom
+                  </label>
+                  <div className="mt-1 relative">
+                    <input
+                      id="firstName"
+                      name="firstName"
+                      type="text"
+                      autoComplete="given-name"
+                      placeholder="Votre prénom"
+                      required
+                      value={firstName}
+                      onChange={(e) => {
+                        setFirstName(e.target.value);
+                        validateFirstName(e.target.value);
+                      }}
+                      onBlur={(e) => validateFirstName(e.target.value)}
+                      className={`appearance-none block w-full px-3 py-3 border ${
+                        firstNameError ? 'border-red-300 dark:border-red-500' : 'border-gray-300 dark:border-gray-600'
+                      } rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white`}
+                    />
+                    {firstName && !firstNameError && (
+                      <Check className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-green-500" />
+                    )}
+                    {firstNameError && (
+                      <p className="mt-1 text-sm text-red-600 dark:text-red-400 flex items-center">
+                        <AlertCircle className="w-4 h-4 mr-1" /> {firstNameError}
+                      </p>
+                    )}
+                  </div>
                 </div>
-                {nameError && (
-                  <p className="mt-1 text-sm text-red-600 dark:text-red-400 flex items-center">
-                    <AlertCircle className="w-4 h-4 mr-1" /> {nameError}
-                  </p>
-                )}
+
+                <div>
+                  <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Nom
+                  </label>
+                  <div className="mt-1 relative">
+                    <input
+                      id="lastName"
+                      name="lastName"
+                      type="text"
+                      autoComplete="family-name"
+                      placeholder="Votre nom"
+                      required
+                      value={lastName}
+                      onChange={(e) => {
+                        setLastName(e.target.value);
+                        validateLastName(e.target.value);
+                      }}
+                      onBlur={(e) => validateLastName(e.target.value)}
+                      className={`appearance-none block w-full px-3 py-3 border ${
+                        lastNameError ? 'border-red-300 dark:border-red-500' : 'border-gray-300 dark:border-gray-600'
+                      } rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white`}
+                    />
+                    {lastName && !lastNameError && (
+                      <Check className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-green-500" />
+                    )}
+                    {lastNameError && (
+                      <p className="mt-1 text-sm text-red-600 dark:text-red-400 flex items-center">
+                        <AlertCircle className="w-4 h-4 mr-1" /> {lastNameError}
+                      </p>
+                    )}
+                  </div>
+                </div>
               </div>
               
               <div>
@@ -207,12 +254,12 @@ const Register = () => {
                   {email && !emailError && (
                     <Check className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-green-500" />
                   )}
+                  {emailError && (
+                    <p className="mt-1 text-sm text-red-600 dark:text-red-400 flex items-center">
+                      <AlertCircle className="w-4 h-4 mr-1" /> {emailError}
+                    </p>
+                  )}
                 </div>
-                {emailError && (
-                  <p className="mt-1 text-sm text-red-600 dark:text-red-400 flex items-center">
-                    <AlertCircle className="w-4 h-4 mr-1" /> {emailError}
-                  </p>
-                )}
               </div>
 
               <div>
@@ -240,12 +287,12 @@ const Register = () => {
                   {password && !passwordError && (
                     <Check className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-green-500" />
                   )}
+                  {passwordError && (
+                    <p className="mt-1 text-sm text-red-600 dark:text-red-400 flex items-center">
+                      <AlertCircle className="w-4 h-4 mr-1" /> {passwordError}
+                    </p>
+                  )}
                 </div>
-                {passwordError && (
-                  <p className="mt-1 text-sm text-red-600 dark:text-red-400 flex items-center">
-                    <AlertCircle className="w-4 h-4 mr-1" /> {passwordError}
-                  </p>
-                )}
               </div>
               
               <div>

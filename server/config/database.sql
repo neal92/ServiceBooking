@@ -5,7 +5,8 @@ USE servicebooking;
 -- Create users table
 CREATE TABLE IF NOT EXISTS users (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(100) NOT NULL,
+    firstName VARCHAR(50) NOT NULL,
+    lastName VARCHAR(50) NOT NULL,
     email VARCHAR(100) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL,
     role ENUM('admin', 'user') DEFAULT 'user',
@@ -76,5 +77,5 @@ INSERT INTO appointments (clientName, clientEmail, clientPhone, serviceId, date,
 ('Sarah Williams', 'sarah.williams@example.com', '555-789-0123', 10, '2025-06-20', '16:00:00', 'pending', 'Wedding preparation');
 
 -- Insert admin user (password: admin123)
-INSERT INTO users (name, email, password, role) VALUES
-('Admin User', 'admin@example.com', '$2b$10$96Qr8PnqJCXTt1uGMTGvIOLKLY.5O9XpZpPGC8cbtCOlcVg2xi1Iy', 'admin');
+INSERT INTO users (firstName, lastName, email, password, role) VALUES
+('Admin', 'User', 'admin@example.com', '$2b$10$96Qr8PnqJCXTt1uGMTGvIOLKLY.5O9XpZpPGC8cbtCOlcVg2xi1Iy', 'admin');

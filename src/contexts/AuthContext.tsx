@@ -1,80 +1,44 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
 import authService from '../services/auth';
 
-import { User } from '../types';
+interface User {
+  id: number;
+  firstName: string;
+  lastName: string;
+  email: string;
+  role: string;
+  avatar?: string;
+}
 
 interface AuthContextType {
   user: User | null;
-  login: (email: string, password: string) => Promise<void>;
-  register: (name: string, email: string, password: string) => Promise<void>;
-  logout: () => void;
   loading: boolean;
   error: string | null;
-  updateUser: (userData: Partial<User>) => Promise<void>;
-  uploadAvatar: (file: File) => Promise<void>;
+  login: (email: string, password: string) => Promise<void>;
+  register: (firstName: string, lastName: string, email: string, password: string) => Promise<void>;
+  logout: () => void;
+  updateUser: (data: { firstName?: string; lastName?: string; email?: string }) => Promise<void>;
   changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
+  uploadAvatar: (file: File) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-};
+interface AuthProviderProps {
+  children: ReactNode;
+}
 
-export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
-  const updateUser = async (userData: Partial<User>) => {
-    if (!user) return;
-    try {
-      const { user: updatedUser } = await authService.updateProfile(userData);
-      setUser(updatedUser);
-      localStorage.setItem('user', JSON.stringify(updatedUser));
-    } catch (err) {
-      console.error('Error updating user:', err);
-      throw err;
-    }
-  };
-
-  const uploadAvatar = async (file: File) => {
-    if (!user) return;
-    try {
-      const response = await authService.uploadAvatar(file);
-      const updatedUser = { ...user, avatar: response.avatarUrl };
-      setUser(updatedUser);
-    } catch (err) {
-      console.error('Error uploading avatar:', err);
-      throw err;
-    }
-  };
-
-  const changePassword = async (currentPassword: string, newPassword: string) => {
-    try {
-      await authService.changePassword({ currentPassword, newPassword });
-    } catch (err) {
-      console.error('Error changing password:', err);
-      throw err;
-    }
-  };
-
-  // Check for stored user on initial load
+  // Check for stored user data on mount
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
     if (storedUser) {
-      try {
-        setUser(JSON.parse(storedUser));
-      } catch (err) {
-        console.error('Error parsing stored user:', err);
-        localStorage.removeItem('user');
-      }
+      setUser(JSON.parse(storedUser));
     }
-    setLoading(false);
   }, []);
 
   // Login with API
@@ -94,16 +58,68 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   // Register with API
-  const register = async (name: string, email: string, password: string) => {
+  const register = async (firstName: string, lastName: string, email: string, password: string) => {
     setLoading(true);
     setError(null);
     
     try {
-      const response = await authService.register({ name, email, password });
+      const response = await authService.register({ firstName, lastName, email, password });
       setUser(response.user);
     } catch (err: any) {
       setError(err.response?.data?.message || "Échec de l'inscription. Veuillez réessayer.");
       console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Update user profile
+  const updateUser = async (data: { firstName?: string; lastName?: string; email?: string }) => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const response = await authService.updateProfile(data);
+      setUser(response.user);
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Échec de la mise à jour du profil.');
+      console.error(err);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Change password
+  const changePassword = async (currentPassword: string, newPassword: string) => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      await authService.changePassword({ currentPassword, newPassword });
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Échec de la modification du mot de passe.');
+      console.error(err);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Upload avatar
+  const uploadAvatar = async (file: File) => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const response = await authService.uploadAvatar(file);
+      if (user) {
+        setUser({ ...user, avatar: response.avatarUrl });
+      }
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Échec de l'upload de l'avatar.");
+      console.error(err);
+      throw err;
     } finally {
       setLoading(false);
     }
@@ -114,17 +130,30 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     authService.logout();
     setUser(null);
   };
-  const value = {
-    user,
-    login,
-    register,
-    logout,
-    loading,
-    error,
-    updateUser,
-    uploadAvatar,
-    changePassword
-  };
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider
+      value={{
+        user,
+        loading,
+        error,
+        login,
+        register,
+        logout,
+        updateUser,
+        changePassword,
+        uploadAvatar
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
+  );
+};
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
 };

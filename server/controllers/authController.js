@@ -19,7 +19,7 @@ exports.register = async (req, res) => {
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { name, email, password } = req.body;
+    const { firstName, lastName, email, password } = req.body;
     console.log(`Registration attempt for email: ${email}`);
 
     // Check if user already exists
@@ -32,7 +32,7 @@ exports.register = async (req, res) => {
 
     // Create user
     console.log('Creating new user');
-    const { userId } = await User.create({ name, email, password });
+    const { userId } = await User.create({ firstName, lastName, email, password });
     console.log(`User created with ID: ${userId}`);
 
     // Generate JWT
@@ -100,7 +100,8 @@ exports.login = async (req, res) => {
     // Return user info (without password) and token
     const userData = {
       id: user.id,
-      name: user.name,
+      firstName: user.firstName,
+      lastName: user.lastName,
       email: user.email,
       role: user.role
     };
@@ -113,7 +114,6 @@ exports.login = async (req, res) => {
     });
   } catch (error) {
     console.error('Login error details:', error);
-    // Log more specific information
     if (error.sqlMessage) {
       console.error('SQL error during login:', error.sqlMessage);
     } else {
@@ -141,7 +141,7 @@ exports.getCurrentUser = async (req, res) => {
 // Update user profile
 exports.updateProfile = async (req, res) => {
   try {
-    const { name, email } = req.body;
+    const { firstName, lastName, email } = req.body;
     
     // Check if email exists and belongs to another user
     if (email) {
@@ -151,7 +151,7 @@ exports.updateProfile = async (req, res) => {
       }
     }
 
-    const success = await User.update(req.user.userId, { name, email });
+    const success = await User.update(req.user.userId, { firstName, lastName, email });
     
     if (!success) {
       return res.status(404).json({ message: 'User not found or no changes made' });
@@ -185,7 +185,8 @@ exports.changePassword = async (req, res) => {
     // Change password
     await User.changePassword(req.user.userId, newPassword);
     
-    res.json({ message: 'Password changed successfully' });  } catch (error) {
+    res.json({ message: 'Password changed successfully' });
+  } catch (error) {
     console.error('Change password error:', error);
     res.status(500).json({ message: 'Server error changing password' });
   }

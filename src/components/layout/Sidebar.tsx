@@ -77,7 +77,7 @@ const Sidebar = ({ mobile, closeSidebar }: SidebarProps) => {
             <p className="text-sm font-medium text-gray-900 dark:text-gray-200">
               {user ? `${user.firstName} ${user.lastName}` : 'Utilisateur'}
             </p>
-            <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{user?.email || 'email@exemple.com'}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{user?.email}</p>
           </div>
         </div>
         

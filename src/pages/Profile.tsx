@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import PageTransition from '../components/layout/PageTransition';
+import SuccessToast from '../components/layout/SuccessToast';
 import { Camera } from 'lucide-react';
 import authService from '../services/auth';
 
@@ -19,16 +20,24 @@ const Profile = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [avatar, setAvatar] = useState(user?.avatar || null);
+  const [showSuccessToast, setShowSuccessToast] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const resetToast = () => {
+    setSuccess('');
+    setShowSuccessToast(false);
+  };
 
   const handleInfoSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setSuccess('');
+    setShowSuccessToast(false);
 
     try {
       await updateUser(userInfo);
       setSuccess('Informations mises à jour avec succès');
+      setShowSuccessToast(true);
       setIsEditing(false);
     } catch (err: any) {
       setError(err.message || 'Erreur lors de la mise à jour des informations');
@@ -38,6 +47,7 @@ const Profile = () => {
     e.preventDefault();
     setError('');
     setSuccess('');
+    setShowSuccessToast(false);
 
     if (newPassword !== confirmPassword) {
       setError('Les mots de passe ne correspondent pas');
@@ -47,6 +57,7 @@ const Profile = () => {
     try {
       await changePassword(password, newPassword);
       setSuccess('Mot de passe modifié avec succès');
+      setShowSuccessToast(true);
       setIsEditingPassword(false);
       setPassword('');
       setNewPassword('');
@@ -60,6 +71,13 @@ const Profile = () => {
     <PageTransition type="fade">
       <div className="max-w-2xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Mon Profil</h1>
+          {/* Toast de succès */}
+        <SuccessToast 
+          message={success} 
+          show={showSuccessToast} 
+          onClose={resetToast}
+          duration={3000}
+        />
         
         <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 space-y-6">
           {/* Avatar section */}
@@ -82,13 +100,17 @@ const Profile = () => {
                 type="file"
                 ref={fileInputRef}
                 className="hidden"
-                accept="image/*"                onChange={async (e) => {
-                  const file = e.target.files?.[0];
+                accept="image/*"
+                onChange={async (e) => {                  const file = e.target.files?.[0];
                   if (file) {
                     try {
+                      setError('');
+                      setSuccess('');
+                      setShowSuccessToast(false);
                       const response = await authService.uploadAvatar(file);
                       setAvatar(response.avatarUrl);
                       setSuccess('Avatar mis à jour avec succès');
+                      setShowSuccessToast(true);
                     } catch (err: any) {
                       setError(err.message || 'Erreur lors de la mise à jour de l\'avatar');
                     }

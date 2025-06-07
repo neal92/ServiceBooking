@@ -2,7 +2,6 @@ import axios from 'axios';
 
 interface User {
   id: number;
-  name: string;
   firstName: string;
   lastName: string;
   email: string;
@@ -11,7 +10,8 @@ interface User {
 }
 
 interface RegisterData {
-  name: string;
+  firstName: string;
+  lastName: string;
   email: string;
   password: string;
 }
@@ -27,7 +27,8 @@ interface AuthResponse {
 }
 
 interface ProfileUpdateData {
-  name?: string;
+  firstName?: string;
+  lastName?: string;
   email?: string;
 }
 
@@ -60,10 +61,11 @@ apiClient.interceptors.request.use((config) => {
   return Promise.reject(error);
 });
 
-export const authService = {  
-  register: async (userData: RegisterData): Promise<AuthResponse> => {
+const authService = {    register: async (userData: RegisterData): Promise<AuthResponse> => {
     try {
+      console.log('Sending registration request with data:', userData);
       const response = await apiClient.post<AuthResponse>('/auth/register', userData);
+      console.log('Registration successful, received response:', response.data);
       
       // Save token and user to local storage
       if (response.data.token) {
@@ -74,11 +76,18 @@ export const authService = {
       return response.data;
     } catch (error: any) {
       console.error('Registration error:', error);
+      console.error('Error details:', {
+        message: error.message,
+        status: error.response?.status,
+        data: error.response?.data,
+        headers: error.response?.headers
+      });
       // Extract the specific error message from the response if available
       const errorMessage = error.response?.data?.message || "Échec de l'inscription. Veuillez réessayer.";
       throw new Error(errorMessage);
     }
-  },    
+  },
+  
   login: async (credentials: LoginCredentials): Promise<AuthResponse> => {
     try {
       const response = await apiClient.post<AuthResponse>('/auth/login', credentials);

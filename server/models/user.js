@@ -1,7 +1,8 @@
 const db = require('../config/db');
 const bcrypt = require('bcrypt');
 
-class User {  // Find user by email
+class User {
+  // Find user by email
   static async findByEmail(email) {
     try {
       console.log(`Looking up user by email: ${email}`);
@@ -27,25 +28,25 @@ class User {  // Find user by email
   // Find user by ID
   static async findById(id) {
     try {
-      const [rows] = await db.query('SELECT id, email, name, role, created_at FROM users WHERE id = ?', [id]);
+      const [rows] = await db.query('SELECT id, email, firstName, lastName, role, created_at FROM users WHERE id = ?', [id]);
       return rows[0];
     } catch (error) {
       console.error('Error finding user by ID:', error);
       throw error;
     }
   }
+
   // Create a new user
   static async create(userData) {
     try {
       console.log(`Hashing password for user: ${userData.email}`);
-      // Hash the password
       const salt = await bcrypt.genSalt(10);
       const hashedPassword = await bcrypt.hash(userData.password, salt);
 
       console.log(`Inserting new user into database: ${userData.email}`);
       const [result] = await db.query(
-        'INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)',
-        [userData.name, userData.email, hashedPassword, userData.role || 'user']
+        'INSERT INTO users (firstName, lastName, email, password, role) VALUES (?, ?, ?, ?, ?)',
+        [userData.firstName, userData.lastName, userData.email, hashedPassword, userData.role || 'user']
       );
 
       console.log(`User created with ID: ${result.insertId}`);
@@ -62,6 +63,7 @@ class User {  // Find user by email
       throw error;
     }
   }
+
   // Verify password
   static async verifyPassword(plainPassword, hashedPassword) {
     try {
@@ -78,10 +80,9 @@ class User {  // Find user by email
   // Update user
   static async update(id, userData) {
     try {
-      // Don't update password here, use a separate method for that
       const [result] = await db.query(
-        'UPDATE users SET name = ?, email = ? WHERE id = ?',
-        [userData.name, userData.email, id]
+        'UPDATE users SET firstName = ?, lastName = ?, email = ? WHERE id = ?',
+        [userData.firstName, userData.lastName, userData.email, id]
       );
       
       return result.affectedRows > 0;
