@@ -26,40 +26,37 @@ const Calendar = () => {
     return (
     <PageTransition type="zoom">
       <div className="h-screen flex flex-col">
-        <div className="mb-4">
-          <h1 className="text-2xl font-bold text-gray-900">Calendrier des rendez-vous</h1>
-          <p className="mt-1 text-sm text-gray-500">
+        <div className="mb-4">          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Calendrier des rendez-vous</h1>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
             Consultez, ajoutez ou modifiez vos rendez-vous dans le calendrier.
           </p>
         </div>
-        
-        {/* Légende des statuts */}
-        <div className="mb-6 bg-white p-4 rounded-lg shadow-sm">
+          {/* Légende des statuts */}
+        <div className="mb-6 bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
           <div className="flex items-center mb-2">
-            <Info size={18} className="text-blue-600 mr-2" />
-            <h3 className="font-medium text-gray-700">Légende des statuts</h3>
+            <Info size={18} className="text-blue-600 dark:text-blue-400 mr-2" />
+            <h3 className="font-medium text-gray-700 dark:text-gray-200">Légende des statuts</h3>
           </div>
           <div className="flex flex-wrap gap-3 pt-2">
-            <div className="flex items-center px-3 py-1.5 rounded-md text-sm text-gray-700">
+            <div className="flex items-center px-3 py-1.5 rounded-md text-sm text-gray-700 dark:text-gray-200">
               <div className="h-3 w-3 rounded-full bg-green-500 mr-2"></div>
-              Confirmé
-            </div>
-            <div className="flex items-center px-3 py-1.5 rounded-md text-sm text-gray-700">
+              Confirmé            </div>
+            <div className="flex items-center px-3 py-1.5 rounded-md text-sm text-gray-700 dark:text-gray-200">
               <div className="h-3 w-3 rounded-full bg-orange-500 mr-2"></div>
               En attente
             </div>
-            <div className="flex items-center px-3 py-1.5 rounded-md text-sm text-gray-700">
+            <div className="flex items-center px-3 py-1.5 rounded-md text-sm text-gray-700 dark:text-gray-200">
               <div className="h-3 w-3 rounded-full bg-red-500 mr-2"></div>
               Annulé
             </div>
-            <div className="flex items-center px-3 py-1.5 rounded-md text-sm text-gray-700">
+            <div className="flex items-center px-3 py-1.5 rounded-md text-sm text-gray-700 dark:text-gray-200">
               <div className="h-3 w-3 rounded-full bg-blue-500 mr-2"></div>
-              Terminé
-            </div>
+              Terminé            </div>
           </div>
-        </div>          <div className="bg-white shadow rounded-lg p-6 flex-grow flex flex-col h-full">
+        </div>          
+        <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 flex-grow flex flex-col h-full border border-gray-200 dark:border-gray-700">
             <div className="flex-grow h-full" ref={calendarContainerRef}>
-              <AppointmentCalendar 
+              <AppointmentCalendar
                 key={refreshKey}
                 onAppointmentUpdated={handleAppointmentUpdated}
               />

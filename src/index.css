@@ -57,8 +57,175 @@
   
   /* Styles pour le calendrier en plein écran */
   .fc {
+    --fc-border-color: rgb(var(--border-color));
+    --fc-page-bg-color: rgb(var(--bg-card));
+    --fc-neutral-bg-color: rgb(var(--bg-main));
+    --fc-list-event-hover-bg-color: rgb(var(--bg-main));
+    --fc-theme-standard-border-color: rgb(var(--border-color));
     height: 100% !important;
     min-height: 100% !important;
+    color: rgb(var(--text-main));
+    background: rgb(var(--bg-card));
+  }
+
+  /* Style des créneaux horaires */
+  .fc-timegrid-slots {
+    background-color: rgb(var(--bg-card)) !important;
+  }
+
+  .fc-timegrid-slot {
+    height: 3rem !important;
+    border-color: rgb(var(--border-color)) !important;
+  }
+
+  .fc-theme-standard .fc-scrollgrid {
+    border: 1px solid rgb(var(--border-color)) !important;
+  }
+
+  .fc-theme-standard td, 
+  .fc-theme-standard th {
+    border: 1px solid rgb(var(--border-color)) !important;
+  }
+
+  .fc-timegrid-col.fc-day-today {
+    background-color: rgba(59, 130, 246, 0.05) !important;
+  }
+
+  .fc-timegrid-now-indicator-line {
+    border-color: rgb(59, 130, 246) !important;
+    border-width: 2px !important;
+  }
+
+  .fc-timegrid-now-indicator-arrow {
+    border-color: rgb(59, 130, 246) !important;
+    background-color: rgb(59, 130, 246) !important;
+  }
+
+  /* En-têtes et labels */
+  .fc-col-header {
+    background-color: rgb(var(--bg-card)) !important;
+    border-bottom: 2px solid rgb(var(--border-color)) !important;
+  }
+
+  .fc-col-header-cell-cushion {
+    color: rgb(var(--text-main)) !important;
+    font-weight: 600 !important;
+    padding: 1rem 0.5rem !important;
+  }
+
+  .fc-timegrid-axis-cushion,
+  .fc-timegrid-slot-label-cushion {
+    color: rgb(var(--text-main)) !important;
+    opacity: 0.7;
+  }
+
+  /* Événements */
+  .fc-event {
+    border-radius: 8px !important;
+    padding: 4px 8px !important;
+    margin: 2px 4px !important;
+    border: none !important;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+  }
+
+  .fc-event:hover {
+    transform: translateY(-1px) scale(1.02) !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
+    z-index: 5 !important;
+  }
+
+  .fc-event-title {
+    font-weight: 500 !important;
+    font-size: 0.875rem !important;
+    padding: 2px 0 !important;
+  }
+
+  .fc-event-time {
+    font-size: 0.75rem !important;
+    opacity: 0.9 !important;
+  }
+
+  /* Mode sombre */
+  .dark .fc {
+    border-color: rgb(55, 65, 81) !important;
+  }
+
+  .dark .fc-theme-standard td, 
+  .dark .fc-theme-standard th,
+  .dark .fc-theme-standard .fc-scrollgrid {
+    border-color: rgb(55, 65, 81) !important;
+  }
+
+  .dark .fc-timegrid-slot {
+    background-color: rgb(31, 41, 55) !important;
+  }
+
+  .dark .fc-timegrid-col.fc-day-today {
+    background-color: rgba(59, 130, 246, 0.1) !important;
+  }
+
+  .dark .fc-col-header {
+    background-color: rgb(31, 41, 55) !important;
+    border-bottom: 2px solid rgb(55, 65, 81) !important;
+  }
+
+  .dark .fc-timegrid-axis,
+  .dark .fc-timegrid-slot-label {
+    background-color: rgb(31, 41, 55) !important;
+    border-color: rgb(55, 65, 81) !important;
+  }
+
+  .dark .fc-button-primary {
+    background-color: rgb(55, 65, 81) !important;
+    border-color: rgb(75, 85, 99) !important;
+    color: rgb(229, 231, 235) !important;
+  }
+
+  .dark .fc-button-primary:hover {
+    background-color: rgb(75, 85, 99) !important;
+    border-color: rgb(107, 114, 128) !important;
+  }
+
+  .dark .fc-button-primary:disabled {
+    background-color: rgb(75, 85, 99) !important;
+    border-color: rgb(107, 114, 128) !important;
+    opacity: 0.5 !important;
+  }
+
+  .dark .fc-button-active {
+    background-color: rgb(37, 99, 235) !important;
+    border-color: rgb(29, 78, 216) !important;
+  }
+
+  .dark .fc-event {
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3) !important;
+  }
+
+  .dark .fc-event:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4) !important;
+  }
+
+  /* Styles responsives */
+  @media (max-width: 640px) {
+    .fc .fc-toolbar {
+      flex-direction: column !important;
+      gap: 0.5rem !important;
+    }
+
+    .fc .fc-toolbar-title {
+      font-size: 1.125rem !important;
+      text-align: center !important;
+    }
+
+    .fc-event-title {
+      font-size: 0.75rem !important;
+    }
+
+    .fc-event {
+      padding: 2px 4px !important;
+      margin: 1px 2px !important;
+    }
   }
   
   .appointment-calendar, 
@@ -106,11 +273,11 @@
     box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.25) !important;
   }
   
-  /* Calendar dark mode styles */
+  /* Styles spécifiques au mode sombre */
   .dark .fc {
-    color: #e5e7eb;
+    color: rgb(var(--text-main));
   }
-  
+
   .dark .fc .fc-toolbar-title {
     color: #e5e7eb;
   }

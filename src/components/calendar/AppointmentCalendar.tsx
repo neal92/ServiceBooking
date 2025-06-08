@@ -237,7 +237,6 @@ const AppointmentCalendar: React.FC<AppointmentCalendarProps> = ({
     switch (status) {
       case 'confirmed': return '#4CAF50'; // Vert
       case 'pending': return '#FF9800'; // Orange
-      case 'in-progress': return '#FF9800'; // Orange
       case 'cancelled': return '#F44336'; // Rouge
       case 'completed': return '#2196F3'; // Bleu
       default: return '#9E9E9E'; // Gris
@@ -343,8 +342,7 @@ const AppointmentCalendar: React.FC<AppointmentCalendarProps> = ({
             initialView={calendarView}
             headerToolbar={{
               left: 'prev,next today',
-              center: 'title',
-              right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek'
+              center: 'title',              right: 'dayGridMonth,timeGridWeek,timeGridDay'
             }}
             locale={frLocale}
             editable={true}
@@ -360,13 +358,18 @@ const AppointmentCalendar: React.FC<AppointmentCalendarProps> = ({
             allDaySlot={false}
             nowIndicator={true}
             slotMinTime="08:00:00"
-            slotMaxTime="20:00:00"
-            businessHours={{
+            slotMaxTime="20:00:00"            businessHours={{
               daysOfWeek: [1, 2, 3, 4, 5, 6], // Lundi au samedi
               startTime: '09:00',
               endTime: '19:00',
             }}
+            slotMinWidth={70}
             slotDuration="00:30:00"
+            slotLabelFormat={{
+              hour: '2-digit',
+              minute: '2-digit',
+              hour12: false
+            }}
           />
         </div>
       )}
