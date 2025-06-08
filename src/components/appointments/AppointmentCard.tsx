@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   Clock, Calendar, User, Mail, Phone, 
   MoreHorizontal, CheckCircle, AlertTriangle, 
@@ -6,15 +6,25 @@ import {
 } from 'lucide-react';
 import { Appointment } from '../../types';
 import AppointmentRecapModal from './AppointmentRecapModal';
+import ModalPortal from '../layout/ModalPortal';
+import SuccessToast from '../layout/SuccessToast';
 
 interface AppointmentCardProps {
   appointment: Appointment;
-  onDelete?: () => void;
-  onStatusChange?: (status: string) => void;
+  onDelete?: (id: number) => Promise<void>;
+  onStatusChange?: (id: string, status: Appointment['status']) => Promise<void>;
 }
 
 const AppointmentCard = ({ appointment, onDelete, onStatusChange }: AppointmentCardProps) => {
-  // Extraire les propriétés en vérifiant qu'elles existent
+  const [showMenu, setShowMenu] = useState(false);
+  const [showRecapModal, setShowRecapModal] = useState(false);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [statusToConfirm, setStatusToConfirm] = useState<Appointment['status'] | null>(null);
+  const [showSuccessToast, setShowSuccessToast] = useState(false);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  // Extract properties and check for existence
   const clientName = appointment.clientName || '';
   const clientEmail = appointment.clientEmail || '';
   const clientPhone = appointment.clientPhone || '';
@@ -22,7 +32,7 @@ const AppointmentCard = ({ appointment, onDelete, onStatusChange }: AppointmentC
   const date = appointment.date || '';
   const time = appointment.time || '';
   const duration = appointment.duration || 0;
-  const status = appointment.status || 'pending';
+  const status = appointment.status;
   const notes = appointment.notes || '';
   
   const formattedDate = date ? new Date(date).toLocaleDateString('fr-FR', {
@@ -31,13 +41,8 @@ const AppointmentCard = ({ appointment, onDelete, onStatusChange }: AppointmentC
     month: 'long'
   }) : '';
   
-  const [showMenu, setShowMenu] = React.useState(false);
-  const [showRecapModal, setShowRecapModal] = React.useState(false);
-  const menuRef = React.useRef<HTMLDivElement>(null);
-  const buttonRef = React.useRef<HTMLButtonElement>(null);
-  
-  // Gestionnaire pour fermer le menu quand on clique en dehors
-  React.useEffect(() => {
+  // Close menu when clicking outside
+  useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (showMenu && 
           menuRef.current && 
@@ -54,7 +59,7 @@ const AppointmentCard = ({ appointment, onDelete, onStatusChange }: AppointmentC
     };
   }, [showMenu]);
 
-  const getStatusDetails = (status: string) => {
+  const getStatusDetails = (status: Appointment['status']) => {
     switch (status) {
       case 'pending':
         return { 
@@ -69,7 +74,8 @@ const AppointmentCard = ({ appointment, onDelete, onStatusChange }: AppointmentC
           textColor: 'text-green-800 dark:text-green-300',
           borderColor: 'border-green-200 dark:border-green-800',
           icon: <CheckCircle className="h-5 w-5 text-green-500" />
-        };      case 'in-progress':
+        };      
+      case 'in-progress':
         return { 
           bgColor: 'bg-orange-100 dark:bg-orange-900/30', 
           textColor: 'text-orange-800 dark:text-orange-300',
@@ -99,10 +105,11 @@ const AppointmentCard = ({ appointment, onDelete, onStatusChange }: AppointmentC
         };
     }
   };
-  // Récupérer les couleurs et icône en fonction du statut
+
+  // Get colors and icon based on status
   const { bgColor, textColor, icon } = getStatusDetails(status);
 
-  // Fonction pour formater la durée
+  // Format duration
   const formatDuration = (minutes: number) => {
     if (minutes < 60) return `${minutes} min`;
     const hours = Math.floor(minutes / 60);
@@ -111,15 +118,146 @@ const AppointmentCard = ({ appointment, onDelete, onStatusChange }: AppointmentC
     return `${hours}h${remainingMinutes}`;
   };
   
-  // Stopper la propagation du clic sur le menu pour éviter d'ouvrir le modal de récap
+  // Stop click propagation for menu
   const handleMenuClick = (e: React.MouseEvent) => {
     e.stopPropagation();
+  };
+
+  // Handle status change with confirmation
+  const handleStatusChange = (newStatus: Appointment['status']) => {
+    setStatusToConfirm(newStatus);
+    setShowConfirmDialog(true);
+    setShowMenu(false);
+  };
+
+  // Delete handler
+  const handleDelete = async () => {
+    if (onDelete) {
+      try {
+        await onDelete(appointment.id);
+        setShowMenu(false);
+      } catch (err) {
+        console.error('Error deleting appointment:', err);
+      }
+    }
+  };
+
+  // Confirm status change 
+  const confirmStatusChange = async () => {
+    if (statusToConfirm && onStatusChange) {
+      try {
+        await onStatusChange(appointment.id.toString(), statusToConfirm);
+        setShowConfirmDialog(false);
+        setShowSuccessToast(true);
+      } catch (err) {
+        console.error('Error updating status:', err);
+      }
+    }
+  };
+
+  // Menu options based on status
+  const getMenuOptions = () => {
+    // Options for in-progress appointments
+    if (status === 'in-progress') {
+      return (
+        <>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              handleStatusChange('completed');
+            }}
+            className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+            role="menuitem"
+          >
+            <CheckCircle className="inline mr-2 h-4 w-4 text-blue-500" />
+            Terminer
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              handleStatusChange('cancelled');
+            }}
+            className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+            role="menuitem"
+          >
+            <XCircle className="inline mr-2 h-4 w-4 text-red-500" />
+            Annuler
+          </button>
+        </>
+      );
+    }
+
+    // Options for pending or confirmed appointments
+    if (status === 'pending' || status === 'confirmed') {
+      return (
+        <>
+          {status === 'pending' && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                handleStatusChange('confirmed');
+              }}
+              className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+              role="menuitem"
+            >
+              <CheckCircle className="inline mr-2 h-4 w-4 text-green-500" />
+              Confirmer
+            </button>
+          )}
+
+          {status === 'confirmed' && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                handleStatusChange('in-progress');
+              }}
+              className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+              role="menuitem"
+            >
+              <Clock className="inline mr-2 h-4 w-4 text-orange-500" />
+              En cours
+            </button>
+          )}
+
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              handleStatusChange('cancelled');
+            }}
+            className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+            role="menuitem"
+          >
+            <XCircle className="inline mr-2 h-4 w-4 text-red-500" />
+            Annuler
+          </button>
+        </>
+      );
+    }
+
+    // Delete option for completed or cancelled appointments
+    if ((status === 'completed' || status === 'cancelled') && onDelete) {
+      return (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            handleDelete();
+          }}
+          className="block w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30"
+          role="menuitem"
+        >
+          <Trash className="inline mr-2 h-4 w-4 text-red-500" />
+          Supprimer
+        </button>
+      );
+    }
+
+    return null;
   };
 
   return (
     <>
       <div 
-        className="px-4 py-4 sm:px-6 border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/60 transition-colors cursor-pointer"
+        className="px-6 py-5 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/60 transition-colors cursor-pointer"
         onClick={() => setShowRecapModal(true)}
       >
         <div className="flex items-center justify-between">
@@ -127,14 +265,14 @@ const AppointmentCard = ({ appointment, onDelete, onStatusChange }: AppointmentC
             <p className="text-sm font-medium text-blue-600 dark:text-blue-400 truncate">
               {serviceName}
             </p>
-            <p className="mt-1 flex items-center text-sm text-gray-500 dark:text-gray-400">
+            <p className="mt-1.5 flex items-center text-sm text-gray-500 dark:text-gray-400">
               <User className="flex-shrink-0 mr-1.5 h-4 w-4 text-gray-400 dark:text-gray-500" aria-hidden="true" />
               <span className="truncate">{clientName}</span>
             </p>
           </div>
-          <div className="ml-2 flex-shrink-0 flex">
-            <p className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${bgColor} ${textColor}`}>
-              {icon && <span className="mr-1">{icon}</span>}
+          <div className="ml-4 flex-shrink-0">
+            <p className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${bgColor} ${textColor}`}>
+              {icon && <span className="mr-1.5">{icon}</span>}
               {status === 'pending' && 'En attente'}
               {status === 'confirmed' && 'Confirmé'}
               {status === 'in-progress' && 'En cours'}
@@ -144,14 +282,14 @@ const AppointmentCard = ({ appointment, onDelete, onStatusChange }: AppointmentC
           </div>
         </div>
         
-        <div className="mt-3 flex justify-between">
-          <div className="sm:flex sm:justify-start">
-            <div className="mr-6 pl-4">
-              <div className="flex items-center text-sm text-gray-500 dark:text-white">
+        <div className="mt-4 flex justify-between">
+          <div className="sm:flex sm:justify-start space-y-2 sm:space-y-0 sm:space-x-6">
+            <div>
+              <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
                 <Calendar className="flex-shrink-0 mr-2 h-4 w-4 text-gray-400 dark:text-gray-500" aria-hidden="true" />
-                <p className="font-medium">{formattedDate}</p>
+                <p className="font-medium text-gray-900 dark:text-white">{formattedDate}</p>
               </div>
-              <div className="mt-1 flex items-center text-sm text-gray-500 dark:text-gray-400">
+              <div className="mt-1.5 flex items-center text-sm text-gray-500 dark:text-gray-400">
                 <Clock className="flex-shrink-0 mr-2 h-4 w-4 text-gray-400 dark:text-gray-500" aria-hidden="true" />
                 <p>{time ? time.substring(0, 5) : ''} ({formatDuration(duration)})</p>
               </div>
@@ -165,7 +303,7 @@ const AppointmentCard = ({ appointment, onDelete, onStatusChange }: AppointmentC
                 </div>
               )}
               {clientPhone && (
-                <div className="mt-1 flex items-center text-sm text-gray-500 dark:text-gray-400">
+                <div className="mt-1.5 flex items-center text-sm text-gray-500 dark:text-gray-400">
                   <Phone className="flex-shrink-0 mr-1.5 h-4 w-4 text-gray-400 dark:text-gray-500" aria-hidden="true" />
                   <p>{clientPhone}</p>
                 </div>
@@ -191,77 +329,7 @@ const AppointmentCard = ({ appointment, onDelete, onStatusChange }: AppointmentC
                 {showMenu && (
                   <div ref={menuRef} className="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 z-10">
                     <div className="py-1" role="menu" aria-orientation="vertical" aria-labelledby="options-menu">
-                      {status !== 'confirmed' && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onStatusChange('confirmed');
-                            setShowMenu(false);
-                          }}
-                          className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
-                          role="menuitem"
-                        >
-                          <CheckCircle className="inline mr-2 h-4 w-4 text-green-500" />
-                          Confirmer
-                        </button>
-                      )}
-                        {status !== 'in-progress' && status !== 'completed' && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onStatusChange('in-progress');
-                            setShowMenu(false);
-                          }}
-                          className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
-                          role="menuitem"
-                        >
-                          <Clock className="inline mr-2 h-4 w-4 text-orange-500" />
-                          En cours
-                        </button>
-                      )}
-                      
-                      {status !== 'completed' && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onStatusChange('completed');
-                            setShowMenu(false);
-                          }}
-                          className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
-                          role="menuitem"
-                        >
-                          <CheckCircle className="inline mr-2 h-4 w-4 text-blue-500" />
-                          Terminé
-                        </button>
-                      )}
-                      
-                      {status !== 'cancelled' && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onStatusChange('cancelled');
-                            setShowMenu(false);
-                          }}
-                          className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
-                          role="menuitem"
-                        >
-                          <XCircle className="inline mr-2 h-4 w-4 text-red-500" />
-                          Annuler
-                        </button>
-                      )}
-                      
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onDelete();
-                          setShowMenu(false);
-                        }}
-                        className="block w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30"
-                        role="menuitem"
-                      >
-                        <Trash className="inline mr-2 h-4 w-4 text-red-500" />
-                        Supprimer
-                      </button>
+                      {getMenuOptions()}
                     </div>
                   </div>
                 )}
@@ -280,14 +348,61 @@ const AppointmentCard = ({ appointment, onDelete, onStatusChange }: AppointmentC
         )}
       </div>
       
-      {/* Modal de récapitulatif */}
+      {/* Récapitulatif modal */}
       {showRecapModal && (
         <AppointmentRecapModal 
           isOpen={showRecapModal}
           onClose={() => setShowRecapModal(false)}
           appointment={appointment}
+          onDelete={onDelete}
+          onStatusChange={async (id, newStatus) => {
+            if (onStatusChange) {
+              return onStatusChange(id, newStatus);
+            }
+            return Promise.resolve();
+          }}
         />
       )}
+
+      {/* Confirmation dialog */}
+      {showConfirmDialog && statusToConfirm && (
+        <ModalPortal isOpen={showConfirmDialog}>
+          <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto modal-backdrop animate-fadeIn">
+            <div className="fixed inset-0 bg-black bg-opacity-40" onClick={() => setShowConfirmDialog(false)}></div>
+            
+            <div className="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full mx-4 animate-fadeIn">
+              <div className="p-6 text-center">
+                <h3 className="mb-5 text-lg font-medium text-gray-900 dark:text-white">
+                  Êtes-vous sûr de votre choix, celui-ci est irréversible
+                </h3>
+                <div className="flex justify-center gap-4">
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmDialog(false)}
+                    className="py-2 px-4 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400 transition-all duration-200"
+                  >
+                    Annuler
+                  </button>
+                  <button
+                    type="button"
+                    onClick={confirmStatusChange}
+                    className="py-2 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
+                  >
+                    Confirmer
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </ModalPortal>
+      )}
+
+      {/* Success Toast */}
+      <SuccessToast 
+        show={showSuccessToast}
+        message="Status modifié"
+        onClose={() => setShowSuccessToast(false)}
+      />
     </>
   );
 };

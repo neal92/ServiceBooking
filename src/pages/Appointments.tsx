@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { PlusCircle, Filter, Calendar as CalendarIcon, CalendarX, Trash2 } from 'lucide-react';
+import { PlusCircle, Filter, Calendar as CalendarIcon, CalendarX, Trash2, RotateCcw } from 'lucide-react';
 import AppointmentList from '../components/appointments/AppointmentList';
 import NewAppointmentModal from '../components/appointments/NewAppointmentModal';
 import { Appointment, Service } from '../types';
@@ -17,36 +17,19 @@ const Appointments = () => {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [appointmentToDelete, setAppointmentToDelete] = useState<Appointment | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  // Nouvel état pour activer/désactiver la mise à jour automatique du statut
-  const [autoUpdateStatus, setAutoUpdateStatus] = useState<boolean>(true);
+  const [appointmentToDelete, setAppointmentToDelete] = useState<Appointment | null>(null);
+  const [autoUpdateStatus, setAutoUpdateStatus] = useState(true);
 
   useEffect(() => {
     fetchData();
   }, []);
 
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      const [appointmentsData, servicesData] = await Promise.all([
-        appointmentService.getAll(),
-        serviceService.getAll()
-      ]);
-      setAppointments(appointmentsData);
-      setServices(servicesData);
-      setLoading(false);
-    } catch (err) {
-      console.error("Error fetching data:", err);
-      setError('Failed to load appointments or services');
-      setLoading(false);
-    }
-  };
   // Écouter l'événement personnalisé 'appointmentUpdated'
   useEffect(() => {
     const handleAppointmentUpdated = () => {
-      fetchData(); // Recharger les rendez-vous après la mise à jour
+      fetchData();
     };
     
     window.addEventListener('appointmentUpdated', handleAppointmentUpdated);
@@ -55,69 +38,82 @@ const Appointments = () => {
       window.removeEventListener('appointmentUpdated', handleAppointmentUpdated);
     };
   }, []);
-    // Effet pour mettre automatiquement les rendez-vous en statut "en cours" quand l'heure arrive
+
+  // Effet pour la mise à jour automatique du statut
   useEffect(() => {
-    // Ne rien faire si la mise à jour automatique est désactivée
     if (!autoUpdateStatus) return;
     
-    // Fonction pour vérifier et mettre à jour les statuts des rendez-vous
     const checkAndUpdateAppointments = async () => {
-      // Récupérer les rendez-vous à jour
-      const currentAppointments = await appointmentService.getAll();
       const now = new Date();
-      const confirmedAppointments = currentAppointments.filter(app => 
-        app.status === 'confirmed' && 
+      const confirmedAppointments = appointments.filter(app => 
+        app.status === 'confirmed' &&
         new Date(app.date).setHours(0, 0, 0, 0) === now.setHours(0, 0, 0, 0)
       );
       
       let hasUpdates = false;
       for (const appointment of confirmedAppointments) {
-        // Extraire l'heure et les minutes du rendez-vous
         const [hours, minutes] = appointment.time.split(':').map(Number);
         const appointmentTime = new Date();
         appointmentTime.setHours(hours, minutes, 0, 0);
         
-        // Si l'heure du rendez-vous est passée (avec une tolérance de 5 minutes avant)
         const fiveMinutesBeforeAppt = new Date(appointmentTime);
         fiveMinutesBeforeAppt.setMinutes(fiveMinutesBeforeAppt.getMinutes() - 5);
         
         if (now >= fiveMinutesBeforeAppt && appointment.status === 'confirmed') {
           console.log(`Mise à jour automatique du statut pour le rendez-vous #${appointment.id} à ${hours}h${minutes}`);
-          await appointmentService.updateStatus(appointment.id.toString(), 'in-progress');
-          hasUpdates = true;
+          
+          try {
+            await appointmentService.updateStatus(appointment.id.toString(), 'in-progress');
+            hasUpdates = true;
+          } catch (err) {
+            console.error("Error updating appointment status:", err);
+          }
         }
       }
       
-      // Recharger les données seulement si des mises à jour ont été effectuées
       if (hasUpdates) {
         fetchData();
       }
     };
-    
-    // Vérifier immédiatement
+
+    // Vérifier toutes les 5 minutes
+    const interval = setInterval(checkAndUpdateAppointments, 5 * 60 * 1000);
+    // Vérifier immédiatement au chargement
     checkAndUpdateAppointments();
-    
-    // Vérifier toutes les minutes
-    const intervalId = setInterval(checkAndUpdateAppointments, 60000);
-    
-    // Nettoyage
-    return () => clearInterval(intervalId);
-  }, [autoUpdateStatus]);
-  
-  const handleStatusChange = async (id: number, status: string) => {
+
+    return () => clearInterval(interval);
+  }, [autoUpdateStatus, appointments]);
+
+  const fetchData = async () => {
     try {
-      await appointmentService.updateStatus(id.toString(), status);
+      setLoading(true);
+      setError(null);
+      const [appointmentsData, servicesData] = await Promise.all([
+        appointmentService.getAll(),
+        serviceService.getAll()
+      ]);
+      
+      setAppointments(appointmentsData);
+      setServices(servicesData);
+      setLoading(false);
+    } catch (err) {
+      console.error("Error fetching appointments:", err);
+      setError('Erreur lors du chargement des rendez-vous');
+      setLoading(false);
+    }
+  };
+  const handleStatusChange = async (id: string, status: Appointment['status']) => {
+    try {
+      await appointmentService.updateStatus(id, status);
       fetchData();
     } catch (err) {
       console.error("Error updating appointment status:", err);
-      setError('Failed to update appointment status');
+      setError('Erreur lors de la mise à jour du statut');
     }
   };
-  const confirmDeleteAppointment = (appointment: Appointment | undefined) => {
-    if (appointment) {
-      setAppointmentToDelete(appointment);
-      setIsDeleteModalOpen(true);
-    }
+  const confirmDeleteAppointment = async (appointment: Appointment): Promise<void> => {
+    setAppointmentToDelete(appointment);
+    setIsDeleteModalOpen(true);
   };
 
   const handleDeleteAppointment = async () => {
@@ -133,10 +129,10 @@ const Appointments = () => {
       setError('Failed to delete appointment');
     }
   };
+
   const getFilteredAppointments = () => {
     let filtered = [...appointments];
     
-    // Filtre par période (all, upcoming, ongoing, past)
     if (statusFilter !== 'all') {
       const now = new Date();
       const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -160,7 +156,6 @@ const Appointments = () => {
       });
     }
     
-    // Filtre additionnel par statut d'appointement
     if (appointmentStatusFilter !== 'all-status') {
       filtered = filtered.filter(appointment => appointment.status === appointmentStatusFilter);
     }
@@ -170,92 +165,43 @@ const Appointments = () => {
 
   const filteredAppointments = getFilteredAppointments();
 
+  const handleResetFilters = () => {
+    setStatusFilter('all');
+    setAppointmentStatusFilter('all-status');
+  };
+
   return (
     <PageTransition type="zoom">
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Mes rendez-vous</h1>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Gérez vos rendez-vous existants ou ajoutez-en de nouveaux.</p>
       </div>
-  
 
       {error && (
         <div className="mb-6 bg-red-100 dark:bg-red-900/20 border-l-4 border-red-500 dark:border-red-700 text-red-700 dark:text-red-300 p-4">
           <p>{error}</p>
         </div>
       )}
-      
-      <div className="mb-6">
-        {/* Filtre par statut - en haut */}
-        <div className="flex flex-col sm:flex-row justify-between sm:items-center space-y-4 sm:space-y-0 mb-6">
-          <div className="inline-flex shadow-sm rounded-md">
-            <button
-              type="button"
-              className={`relative inline-flex items-center px-3 py-2 rounded-l-md border ${
-                appointmentStatusFilter === 'all-status'
-                  ? 'border-blue-600 bg-blue-600 text-white dark:bg-blue-700'
-                  : 'border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
-              } text-sm font-medium focus:z-10 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500`}
-              onClick={() => setAppointmentStatusFilter('all-status')}
-            >
-              Tous
-            </button>
-            <button
-              type="button"
-              className={`relative inline-flex items-center px-3 py-2 border-t border-b ${
-                appointmentStatusFilter === 'pending'
-                  ? 'border-yellow-600 bg-yellow-600 text-white dark:bg-yellow-700'
-                  : 'border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
-              } text-sm font-medium focus:z-10 focus:outline-none focus:ring-1 focus:ring-yellow-500 focus:border-yellow-500`}
-              onClick={() => setAppointmentStatusFilter('pending')}
-            >
-              En attente
-            </button>
-            <button
-              type="button"
-              className={`relative inline-flex items-center px-3 py-2 border-t border-b ${
-                appointmentStatusFilter === 'confirmed'
-                  ? 'border-green-600 bg-green-600 text-white dark:bg-green-700'
-                  : 'border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
-              } text-sm font-medium focus:z-10 focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500`}
-              onClick={() => setAppointmentStatusFilter('confirmed')}
-            >
-              Confirmé
-            </button>
-            <button
-              type="button"
-              className={`relative inline-flex items-center px-3 py-2 border-t border-b ${
-                appointmentStatusFilter === 'in-progress'
-                  ? 'border-orange-600 bg-orange-600 text-white dark:bg-orange-700'
-                  : 'border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
-              } text-sm font-medium focus:z-10 focus:outline-none focus:ring-1 focus:ring-orange-500 focus:border-orange-500`}
-              onClick={() => setAppointmentStatusFilter('in-progress')}
-            >
-              En cours
-            </button>
-            <button
-              type="button"
-              className={`relative inline-flex items-center px-3 py-2 border-t border-b ${
-                appointmentStatusFilter === 'completed'
-                  ? 'border-blue-600 bg-blue-600 text-white dark:bg-blue-700'
-                  : 'border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
-              } text-sm font-medium focus:z-10 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500`}
-              onClick={() => setAppointmentStatusFilter('completed')}
-            >
-              Terminé
-            </button>
-            <button
-              type="button"
-              className={`relative inline-flex items-center px-3 py-2 rounded-r-md border ${
-                appointmentStatusFilter === 'cancelled'
-                  ? 'border-red-600 bg-red-600 text-white dark:bg-red-700'
-                  : 'border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
-              } text-sm font-medium focus:z-10 focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500`}
-              onClick={() => setAppointmentStatusFilter('cancelled')}
-            >
-              Annulé
-            </button>
+
+      <div className="mb-8">
+        <div className="flex flex-wrap justify-between items-center mb-6 gap-4">
+          <div className="flex-1">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Filtres</h2>
           </div>
-            {/* Bouton "Nouveau rendez-vous" à droite */}          <div className="flex flex-col space-y-4 items-end">
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={handleResetFilters}
+              className={`inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${
+                statusFilter === 'all' && appointmentStatusFilter === 'all-status'
+                  ? 'opacity-50 cursor-not-allowed'
+                  : ''
+              }`}
+              disabled={statusFilter === 'all' && appointmentStatusFilter === 'all-status'}
+            >
+              <RotateCcw className="h-4 w-4 mr-1.5" />
+              Réinitialiser
+            </button>
             <button
               type="button"
               className="inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:bg-blue-700 dark:hover:bg-blue-600"
@@ -264,78 +210,160 @@ const Appointments = () => {
               <PlusCircle className="-ml-1 mr-2 h-5 w-5" />
               Nouveau rendez-vous
             </button>
-            {/* Interrupteur pour l'auto-mise à jour des statuts */}
-            <div className="flex items-center">
-              <span className="mr-3 text-sm text-gray-600 dark:text-gray-400">
-                Mise à jour automatique du statut
-              </span>
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input 
-                  type="checkbox" 
-                  className="sr-only peer" 
-                  checked={autoUpdateStatus}
-                  onChange={(e) => setAutoUpdateStatus(e.target.checked)}
-                />
-                <div className="w-11 h-6 bg-gray-200 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
-              </label>
+          </div>
+        </div>
+
+        {/* Conteneur des filtres */}
+        <div className="grid gap-4 md:grid-cols-2">
+          {/* Filtres par période */}
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4">
+            <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-3 pb-2 border-b border-gray-200 dark:border-gray-700">
+              Période
+            </h3>
+            <div className="flex flex-wrap gap-2">              <button
+                type="button"
+                className={`px-3 py-2 rounded-md text-sm font-medium ${
+                  statusFilter === 'all'
+                    ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
+                    : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                }`}
+                onClick={() => setStatusFilter('all')}
+              >
+                Tous
+              </button>
+              <button
+                type="button"
+                className={`px-3 py-2 rounded-md text-sm font-medium flex items-center ${
+                  statusFilter === 'upcoming'
+                    ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
+                    : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                }`}
+                onClick={() => setStatusFilter('upcoming')}
+              >
+                <CalendarIcon className="mr-1.5 h-4 w-4" />
+                À venir
+              </button>
+              <button
+                type="button"
+                className={`px-3 py-2 rounded-md text-sm font-medium flex items-center ${
+                  statusFilter === 'ongoing'
+                    ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
+                    : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                }`}
+                onClick={() => setStatusFilter('ongoing')}
+              >
+                Aujourd'hui
+              </button>
+              <button
+                type="button"
+                className={`px-3 py-2 rounded-md text-sm font-medium flex items-center ${
+                  statusFilter === 'past'
+                    ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
+                    : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                }`}
+                onClick={() => setStatusFilter('past')}
+              >
+                <CalendarX className="mr-1.5 h-4 w-4" />
+                Passés
+              </button>
+            </div>
+          </div>
+
+          {/* Filtres par statut */}
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4">
+            <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-3 pb-2 border-b border-gray-200 dark:border-gray-700">
+              Statut du rendez-vous
+            </h3>
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                className={`px-3 py-2 rounded-md text-sm font-medium ${
+                  appointmentStatusFilter === 'all-status'
+                    ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
+                    : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                }`}
+                onClick={() => setAppointmentStatusFilter('all-status')}
+              >
+                Tous
+              </button>
+              <button
+                type="button"
+                className={`px-3 py-2 rounded-md text-sm font-medium ${
+                  appointmentStatusFilter === 'pending'
+                    ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300'
+                    : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                }`}
+                onClick={() => setAppointmentStatusFilter('pending')}
+              >
+                En attente
+              </button>
+              <button
+                type="button"
+                className={`px-3 py-2 rounded-md text-sm font-medium ${
+                  appointmentStatusFilter === 'confirmed'
+                    ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
+                    : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                }`}
+                onClick={() => setAppointmentStatusFilter('confirmed')}
+              >
+                Confirmé
+              </button>
+              <button
+                type="button"
+                className={`px-3 py-2 rounded-md text-sm font-medium ${
+                  appointmentStatusFilter === 'in-progress'
+                    ? 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300'
+                    : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                }`}
+                onClick={() => setAppointmentStatusFilter('in-progress')}
+              >
+                En cours
+              </button>
+              <button
+                type="button"
+                className={`px-3 py-2 rounded-md text-sm font-medium ${
+                  appointmentStatusFilter === 'completed'
+                    ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
+                    : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                }`}
+                onClick={() => setAppointmentStatusFilter('completed')}
+              >
+                Terminé
+              </button>
+              <button
+                type="button"
+                className={`px-3 py-2 rounded-md text-sm font-medium ${
+                  appointmentStatusFilter === 'cancelled'
+                    ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
+                    : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                }`}
+                onClick={() => setAppointmentStatusFilter('cancelled')}
+              >
+                Annulé
+              </button>
             </div>
           </div>
         </div>
-        
-        {/* Filtre par période (all, upcoming, ongoing, past) - placé en dessous du bouton */}
-        <div className="inline-flex shadow-sm rounded-md">
-          <button
-            type="button"
-            className={`relative inline-flex items-center px-4 py-2 rounded-l-md border ${
-              statusFilter === 'all'
-                ? 'border-blue-600 bg-blue-600 text-white dark:bg-blue-700'
-                : 'border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
-            } text-sm font-medium focus:z-10 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500`}
-            onClick={() => setStatusFilter('all')}
-          >
-            <Filter className="mr-2 h-4 w-4" />
-            Tous
-          </button>
-          <button
-            type="button"
-            className={`relative inline-flex items-center px-4 py-2 border-t border-b ${
-              statusFilter === 'upcoming'
-                ? 'border-blue-600 bg-blue-600 text-white dark:bg-blue-700'
-                : 'border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
-            } text-sm font-medium focus:z-10 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500`}
-            onClick={() => setStatusFilter('upcoming')}
-          >
-            <CalendarIcon className="mr-2 h-4 w-4" />
-            À venir
-          </button>
-          <button
-            type="button"
-            className={`relative inline-flex items-center px-4 py-2 ${
-              statusFilter === 'ongoing'
-                ? 'border-blue-600 bg-blue-600 text-white dark:bg-blue-700'
-                : 'border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
-            } text-sm font-medium focus:z-10 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500`}
-            onClick={() => setStatusFilter('ongoing')}
-          >
-            Aujourd'hui
-          </button>
-          <button
-            type="button"
-            className={`relative inline-flex items-center px-4 py-2 rounded-r-md border ${
-              statusFilter === 'past'
-                ? 'border-blue-600 bg-blue-600 text-white dark:bg-blue-700'
-                : 'border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
-            } text-sm font-medium focus:z-10 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500`}
-            onClick={() => setStatusFilter('past')}
-          >
-            <CalendarX className="mr-2 h-4 w-4" />
-            Passés
-          </button>
+
+        <div className="mt-4 flex justify-end">
+          <div className="flex items-center bg-white dark:bg-gray-800 rounded-lg shadow-sm px-4 py-2">
+            <span className="mr-3 text-sm text-gray-600 dark:text-gray-400">
+              Mise à jour automatique du statut
+            </span>
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input 
+                type="checkbox" 
+                className="sr-only peer" 
+                checked={autoUpdateStatus}
+                onChange={(e) => setAutoUpdateStatus(e.target.checked)}
+              />
+              <div className="w-11 h-6 bg-gray-200 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+            </label>
+          </div>
         </div>
       </div>
 
-      <div className="bg-white dark:bg-gray-800 shadow overflow-hidden sm:rounded-md">
-        {loading ? (
+      <div className="bg-white dark:bg-gray-800 shadow overflow-hidden sm:rounded-lg">        {loading ? (
           <div className="py-12 text-center">
             <div className="loader inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent motion-reduce:animate-[spin_1.5s_linear_infinite] text-blue-600 dark:text-blue-400" role="status">
               <span className="sr-only">Loading...</span>
@@ -343,11 +371,16 @@ const Appointments = () => {
             <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">Chargement des rendez-vous...</p>
           </div>
         ) : filteredAppointments.length > 0 ? (
-          <div className="divide-y divide-gray-200 dark:divide-gray-700">
+          <div className="divide-y divide-gray-200 dark:divide-gray-700">            
             <AppointmentList 
               appointments={filteredAppointments}
-              onDelete={(id) => confirmDeleteAppointment(filteredAppointments.find(app => app.id === id)!)}
-              onStatusChange={(id, status) => handleStatusChange(id, status)}
+              onDelete={async (id) => {
+                const appointment = filteredAppointments.find(app => app.id === id);
+                if (appointment) {
+                  await confirmDeleteAppointment(appointment);
+                }
+              }}
+              onStatusChange={handleStatusChange}
             />
           </div>
         ) : (
@@ -375,12 +408,17 @@ const Appointments = () => {
             </div>
           </div>
         )}
-      </div>        {isModalOpen && (
+      </div>
+
+      {isModalOpen && (
         <ModalPortal isOpen={isModalOpen}>
           <NewAppointmentModal 
             isOpen={isModalOpen}
             services={services}
-            onClose={() => setIsModalOpen(false)}
+            onClose={() => {
+              setIsModalOpen(false);
+              fetchData();
+            }}
           />
         </ModalPortal>
       )}
@@ -388,14 +426,15 @@ const Appointments = () => {
       {isDeleteModalOpen && appointmentToDelete && (
         <ModalPortal isOpen={isDeleteModalOpen}>
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white dark:bg-gray-800 rounded-lg max-w-md w-full p-6">
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full">
               <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Confirmer la suppression</h3>
-              <p className="text-gray-500 dark:text-gray-400 mb-6">
-                Êtes-vous sûr de vouloir supprimer le rendez-vous du {new Date(appointmentToDelete.date).toLocaleDateString()} avec {appointmentToDelete.clientName} ? Cette action est irréversible.
+              <p className="text-gray-500 dark:text-gray-400">
+                Êtes-vous sûr de vouloir supprimer ce rendez-vous ? Cette action est irréversible.
               </p>
-              <div className="flex justify-end space-x-4">
-                <button 
-                  className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
+              <div className="mt-6 flex justify-end gap-3">
+                <button
+                  type="button"
+                  className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700"
                   onClick={() => {
                     setIsDeleteModalOpen(false);
                     setAppointmentToDelete(null);
@@ -403,7 +442,8 @@ const Appointments = () => {
                 >
                   Annuler
                 </button>
-                <button 
+                <button
+                  type="button"
                   className="px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-600"
                   onClick={handleDeleteAppointment}
                 >

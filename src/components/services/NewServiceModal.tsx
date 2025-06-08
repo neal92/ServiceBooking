@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
-import { Category, Service } from '../../types';
-import { categoryService, serviceService } from '../../services/api';
+import { Service, Category } from '../../types';
+import { serviceService, categoryService } from '../../services/api';
 import ModalPortal from '../layout/ModalPortal';
+import SuccessToast from '../layout/SuccessToast';
 
 interface NewServiceModalProps {
   isOpen: boolean;
@@ -20,6 +21,8 @@ const NewServiceModal = ({ isOpen, onClose, service }: NewServiceModalProps) => 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [showSuccessToast, setShowSuccessToast] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
 
   // Fetch categories when modal opens
   useEffect(() => {
@@ -74,13 +77,18 @@ const NewServiceModal = ({ isOpen, onClose, service }: NewServiceModalProps) => 
 
       if (service && service.id) {
         await serviceService.update(service.id.toString(), serviceData);
+        setSuccessMessage('Service modifié avec succès');
       } else {
         await serviceService.create(serviceData);
+        setSuccessMessage('Service créé avec succès');
       }
-      onClose();
+      setShowSuccessToast(true);
+      setTimeout(() => {
+        onClose();
+      }, 1000);
     } catch (err) {
-      console.error('Error saving service:', err);
-      setError('Failed to save service. Please try again.');
+      console.error("Error saving service:", err);
+      setError('Failed to save service');
     } finally {
       setIsSubmitting(false);
     }
@@ -91,11 +99,19 @@ const NewServiceModal = ({ isOpen, onClose, service }: NewServiceModalProps) => 
   return (
     <ModalPortal isOpen={isOpen}>
       <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto modal-backdrop animate-fadeIn">
-        {/* Overlay semi-transparent */}
+        {/* Overlay */}
         <div className="fixed inset-0 bg-black bg-opacity-40" onClick={onClose}></div>
         
+        {/* Success Toast */}
+        <SuccessToast 
+          message={successMessage}
+          show={showSuccessToast}
+          onClose={() => setShowSuccessToast(false)}
+          duration={2000}
+        />
+        
         {/* Modal content */}
-        <div className="relative w-full max-w-lg bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow-lg animate-fadeIn mx-4" style={{ maxHeight: 'calc(100vh - 40px)' }}>
+        <div className="relative w-full max-w-2xl bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow-xl animate-fadeIn mx-4" style={{ maxHeight: 'calc(100vh - 40px)' }}>
           {/* Header */}
           <div className="bg-gradient-to-r from-teal-500 to-blue-500 px-4 py-4">
             <div className="flex justify-between items-center">

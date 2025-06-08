@@ -20,6 +20,57 @@ const Profile = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [showSuccessToast, setShowSuccessToast] = useState(false);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [selectedAvatar, setSelectedAvatar] = useState<string | null>(null);
+  const [isUpdatingAvatar, setIsUpdatingAvatar] = useState(false);
+
+  const handleAvatarSelect = async (avatarUrl: string): Promise<void> => {
+    setSelectedAvatar(avatarUrl);
+    setShowConfirmDialog(true);
+    return new Promise<void>((resolve) => {
+      // La promesse sera résolue après la confirmation ou l'annulation
+      resolve();
+    });
+  };
+  const handleAvatarUpdate = async (avatarUrl: string) => {
+    try {
+      setIsUpdatingAvatar(true);
+      setError('');
+      setSuccess('');
+      setShowSuccessToast(false);
+      
+      await updateUser({
+        firstName: user?.firstName,
+        lastName: user?.lastName,
+        email: user?.email,
+        avatar: avatarUrl,
+        isPresetAvatar: true,
+      });
+      
+      // Fermer d'abord la boîte de dialogue
+      setShowConfirmDialog(false);
+      setSelectedAvatar(null);
+      
+      // Puis afficher le message de succès après un court délai
+      setTimeout(() => {
+        setSuccess('Avatar choisi');
+        setShowSuccessToast(true);
+      }, 100);
+    } catch (err: any) {
+      console.error('Erreur sélection avatar:', err);
+      setError(err.message || 'Erreur lors de la mise à jour de l\'avatar');
+      setShowConfirmDialog(false);
+      setSelectedAvatar(null);
+    } finally {
+      setIsUpdatingAvatar(false);
+    }
+  };
+
+  const handleConfirmDialogClose = () => {
+    setShowConfirmDialog(false);
+    setSelectedAvatar(null);
+    setError('');
+  };
 
   console.log('Profile - État initial:', { 
     id: user?.id,
@@ -72,11 +123,13 @@ const Profile = () => {
     <PageTransition type="fade">
       <div className="max-w-5xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Mon Profil</h1>
-        
-        <SuccessToast 
+          <SuccessToast 
           message={success} 
           show={showSuccessToast} 
-          onClose={() => setShowSuccessToast(false)}
+          onClose={() => {
+            setShowSuccessToast(false);
+            setSuccess('');
+          }}
           duration={3000}
         />
         
@@ -87,29 +140,50 @@ const Profile = () => {
                 <AvatarSelector
                   currentAvatar={user?.avatar}
                   userFirstName={user?.firstName}
-                  onAvatarSelect={async (avatarUrl) => {
-                    try {
-                      setError('');
-                      setSuccess('');
-                      setShowSuccessToast(false);
-                      
-                      // Mise à jour de l'utilisateur avec l'avatar prédéfini
-                      await updateUser({
-                        firstName: user?.firstName,
-                        lastName: user?.lastName,
-                        email: user?.email,
-                        avatar: avatarUrl,
-                        isPresetAvatar: true,
-                      });
-                      
-                      setSuccess('Avatar mis à jour avec succès');
-                      setShowSuccessToast(true);
-                    } catch (err: any) {
-                      console.error('Erreur sélection avatar:', err);
-                      setError(err.message || 'Erreur lors de la mise à jour de l\'avatar');
-                    }
-                  }}
+                  onAvatarSelect={handleAvatarSelect}
                 />
+
+                {showConfirmDialog && (
+                  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+                    <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-sm w-full mx-4 animate-fadeIn" onClick={e => e.stopPropagation()}>
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                        Confirmation
+                      </h3>
+                      <p className="text-gray-700 dark:text-gray-300 mb-6">
+                        Êtes-vous sûr de vouloir changer votre avatar ?
+                      </p>
+                      
+                      {error && (
+                        <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/30 border-l-4 border-red-400 dark:border-red-500 text-red-700 dark:text-red-400">
+                          {error}
+                        </div>
+                      )}
+
+                      <div className="flex justify-end space-x-4">
+                        <button
+                          type="button"
+                          onClick={handleConfirmDialogClose}
+                          className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                          disabled={isUpdatingAvatar}
+                        >
+                          Non
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (selectedAvatar) {
+                              handleAvatarUpdate(selectedAvatar);
+                            }
+                          }}
+                          disabled={isUpdatingAvatar}
+                          className="px-4 py-2 text-sm font-medium text-white bg-blue-600 dark:bg-blue-700 border border-transparent rounded-md hover:bg-blue-700 dark:hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {isUpdatingAvatar ? 'En cours...' : 'Oui'}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 <div className="text-center mt-6">
                   <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">

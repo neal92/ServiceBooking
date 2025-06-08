@@ -143,7 +143,7 @@ export const appointmentService = {  getAll: async (): Promise<Appointment[]> =>
     });
   },
   
-  updateStatus: async (id: string, status: string): Promise<void> => {
+  updateStatus: async (id: string, status: Appointment['status']): Promise<void> => {
     await apiClient.patch(`/appointments/${id}/status`, { status });
   },
   

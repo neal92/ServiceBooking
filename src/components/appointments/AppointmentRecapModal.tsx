@@ -1,18 +1,22 @@
 import React, { useState } from 'react';
-import { X, Calendar, Clock, User, Mail, Phone, CheckCircle, AlertTriangle, XCircle, Edit, Pencil } from 'lucide-react';
+import { X, Calendar, Clock, User, Mail, Phone, CheckCircle, AlertTriangle, XCircle, Edit, Pencil, Trash } from 'lucide-react';
 import { Appointment } from '../../types';
 import ModalPortal from '../layout/ModalPortal';
 import NewAppointmentModal from './NewAppointmentModal';
+import SuccessToast from '../layout/SuccessToast';
 
 interface AppointmentRecapModalProps {
   isOpen: boolean;
   onClose: () => void;
   appointment: Appointment;
   onDelete?: (id: number) => Promise<void>;
+  onStatusChange: (id: string, status: Appointment['status']) => Promise<void>;
 }
 
-const AppointmentRecapModal: React.FC<AppointmentRecapModalProps> = ({ isOpen, onClose, appointment, onDelete }) => {
+const AppointmentRecapModal: React.FC<AppointmentRecapModalProps> = ({ isOpen, onClose, appointment, onDelete, onStatusChange }) => {
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showSuccessToast, setShowSuccessToast] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
   
   if (!isOpen || !appointment) return null;
 
@@ -34,8 +38,7 @@ const AppointmentRecapModal: React.FC<AppointmentRecapModalProps> = ({ isOpen, o
     if (remainingMinutes === 0) return `${hours}h`;
     return `${hours}h${remainingMinutes}`;
   };
-
-  const getStatusDetails = (status: string) => {
+  const getStatusDetails = (status: Appointment['status']) => {
     switch (status) {
       case 'pending':
         return { 
@@ -92,6 +95,16 @@ const AppointmentRecapModal: React.FC<AppointmentRecapModalProps> = ({ isOpen, o
   const handleEditClose = () => {
     setShowEditModal(false);
   };
+  // Status update handler
+  const handleStatusChange = async (newStatus: Appointment['status']) => {
+    try {
+      await onStatusChange(appointment.id.toString(), newStatus);
+      setSuccessMessage('Statut du rendez-vous modifié');
+      setShowSuccessToast(true);
+    } catch (err) {
+      console.error('Error updating appointment status:', err);
+    }
+  };
 
   return (
     <>
@@ -100,8 +113,16 @@ const AppointmentRecapModal: React.FC<AppointmentRecapModalProps> = ({ isOpen, o
           {/* Overlay semi-transparent */}
           <div className="fixed inset-0 bg-black bg-opacity-40" onClick={onClose}></div>
           
+          {/* Success Toast */}
+          <SuccessToast 
+            message={successMessage}
+            show={showSuccessToast}
+            onClose={() => setShowSuccessToast(false)}
+            duration={2000}
+          />
+          
           {/* Modal content */}
-          <div className="relative w-full max-w-lg bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow-lg animate-fadeIn mx-4" style={{ maxHeight: 'calc(100vh - 40px)' }}>
+          <div className="relative w-full max-w-2xl bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow-xl animate-fadeIn mx-4" style={{ maxHeight: 'calc(100vh - 40px)' }}>
             {/* Header */}
             <div className="flex justify-between items-center px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-blue-500 to-indigo-600">
               <h3 className="text-xl font-semibold text-white animate-fadeIn">
@@ -205,10 +226,22 @@ const AppointmentRecapModal: React.FC<AppointmentRecapModalProps> = ({ isOpen, o
                   <Pencil className="inline-block mr-1 h-4 w-4" />
                   Modifier
                 </button>
-              </div>
+              </div>              {appointment.status === 'completed' && onDelete && (
+                <button
+                  type="button"
+                  className="px-4 py-2 border border-red-300 dark:border-red-600 shadow-sm text-sm font-medium rounded-md text-red-600 dark:text-red-400 bg-white dark:bg-gray-800 hover:bg-red-50 dark:hover:bg-red-900/20 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                  onClick={() => {
+                    onDelete(appointment.id);
+                    onClose();
+                  }}
+                >
+                  <Trash className="inline-block mr-1 h-4 w-4" />
+                  Supprimer
+                </button>
+              )}
               <button
                 type="button"
-                className="px-4 py-2 border border-gray-300 dark:border-gray-600 shadow-sm text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                className="px-4 py-2 border border-gray-300 dark:border-gray-600 shadow-sm text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
                 onClick={onClose}
               >
                 Fermer

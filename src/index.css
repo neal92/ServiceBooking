@@ -26,6 +26,18 @@
     background-color: rgb(17, 24, 39);
     color: rgb(243, 244, 246);
   }
+
+  /* Style pour les inputs date et time en mode sombre */
+  .dark input[type="date"],
+  .dark input[type="time"] {
+    color: rgb(243, 244, 246) !important;
+    color-scheme: dark;
+  }
+
+  .dark input[type="date"]::-webkit-calendar-picker-indicator,
+  .dark input[type="time"]::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+  }
 }
 
 @layer utilities {
