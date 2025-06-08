@@ -30,6 +30,8 @@ interface ProfileUpdateData {
   firstName?: string;
   lastName?: string;
   email?: string;
+  avatar?: string;
+  isPresetAvatar?: boolean;
 }
 
 interface PasswordChangeData {

@@ -95,15 +95,15 @@ exports.login = async (req, res) => {
 
     // Generate JWT
     console.log('Generating JWT token');
-    const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: JWT_EXPIRATION });
-
-    // Return user info (without password) and token
+    const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: JWT_EXPIRATION });    // Return user info (without password) and token
     const userData = {
       id: user.id,
       firstName: user.firstName,
       lastName: user.lastName,
       email: user.email,
-      role: user.role
+      role: user.role,
+      avatar: user.avatar,
+      isPresetAvatar: user.isPresetAvatar
     };
 
     console.log(`User ${email} logged in successfully`);
@@ -141,7 +141,8 @@ exports.getCurrentUser = async (req, res) => {
 // Update user profile
 exports.updateProfile = async (req, res) => {
   try {
-    const { firstName, lastName, email } = req.body;
+    const { firstName, lastName, email, avatar, isPresetAvatar } = req.body;
+    console.log('Updating profile with data:', { firstName, lastName, email, avatar, isPresetAvatar });
     
     // Check if email exists and belongs to another user
     if (email) {
@@ -151,13 +152,14 @@ exports.updateProfile = async (req, res) => {
       }
     }
 
-    const success = await User.update(req.user.userId, { firstName, lastName, email });
+    const success = await User.update(req.user.userId, { firstName, lastName, email, avatar, isPresetAvatar });
     
     if (!success) {
       return res.status(404).json({ message: 'User not found or no changes made' });
     }
 
     const updatedUser = await User.findById(req.user.userId);
+    console.log('Profile updated successfully:', { id: updatedUser.id, avatar: updatedUser.avatar ? 'exists' : 'null' });
     res.json({ message: 'Profile updated successfully', user: updatedUser });
   } catch (error) {
     console.error('Update profile error:', error);
@@ -207,36 +209,47 @@ exports.uploadAvatar = async (req, res) => {
       type: avatarFile.mimetype,
       size: avatarFile.size,
       isPredefined: req.body.isPredefined
-    });
-
-    // Si c'est un avatar prédéfini, on utilise le nom d'origine
-    const fileName = req.body.isPredefined === 'true' 
-      ? avatarFile.name 
-      : `avatar-${req.user.userId}-${Date.now()}.${avatarFile.name.split('.').pop()}`;
+    });    let fileName;
+    let uploadPath;
+    
+    // Si c'est un avatar prédéfini, pas besoin de sauvegarder le fichier
+    if (req.body.isPredefined === 'true') {
+      fileName = avatarFile.name;
+      console.log('uploadAvatar - Utilisation de l\'avatar prédéfini:', fileName);
+    } else {
+      // Pour les avatars personnalisés
+      fileName = `avatar-${req.user.userId}-${Date.now()}.${avatarFile.name.split('.').pop()}`;
+      console.log('uploadAvatar - Nom de fichier généré:', fileName);
       
-    console.log('uploadAvatar - Nom de fichier généré:', fileName);
-    const uploadPath = path.join(__dirname, '..', 'public', 'uploads', fileName);    // Create uploads directory if it doesn't exist
-    const uploadsDir = path.join(__dirname, '..', 'public', 'uploads');
-    if (!fs.existsSync(uploadsDir)) {
-      console.log('uploadAvatar - Création du répertoire uploads:', uploadsDir);
-      fs.mkdirSync(uploadsDir, { recursive: true });
-    }
-
-    // Move the file
-    console.log('uploadAvatar - Déplacement du fichier vers:', uploadPath);
-    try {
-      await avatarFile.mv(uploadPath);
-      console.log('uploadAvatar - Fichier déplacé avec succès');
-    } catch (err) {
-      console.error('uploadAvatar - Erreur lors du déplacement du fichier:', err);
-      throw err;
-    }
-
-    // Update user's avatar in database
+      // Créer le répertoire uploads s'il n'existe pas
+      const uploadsDir = path.join(__dirname, '..', 'public', 'uploads');
+      if (!fs.existsSync(uploadsDir)) {
+        console.log('uploadAvatar - Création du répertoire uploads:', uploadsDir);
+        fs.mkdirSync(uploadsDir, { recursive: true });
+      }
+      
+      // Sauvegarder le fichier uniquement si ce n'est pas un avatar prédéfini
+      uploadPath = path.join(__dirname, '..', 'public', 'uploads', fileName);
+      console.log('uploadAvatar - Déplacement du fichier vers:', uploadPath);
+      try {
+        await avatarFile.mv(uploadPath);
+        console.log('uploadAvatar - Fichier déplacé avec succès');
+      } catch (err) {
+        console.error('uploadAvatar - Erreur lors du déplacement du fichier:', err);
+        throw err;
+      }
+    }// Update user's avatar in database
     console.log('uploadAvatar - Mise à jour de l\'avatar dans la base de données');
-    const avatarUrl = req.body.isPredefined === 'true' 
-      ? `/avatars/${fileName}`  // Pour les avatars prédéfinis
-      : `/uploads/${fileName}`; // Pour les avatars personnalisés
+    let avatarUrl;
+    
+    if (req.body.isPredefined === 'true') {
+      // Pour les avatars prédéfinis, utiliser directement le chemin
+      avatarUrl = `/avatars/${fileName}`;
+      console.log('uploadAvatar - Utilisation de l\'avatar prédéfini:', avatarUrl);
+    } else {
+      // Pour les avatars personnalisés
+      avatarUrl = `/uploads/${fileName}`;
+    }
 
     try {
       await User.update(req.user.userId, { 

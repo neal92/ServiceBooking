@@ -19,6 +19,11 @@ app.use(cors());
 app.use(express.json());
 app.use(fileUpload());
 app.use('/uploads', express.static('public/uploads'));
+app.use('/avatars', express.static('public/avatars'));
+
+// Servir aussi les avatars depuis le dossier public à la racine du projet
+const path = require('path');
+app.use('/avatars', express.static(path.join(__dirname, '..', 'public', 'avatars')));
 
 // Add request logging middleware
 app.use((req, res, next) => {

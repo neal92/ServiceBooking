@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { Calendar, FileText, Tag, LayoutDashboard, X, User, Settings, LogOut, ClipboardList } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import { getFullMediaUrl } from '../../utils/config';
 
 interface SidebarProps {
   mobile: boolean;
@@ -70,9 +71,31 @@ const Sidebar = ({ mobile, closeSidebar }: SidebarProps) => {
           className="flex items-center p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer"
           onClick={() => setShowUserMenu(!showUserMenu)}
         >
-          <div className="h-10 w-10 rounded-full bg-blue-500 flex items-center justify-center text-white mr-3">
-            {user?.firstName?.charAt(0).toUpperCase() || 'U'}
-          </div>
+          {user?.avatar ? (
+            <div className="h-10 w-10 rounded-full overflow-hidden mr-3">
+              <img 
+                src={getFullMediaUrl(user.avatar)}
+                alt={`Avatar de ${user.firstName}`} 
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  console.error('Erreur de chargement de l\'avatar dans la sidebar:', e);
+                  // Insérer le code pour afficher les initiales
+                  const parentDiv = e.currentTarget.parentElement;
+                  if (parentDiv) {
+                    e.currentTarget.style.display = 'none';
+                    parentDiv.className = "h-10 w-10 rounded-full bg-blue-500 flex items-center justify-center text-white mr-3";
+                    parentDiv.innerHTML = `<span>${user?.firstName?.charAt(0).toUpperCase() || 'U'}</span>`;
+                    // Ajouter un log pour suivre cette modification
+                    console.log('Avatar remplacé par initiale dans la sidebar');
+                  }
+                }}
+              />
+            </div>
+          ) : (
+            <div className="h-10 w-10 rounded-full bg-blue-500 flex items-center justify-center text-white mr-3">
+              {user?.firstName?.charAt(0).toUpperCase() || 'U'}
+            </div>
+          )}
           <div className="flex-1">
             <p className="text-sm font-medium text-gray-900 dark:text-gray-200">
               {user ? `${user.firstName} ${user.lastName}` : 'Utilisateur'}

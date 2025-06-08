@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
-import { Menu, Bell, Sun, Moon, User, LogOut } from 'lucide-react';
+import { Menu, Bell, Sun, Moon, LogOut } from 'lucide-react';
+import { getFullMediaUrl } from '../../utils/config';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -94,10 +95,32 @@ const Header = ({ openSidebar }: HeaderProps) => {
             <button
               type="button"
               onClick={() => setShowUserMenu(!showUserMenu)}
-              className="bg-white dark:bg-gray-700 p-1.5 rounded-full text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              className={`p-0.5 rounded-full ${!user?.avatar ? 'bg-white dark:bg-gray-700 text-gray-400 hover:text-gray-500 dark:hover:text-gray-300' : ''} focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500`}
             >
               <span className="sr-only">Open user menu</span>
-              <User className="h-5 w-5" aria-hidden="true" />
+              {user?.avatar ? (
+                <div className="h-8 w-8 rounded-full overflow-hidden">
+                  <img 
+                    src={getFullMediaUrl(user.avatar)}
+                    alt={`Avatar de ${user.firstName}`} 
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      console.error('Erreur de chargement de l\'avatar dans le header:', e);
+                      e.currentTarget.style.display = 'none';
+                      // Remplacer par un élément avec l'initiale
+                      const parentDiv = e.currentTarget.parentElement;
+                      if (parentDiv) {
+                        parentDiv.className = "h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center text-white";
+                        parentDiv.innerHTML = `<span>${user.firstName?.charAt(0).toUpperCase() || 'U'}</span>`;
+                      }
+                    }}
+                  />
+                </div>
+              ) : (
+                <div className="h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center text-white">
+                  <span>{user?.firstName?.charAt(0).toUpperCase() || 'U'}</span>
+                </div>
+              )}
             </button>
 
             {/* Menu déroulant */}

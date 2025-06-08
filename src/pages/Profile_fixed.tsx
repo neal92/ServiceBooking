@@ -3,8 +3,6 @@ import { useAuth } from '../contexts/AuthContext';
 import PageTransition from '../components/layout/PageTransition';
 import SuccessToast from '../components/layout/SuccessToast';
 import AvatarSelector from '../components/profile/AvatarSelector';
-import authService from '../services/auth';
-import { getFullMediaUrl, API_BASE_URL } from '../utils/config';
 
 const Profile = () => {
   const { user, updateUser, changePassword } = useAuth();
@@ -85,7 +83,8 @@ const Profile = () => {
         <div className="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">
           <div className="flex flex-col md:flex-row">
             <div className="p-8 md:w-1/3 bg-gray-50 dark:bg-gray-700/50 border-r border-gray-200 dark:border-gray-700">
-              <div className="flex flex-col items-center justify-center h-full max-w-sm mx-auto">                <AvatarSelector
+              <div className="flex flex-col items-center justify-center h-full max-w-sm mx-auto">
+                <AvatarSelector
                   currentAvatar={user?.avatar}
                   userFirstName={user?.firstName}
                   onAvatarSelect={async (avatarUrl) => {
@@ -93,39 +92,18 @@ const Profile = () => {
                       setError('');
                       setSuccess('');
                       setShowSuccessToast(false);
-                      console.log('Sélection avatar prédéfini:', avatarUrl);
                       
-                      if (avatarUrl.startsWith('/avatars/')) {
-                        const fileName = avatarUrl.split('/').pop() || 'avatar.svg';
-                        
-                        console.log(`Récupération du contenu SVG depuis ${avatarUrl}`);
-                        const response = await fetch(`${API_BASE_URL}${avatarUrl}`);
-                        if (!response.ok) {
-                          throw new Error(`Erreur lors du chargement de l'avatar: ${response.statusText}`);
-                        }
-                        
-                        const svgContent = await response.text();
-                        console.log(`Contenu SVG récupéré (${svgContent.length} caractères)`);
-                        
-                        const file = new File([svgContent], fileName, { 
-                          type: 'image/svg+xml',
-                        });
-                        
-                        console.log('Upload avatar prédéfini:', file.name);
-                        const uploadResponse = await authService.uploadAvatar(file);
-                        console.log('Upload réussi:', uploadResponse.avatarUrl);
-                        
-                        await updateUser({
-                          firstName: user?.firstName,
-                          lastName: user?.lastName,
-                          email: user?.email,
-                          avatar: uploadResponse.avatarUrl,
-                          isPresetAvatar: true,
-                        });
-                        
-                        setSuccess('Avatar mis à jour avec succès');
-                        setShowSuccessToast(true);
-                      }
+                      // Mise à jour de l'utilisateur avec l'avatar prédéfini
+                      await updateUser({
+                        firstName: user?.firstName,
+                        lastName: user?.lastName,
+                        email: user?.email,
+                        avatar: avatarUrl,
+                        isPresetAvatar: true,
+                      });
+                      
+                      setSuccess('Avatar mis à jour avec succès');
+                      setShowSuccessToast(true);
                     } catch (err: any) {
                       console.error('Erreur sélection avatar:', err);
                       setError(err.message || 'Erreur lors de la mise à jour de l\'avatar');
@@ -330,6 +308,12 @@ const Profile = () => {
                           />
                         </div>
                       </div>
+
+                      {error && (
+                        <div className="p-4 bg-red-50 dark:bg-red-900/30 border-l-4 border-red-400 dark:border-red-500 text-red-700 dark:text-red-400">
+                          {error}
+                        </div>
+                      )}
 
                       <div className="flex space-x-4 pt-2">
                         <button
