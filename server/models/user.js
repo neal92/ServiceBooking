@@ -24,11 +24,18 @@ class User {
       throw error;
     }
   }
-
-  // Find user by ID
+  // Find user by ID  
   static async findById(id) {
     try {
-      const [rows] = await db.query('SELECT id, email, firstName, lastName, role, created_at FROM users WHERE id = ?', [id]);
+      console.log('Finding user by ID:', id);
+      const [rows] = await db.query(
+        'SELECT id, email, firstName, lastName, role, avatar, isPresetAvatar, created_at FROM users WHERE id = ?', 
+        [id]
+      );
+      console.log('Found user:', rows[0] ? {
+        ...rows[0],
+        avatar: rows[0].avatar ? '[PRESENT]' : '[NOT PRESENT]'
+      } : 'None');
       return rows[0];
     } catch (error) {
       console.error('Error finding user by ID:', error);
@@ -76,14 +83,51 @@ class User {
       throw error;
     }
   }
-
   // Update user
   static async update(id, userData) {
     try {
-      const [result] = await db.query(
-        'UPDATE users SET firstName = ?, lastName = ?, email = ? WHERE id = ?',
-        [userData.firstName, userData.lastName, userData.email, id]
-      );
+      console.log('Updating user data:', { id, ...userData });
+      let query = 'UPDATE users SET ';
+      const values = [];
+      const fields = [];
+
+      if (userData.firstName !== undefined) {
+        fields.push('firstName = ?');
+        values.push(userData.firstName);
+      }
+      if (userData.lastName !== undefined) {
+        fields.push('lastName = ?');
+        values.push(userData.lastName);
+      }
+      if (userData.email !== undefined) {
+        fields.push('email = ?');
+        values.push(userData.email);
+      }
+      if (userData.avatar !== undefined) {
+        fields.push('avatar = ?');
+        values.push(userData.avatar);
+      }
+      if (userData.isPresetAvatar !== undefined) {
+        fields.push('isPresetAvatar = ?');
+        values.push(userData.isPresetAvatar);
+      }
+
+      if (fields.length === 0) {
+        console.log('No fields to update');
+        return false;
+      }
+
+      query += fields.join(', ') + ' WHERE id = ?';
+      values.push(id);
+
+      console.log('Update query:', query);
+      console.log('Update values:', values);
+
+      const [result] = await db.query(query, values);
+      console.log('Update result:', {
+        affectedRows: result.affectedRows,
+        changedRows: result.changedRows
+      });
       
       return result.affectedRows > 0;
     } catch (error) {

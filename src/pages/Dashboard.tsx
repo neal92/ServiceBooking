@@ -7,11 +7,11 @@ import { Appointment, Service, Category } from '../types';
 import { appointmentService, serviceService, categoryService } from '../services/api';
 import PageTransition from '../components/layout/PageTransition';
 
-const Dashboard = () => {
-  const { user } = useAuth();
+const Dashboard = () => {  const { user } = useAuth();
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [services, setServices] = useState<Service[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const displayName = user ? `${user.firstName} ${user.lastName}` : '';
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -81,9 +81,8 @@ const Dashboard = () => {
 
   return (
     <PageTransition type="zoom">      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Tableau de bord</h1>
-        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          Bienvenue, {user ? `${user.firstName} ${user.lastName}` : user?.email}. Voici un aperçu de vos rendez-vous et prestations.
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Tableau de bord</h1>        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+          Bienvenue, {displayName || user?.email || 'Utilisateur'}. Voici un aperçu de vos rendez-vous et prestations.
         </p>
         {error && (
           <div className="mt-2 bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-700 text-red-700 dark:text-red-300 px-4 py-3 rounded relative">

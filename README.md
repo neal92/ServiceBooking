@@ -45,3 +45,22 @@ If you need to initialize the database:
 cd server
 npm run init-db
 ```
+
+## Avatars
+
+The application supports both predefined avatars and custom user uploads. 
+
+### Predefined Avatars
+A set of predefined avatars is available in the `/public/avatars/` directory. To set them up:
+
+1. Go to `/public/avatars/README.md` for the list of avatar URLs
+2. Download each avatar from the provided DiceBear URLs
+3. Save them in the `/public/avatars/` directory with the corresponding names (avatar1.png, avatar2.png, etc.)
+
+### Custom Avatars
+Users can also upload their own avatar images through the profile page. Supported formats:
+- PNG
+- JPEG
+- SVG
+
+Custom avatars are stored in the `server/public/uploads/` directory.

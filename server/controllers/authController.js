@@ -194,34 +194,69 @@ exports.changePassword = async (req, res) => {
 
 // Upload avatar
 exports.uploadAvatar = async (req, res) => {
+  console.log('uploadAvatar - Début de la requête');
   try {
     if (!req.files || !req.files.avatar) {
+      console.error('uploadAvatar - Aucun fichier trouvé dans la requête');
       return res.status(400).json({ message: 'No file uploaded' });
     }
 
     const avatarFile = req.files.avatar;
-    const fileExtension = avatarFile.name.split('.').pop();
-    const fileName = `avatar-${req.user.userId}-${Date.now()}.${fileExtension}`;
-    const uploadPath = path.join(__dirname, '..', 'public', 'uploads', fileName);
+    console.log('uploadAvatar - Fichier reçu:', {
+      name: avatarFile.name,
+      type: avatarFile.mimetype,
+      size: avatarFile.size,
+      isPredefined: req.body.isPredefined
+    });
 
-    // Create uploads directory if it doesn't exist
+    // Si c'est un avatar prédéfini, on utilise le nom d'origine
+    const fileName = req.body.isPredefined === 'true' 
+      ? avatarFile.name 
+      : `avatar-${req.user.userId}-${Date.now()}.${avatarFile.name.split('.').pop()}`;
+      
+    console.log('uploadAvatar - Nom de fichier généré:', fileName);
+    const uploadPath = path.join(__dirname, '..', 'public', 'uploads', fileName);    // Create uploads directory if it doesn't exist
     const uploadsDir = path.join(__dirname, '..', 'public', 'uploads');
     if (!fs.existsSync(uploadsDir)) {
+      console.log('uploadAvatar - Création du répertoire uploads:', uploadsDir);
       fs.mkdirSync(uploadsDir, { recursive: true });
     }
 
     // Move the file
-    await avatarFile.mv(uploadPath);
+    console.log('uploadAvatar - Déplacement du fichier vers:', uploadPath);
+    try {
+      await avatarFile.mv(uploadPath);
+      console.log('uploadAvatar - Fichier déplacé avec succès');
+    } catch (err) {
+      console.error('uploadAvatar - Erreur lors du déplacement du fichier:', err);
+      throw err;
+    }
 
     // Update user's avatar in database
-    await User.update(req.user.userId, { avatar: `/uploads/${fileName}` });
+    console.log('uploadAvatar - Mise à jour de l\'avatar dans la base de données');
+    const avatarUrl = req.body.isPredefined === 'true' 
+      ? `/avatars/${fileName}`  // Pour les avatars prédéfinis
+      : `/uploads/${fileName}`; // Pour les avatars personnalisés
 
-    res.json({ 
+    try {
+      await User.update(req.user.userId, { 
+        avatar: avatarUrl,
+        isPresetAvatar: req.body.isPredefined === 'true'
+      });
+      console.log('uploadAvatar - Base de données mise à jour avec succès');
+    } catch (err) {
+      console.error('uploadAvatar - Erreur lors de la mise à jour de la base de données:', err);
+      throw err;
+    }
+
+    const response = { 
       message: 'Avatar uploaded successfully',
-      avatarUrl: `/uploads/${fileName}`
-    });
+      avatarUrl
+    };
+    console.log('uploadAvatar - Réponse envoyée:', response);
+    res.json(response);
   } catch (error) {
-    console.error('Upload avatar error:', error);
+    console.error('uploadAvatar - Erreur:', error);
     res.status(500).json({ message: 'Server error uploading avatar' });
   }
 };

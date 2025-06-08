@@ -137,26 +137,46 @@ const authService = {    register: async (userData: RegisterData): Promise<AuthR
     const response = await apiClient.put<{ message: string }>('/auth/password', passwordData);
     return response.data;
   },
-  
   uploadAvatar: async (file: File): Promise<UploadAvatarResponse> => {
+    console.log('Début uploadAvatar avec fichier:', {
+      name: file.name,
+      type: file.type,
+      size: file.size
+    });
+
     const formData = new FormData();
     formData.append('avatar', file);
 
-    const response = await apiClient.post<UploadAvatarResponse>('/auth/avatar', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
-
-    // Update stored user data
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      const user = JSON.parse(storedUser);
-      user.avatar = response.data.avatarUrl;
-      localStorage.setItem('user', JSON.stringify(user));
+    // Si le nom du fichier commence par avatar et finit par .svg, c'est un avatar prédéfini
+    const isPredefined = file.name.match(/^avatar\d+\.svg$/);
+    if (isPredefined) {
+      console.log('Avatar prédéfini détecté:', file.name);
+      formData.append('isPredefined', 'true');
     }
 
-    return response.data;
+    try {
+      console.log('Envoi de la requête POST /auth/avatar');
+      const response = await apiClient.post<UploadAvatarResponse>('/auth/avatar', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      console.log('Réponse uploadAvatar reçue:', response.data);
+
+      // Update stored user data
+      const storedUser = localStorage.getItem('user');
+      if (storedUser) {
+        console.log('Mise à jour des données utilisateur stockées');
+        const userData = JSON.parse(storedUser);
+        userData.avatar = response.data.avatarUrl;
+        localStorage.setItem('user', JSON.stringify(userData));
+      }
+
+      return response.data;
+    } catch (err) {
+      console.error('Erreur dans uploadAvatar:', err);
+      throw err;
+    }
   },
 
   isAuthenticated: (): boolean => {

@@ -118,9 +118,12 @@ const Header = ({ openSidebar }: HeaderProps) => {
                     logout();
                     navigate('/login');
                   }}
-                  className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600"
+                  className="w-full text-left px-4 py-2 text-sm font-bold text-red-700 dark:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30"
                 >
-                  Déconnexion
+                  <div className="flex items-center">
+                    <LogOut className="mr-2 h-4 w-4 text-red-600 dark:text-red-500" />
+                    Déconnexion
+                  </div>
                 </button>
               </div>
             )}
