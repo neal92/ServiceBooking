@@ -23,17 +23,21 @@ class User {
       }
       throw error;
     }
-  }
-  // Find user by ID  
-  static async findById(id) {
+  }  // Find user by ID  
+  static async findById(id, includePassword = false) {
     try {
-      console.log('Finding user by ID:', id);
+      console.log('Finding user by ID:', id, includePassword ? '(including password)' : '');
+      const columns = includePassword 
+        ? 'id, email, firstName, lastName, role, password, avatar, isPresetAvatar, created_at' 
+        : 'id, email, firstName, lastName, role, avatar, isPresetAvatar, created_at';
+      
       const [rows] = await db.query(
-        'SELECT id, email, firstName, lastName, role, avatar, isPresetAvatar, created_at FROM users WHERE id = ?', 
+        `SELECT ${columns} FROM users WHERE id = ?`, 
         [id]
       );
       console.log('Found user:', rows[0] ? {
         ...rows[0],
+        password: rows[0].password ? '[PRESENT]' : '[NOT PRESENT]',
         avatar: rows[0].avatar ? '[PRESENT]' : '[NOT PRESENT]'
       } : 'None');
       return rows[0];
@@ -69,18 +73,38 @@ class User {
       }
       throw error;
     }
-  }
-
-  // Verify password
+  }  // Verify password
   static async verifyPassword(plainPassword, hashedPassword) {
     try {
       console.log('Verifying password');
+      
+      // Vérifier que les arguments sont valides pour éviter l'erreur "data and hash arguments required"
+      if (!plainPassword || typeof plainPassword !== 'string') {
+        console.error('Invalid plain password provided:', plainPassword);
+        return false;
+      }
+      
+      if (!hashedPassword || typeof hashedPassword !== 'string') {
+        console.error('Invalid hashed password provided');
+        return false;
+      }
+      
+      // Longueur minimale pour un hash bcrypt valide
+      const MIN_BCRYPT_LENGTH = 60;
+      if (hashedPassword.length < MIN_BCRYPT_LENGTH) {
+        console.error(`Hashed password is too short (${hashedPassword.length} chars). Minimum required: ${MIN_BCRYPT_LENGTH}`);
+        return false;
+      }
+      
       const isValid = await bcrypt.compare(plainPassword, hashedPassword);
       console.log(`Password verification result: ${isValid ? 'valid' : 'invalid'}`);
       return isValid;
     } catch (error) {
       console.error('Error verifying password:', error);
-      throw error;
+      if (error.message && error.message.includes('data and hash arguments required')) {
+        console.error('Invalid arguments for bcrypt.compare - plainPassword or hashedPassword might be undefined or null');
+      }
+      return false; // Retourner false au lieu de propager l'erreur pour une meilleure expérience utilisateur
     }
   }
   // Update user

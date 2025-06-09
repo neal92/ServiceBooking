@@ -91,11 +91,9 @@ exports.login = async (req, res) => {
     if (!isPasswordValid) {
       console.log(`Login failed: Invalid password for user ${email}`);
       return res.status(401).json({ message: 'Identifiants invalides' });
-    }
-
-    // Generate JWT
+    }    // Generate JWT
     console.log('Generating JWT token');
-    const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: JWT_EXPIRATION });    // Return user info (without password) and token
+    const token = jwt.sign({ userId: user.id, email: user.email }, JWT_SECRET, { expiresIn: JWT_EXPIRATION });// Return user info (without password) and token
     const userData = {
       id: user.id,
       firstName: user.firstName,
@@ -170,27 +168,66 @@ exports.updateProfile = async (req, res) => {
 // Change password
 exports.changePassword = async (req, res) => {
   try {
+    console.log('Attempting to change password');
+    console.log('User info from token:', req.user);
     const { currentPassword, newPassword } = req.body;
+      // Find user - first try by email if available
+    let user;
+    if (req.user.email) {
+      console.log('Finding user by email:', req.user.email);
+      user = await User.findByEmail(req.user.email);
+    }
     
-    // Find user
-    const user = await User.findByEmail(req.user.email);
+    // If user not found by email or email not in token, try by ID
     if (!user) {
+      console.log('Finding user by ID:', req.user.userId);
+      // Inclure le mot de passe pour la vérification
+      user = await User.findById(req.user.userId, true);
+    }
+    
+    if (!user) {
+      console.log('User not found for password change. Token info:', req.user);
       return res.status(404).json({ message: 'User not found' });
     }
+      console.log('User found:', { id: user.id, email: user.email, hasPassword: !!user.password });
 
-    // Verify current password
+    // Vérifier que le mot de passe est bien présent dans l'objet utilisateur
+    if (!user.password) {
+      console.error('User record found but password field is missing');
+      return res.status(500).json({ message: 'Erreur serveur: informations utilisateur incomplètes' });
+    }    // Verify current password
     const isPasswordValid = await User.verifyPassword(currentPassword, user.password);
+    console.log('Password verification result:', isPasswordValid ? 'valid' : 'invalid');
+    
     if (!isPasswordValid) {
-      return res.status(401).json({ message: 'Current password is incorrect' });
+      console.log('User provided incorrect current password');
+      return res.status(401).json({ message: 'Current password is incorrect', code: 'INVALID_CURRENT_PASSWORD' });
     }
 
     // Change password
-    await User.changePassword(req.user.userId, newPassword);
+    await User.changePassword(user.id, newPassword);
+    console.log('Password changed successfully for user:', user.id);
     
-    res.json({ message: 'Password changed successfully' });
-  } catch (error) {
+    res.json({ message: 'Password changed successfully' });  } catch (error) {
     console.error('Change password error:', error);
-    res.status(500).json({ message: 'Server error changing password' });
+    
+    // Gérer les différents types d'erreurs possibles
+    if (error.message && error.message.includes('data and hash arguments required')) {
+      return res.status(400).json({ 
+        message: 'Données de mot de passe invalides', 
+        code: 'INVALID_PASSWORD_DATA'
+      });
+    } else if (error.code === 'ER_BAD_NULL_ERROR') {
+      return res.status(400).json({ 
+        message: 'Mot de passe manquant', 
+        code: 'MISSING_PASSWORD_DATA'
+      });
+    } else {
+      return res.status(500).json({ 
+        message: 'Server error changing password', 
+        code: 'SERVER_ERROR'
+      });
+    }
   }
 };
 

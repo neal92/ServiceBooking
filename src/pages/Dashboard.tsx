@@ -56,7 +56,7 @@ const Dashboard = () => {  const { user } = useAuth();
   today.setHours(0, 0, 0, 0);
 
   // Handle appointment status change (to be implemented)
-  const handleStatusChange = async (id: number, status: string) => {
+  const handleStatusChange = async (id: number, status: Appointment['status']) => {
     try {
       await appointmentService.updateStatus(id.toString(), status);
       fetchData();
@@ -210,7 +210,7 @@ const Dashboard = () => {  const { user } = useAuth();
                     <AppointmentCard 
                       appointment={appointment} 
                       onDelete={() => handleDeleteAppointment(appointment.id)}
-                      onStatusChange={(status) => handleStatusChange(appointment.id, status)}
+                      onStatusChange={(id, status) => handleStatusChange(parseInt(id), status)}
                     />
                   </li>
                 ))

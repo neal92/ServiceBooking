@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Calendar, Clock, User, Mail, Phone, CheckCircle, AlertTriangle, XCircle, Edit, Pencil, Trash } from 'lucide-react';
+import { X, Calendar, Clock, User, Mail, Phone, CheckCircle, AlertTriangle, XCircle, Pencil, Trash } from 'lucide-react';
 import { Appointment } from '../../types';
 import ModalPortal from '../layout/ModalPortal';
 import NewAppointmentModal from './NewAppointmentModal';

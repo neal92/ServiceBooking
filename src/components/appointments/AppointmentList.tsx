@@ -1,4 +1,3 @@
-import React from 'react';
 import { CalendarX } from 'lucide-react';
 import AppointmentCard from './AppointmentCard';
 import { Appointment } from '../../types';
@@ -95,7 +94,7 @@ const AppointmentList = ({ appointments, onDelete, onStatusChange }: Appointment
               >                <AppointmentCard 
                   appointment={appointment} 
                   onDelete={() => onDelete(appointment.id)} 
-                  onStatusChange={(id, status) => onStatusChange(id, status)} 
+                  onStatusChange={(id, status) => onStatusChange(id.toString(), status)} 
                 />
               </div>
             ))}

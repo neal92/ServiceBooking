@@ -19,12 +19,13 @@ exports.authenticate = (req, res, next) => {
     console.log('Authentication failed: No token provided');
     return res.status(401).json({ message: 'Access denied. No token provided.' });
   }
-
   try {
     console.log('Verifying JWT token');
     // Verify token
     const decoded = jwt.verify(token, JWT_SECRET);
-    console.log('Token verification successful, user ID:', decoded.userId);
+    console.log('Token verification successful:', decoded);
+    console.log('User ID from token:', decoded.userId);
+    console.log('User email from token:', decoded.email || 'not present');
     req.user = decoded; // Add user info to request
     next();
   } catch (error) {

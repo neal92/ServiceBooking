@@ -146,23 +146,41 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  };
-
+  };  
+  
   // Change password
   const changePassword = async (currentPassword: string, newPassword: string) => {
     setLoading(true);
     setError(null);
-    
-    try {
-      await authService.changePassword({ currentPassword, newPassword });
+      try {
+      console.log('AuthContext: Tentative de changement de mot de passe');
+      const result = await authService.changePassword({ currentPassword, newPassword });
+      console.log('AuthContext: Mot de passe changé avec succès', result);
+      // Ne pas retourner le résultat pour respecter la signature Promise<void>
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Échec de la modification du mot de passe.');
-      console.error(err);
+      console.error('Erreur changement mot de passe dans AuthContext:', err);
+      console.error('Type d\'erreur dans AuthContext:', err.constructor.name);
+      console.error('Nom d\'erreur dans AuthContext:', err.name);
+      console.error('Message d\'erreur dans AuthContext:', err.message);
+      console.error('Erreur complète:', err);
+      
+      // Préserver l'information de type d'erreur lors de la propagation
+      if (err.name === 'IncorrectPasswordError' || 
+          (err.message && err.message.includes('Current password is incorrect')) ||
+          (err.response?.data?.code === 'INVALID_CURRENT_PASSWORD')) {
+        console.log('AuthContext: Détection d\'une erreur de mot de passe incorrect');
+        const passwordError = new Error('Current password is incorrect');
+        passwordError.name = 'IncorrectPasswordError';
+        throw passwordError;
+      }
+      
+      // Propager l'erreur au composant Profile pour un meilleur traitement
       throw err;
     } finally {
-      setLoading(false);
-    }
-  };  // Upload avatar
+      setLoading(false);    }
+  };
+  
+  // Upload avatar
   const uploadAvatar = async (file: File) => {
     setLoading(true);
     setError(null);

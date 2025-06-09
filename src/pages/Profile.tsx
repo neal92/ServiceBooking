@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import PageTransition from '../components/layout/PageTransition';
 import SuccessToast from '../components/layout/SuccessToast';
@@ -19,25 +19,91 @@ const Profile = () => {
   const [password, setPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  const [error, setError] = useState('');  const [success, setSuccess] = useState('');
   const [showSuccessToast, setShowSuccessToast] = useState(false);
+  
+  // Suivre les changements du message de succès pour débogage
+  useEffect(() => {
+    if (success) {
+      console.log('Message de succès mis à jour:', success, 'isEditingPassword =', isEditingPassword);
+    }
+  }, [success, isEditingPassword]);
 
-  console.log('Profile - État initial:', { 
-    id: user?.id,
-    firstName: user?.firstName,
-    lastName: user?.lastName,
-    avatar: user?.avatar,
+  // Effet pour suivre les changements de l'état isEditingPassword
+  useEffect(() => {
+    if (!isEditingPassword && success) {
+      console.log('Mode édition mot de passe désactivé avec message de succès présent:', success);
+    }
+  }, [isEditingPassword, success]);
+
+  // Gestion du toast de succès
+  useEffect(() => {
+    if (showSuccessToast) {
+      // Le toast disparaîtra après 3 secondes
+      const timer = setTimeout(() => {
+        setShowSuccessToast(false);
+      }, 3000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [showSuccessToast]);
+
+  // Gestion du message de succès permanent
+  useEffect(() => {
+    console.log('État du message de succès:', success);
+    console.log('État d\'édition:', isEditingPassword);
+  }, [success, isEditingPassword]);
+
+  const [passwordErrors, setPasswordErrors] = useState({
+    current: '',
+    new: '',
+    confirm: ''
   });
 
+  // Regex validation pour le mot de passe
+  const PASSWORD_REGEX = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6,}$/;
+  const validateCurrentPassword = (value: string) => {
+    if (!value) {
+      setPasswordErrors(prev => ({ ...prev, current: 'Le mot de passe actuel est requis' }));
+      return false;
+    }
+    // Efface l'erreur de mot de passe incorrect ainsi que l'erreur de champ vide
+    setPasswordErrors(prev => ({ ...prev, current: '' }));
+    // Effacer aussi l'erreur principale si elle concerne le mot de passe
+    if (error && (error.includes('mot de passe') || error.includes('password'))) {
+      setError('');
+    }
+    return true;
+  };
+
+  const validateNewPassword = (value: string) => {
+    if (!PASSWORD_REGEX.test(value)) {
+      setPasswordErrors(prev => ({ ...prev, new: 'Le mot de passe doit contenir au moins 6 caractères, avec au moins une lettre et un chiffre' }));
+      return false;
+    }
+    setPasswordErrors(prev => ({ ...prev, new: '' }));
+    return true;
+  };
+
+  const validateConfirmPassword = (newPass: string, confirmPass: string) => {
+    if (newPass !== confirmPass) {
+      setPasswordErrors(prev => ({ ...prev, confirm: 'Les mots de passe ne correspondent pas' }));
+      return false;
+    }
+    setPasswordErrors(prev => ({ ...prev, confirm: '' }));
+    return true;
+  };
   const handleInfoSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    // Réinitialisez complètement le message de succès pour éviter toute confusion
+    // avec le message de succès du changement de mot de passe
     setSuccess('');
     setShowSuccessToast(false);
 
     try {
       await updateUser(userInfo);
+      // Message de succès spécifique pour la mise à jour des informations
       setSuccess('Informations mises à jour avec succès');
       setShowSuccessToast(true);
       setIsEditing(false);
@@ -45,41 +111,93 @@ const Profile = () => {
       setError(err.message || 'Erreur lors de la mise à jour des informations');
     }
   };
-  
-  const handleChangePassword = async (e: React.FormEvent) => {
+    const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Réinitialisation des états d'erreur
     setError('');
-    setSuccess('');
-    setShowSuccessToast(false);
+    setPasswordErrors({
+      current: '',
+      new: '',
+      confirm: ''
+    });
+    
+    console.log('Tentative de changement de mot de passe...');
+    
+    // Validation de tous les champs
+    const isCurrentPasswordValid = validateCurrentPassword(password);
+    const isNewPasswordValid = validateNewPassword(newPassword);
+    const isConfirmPasswordValid = validateConfirmPassword(newPassword, confirmPassword);
 
-    if (newPassword !== confirmPassword) {
-      setError('Les mots de passe ne correspondent pas');
-      return;
-    }
-
-    try {
-      await changePassword(password, newPassword);
-      setSuccess('Mot de passe modifié avec succès');
-      setShowSuccessToast(true);
-      setIsEditingPassword(false);
-      setPassword('');
-      setNewPassword('');
-      setConfirmPassword('');
-    } catch (err: any) {
-      setError(err.message || 'Erreur lors de la modification du mot de passe');
+    // Si toutes les validations sont ok, procéder au changement
+    if (isCurrentPasswordValid && isNewPasswordValid && isConfirmPasswordValid) {
+      try {
+        await changePassword(password, newPassword);
+        
+        // Définir d'abord le message de succès
+        const successMessage = 'Mot de passe modifié avec succès';
+        console.log('Définition du message de succès:', successMessage);
+        
+        // Réinitialiser les champs
+        setPassword('');
+        setNewPassword('');
+        setConfirmPassword('');
+        
+        // Mettre à jour les états dans le bon ordre
+        setIsEditingPassword(false);
+        setSuccess(successMessage); // Set success message after editing state change
+        setShowSuccessToast(true); // Show toast after success message is set
+      } catch (err: any) {
+        console.error('Erreur changement mot de passe dans Profile:', err);
+        console.error('Type d\'erreur:', err.constructor.name);
+        console.error('Nom d\'erreur:', err.name);
+        console.error('Message d\'erreur:', err.message);
+        
+        // Effacer le message de succès en cas d'erreur
+        setSuccess('');
+        
+        // Gérer les différents types d'erreurs
+        if (err.name === 'IncorrectPasswordError' || 
+            (err.message && err.message.includes('Current password is incorrect'))) {
+          console.log('Erreur de mot de passe incorrect détectée');
+          // Réinitialiser l'erreur générale et configurer l'erreur spécifique au champ
+          setError('');
+          setPasswordErrors(prev => ({ 
+            ...prev, 
+            current: 'Le mot de passe actuel est incorrect' 
+          }));
+          // Vider uniquement le champ du mot de passe actuel pour permettre une nouvelle saisie
+          setPassword('');
+        } else if (err.message && err.message.includes('User not found')) {
+          setError('Utilisateur non trouvé. Veuillez vous reconnecter.');
+          // Optionnellement, rediriger vers la page de connexion après un délai
+          setTimeout(() => {
+            window.location.href = '/login';
+          }, 3000);
+        } else if (err.message && err.message.includes('Erreur serveur: informations utilisateur incomplètes')) {
+          setError('Une erreur est survenue avec votre compte. Veuillez contacter le support.');
+        } else if (err.status === 404 || (err.response && err.response.status === 404)) {
+          setError('Service indisponible. Veuillez réessayer plus tard.');
+        } else {
+          setError(err.message || 'Erreur lors de la modification du mot de passe');
+          console.error('Erreur complète:', err);
+        }
+      }
     }
   };
 
   return (
     <PageTransition type="fade">
       <div className="max-w-5xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Mon Profil</h1>
-        
-        <SuccessToast 
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Mon Profil</h1>          <SuccessToast 
           message={success} 
-          show={showSuccessToast} 
-          onClose={() => setShowSuccessToast(false)}
-          duration={3000}
+          show={showSuccessToast}          onClose={() => {
+            // Fermer uniquement le toast, mais garder le message de succès
+            // pour l'affichage permanent dans la section mot de passe
+            console.log('Fermeture du toast, message de succès conservé:', success);
+            setShowSuccessToast(false);
+          }}
+          duration={5000} // Durée d'affichage du toast
         />
         
         <div className="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">
@@ -264,9 +382,8 @@ const Profile = () => {
                         </button>
                       </div>
                     </form>
-                  )}
-                </div>
-              </div>
+                  )}              </div>
+            </div>
 
               {/* Section mot de passe */}
               <div className="bg-white dark:bg-gray-800 rounded-lg overflow-hidden">
@@ -275,31 +392,70 @@ const Profile = () => {
                     Changer le mot de passe
                   </h3>
                 </div>
-                
-                <div className="p-6">
-                  {!isEditingPassword ? (
-                    <button
+                  <div className="p-6">
+                  {/* Message de succès permanent */}
+                  {success && !isEditingPassword && (
+                    <div 
+                      key={success} 
+                      className="mb-6 p-4 rounded-md bg-green-50 border border-green-200"
+                      role="alert"
+                    >
+                      <div className="flex">
+                        <div className="flex-shrink-0">
+                          <svg className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                          </svg>
+                        </div>
+                        <div className="ml-3">
+                          <p className="text-sm font-medium text-green-800">{success}</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  {!isEditingPassword ? (                    <button
                       type="button"
-                      onClick={() => setIsEditingPassword(true)}
+                      onClick={() => {
+                        // Effacer le message de succès seulement lorsque l'utilisateur commence à modifier à nouveau
+                        setSuccess('');
+                        // Puis passer en mode édition
+                        setIsEditingPassword(true);
+                      }}
                       className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:bg-blue-700 dark:hover:bg-blue-600 transition-colors"
                     >
                       Modifier le mot de passe
-                    </button>
-                  ) : (
-                    <form onSubmit={handleChangePassword} className="space-y-6">
+                    </button>) : (                    <form onSubmit={handleChangePassword} className="space-y-6">
+                      {/* Dans le formulaire d'édition, nous n'affichons pas le message de succès
+                          car il sera affiché dans la section parente uniquement quand !isEditingPassword */}
+                      
                       <div className="space-y-4">
                         <div>
                           <label htmlFor="current-password" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                             Mot de passe actuel
-                          </label>
-                          <input
+                          </label><input
                             type="password"
                             id="current-password"
                             value={password}
-                            onChange={(e) => setPassword(e.target.value)}
+                            onChange={(e) => {
+                              setPassword(e.target.value);
+                              validateCurrentPassword(e.target.value);
+                              // Réinitialiser l'erreur lorsque l'utilisateur commence à taper
+                              if (passwordErrors.current) {
+                                setPasswordErrors(prev => ({ ...prev, current: '' }));
+                              }
+                            }}
                             required
-                            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2.5 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white transition-colors"
+                            className={`mt-1 block w-full border ${
+                              passwordErrors.current ? 'border-red-300 dark:border-red-500' : 'border-gray-300 dark:border-gray-600'
+                            } rounded-md shadow-sm py-2.5 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white transition-colors`}
                           />
+                          {passwordErrors.current && (
+                            <p className="mt-1 text-sm text-red-600 dark:text-red-400 flex items-center">
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                              </svg>
+                              {passwordErrors.current}
+                            </p>
+                          )}
                         </div>
                         
                         <div>
@@ -310,10 +466,26 @@ const Profile = () => {
                             type="password"
                             id="new-password"
                             value={newPassword}
-                            onChange={(e) => setNewPassword(e.target.value)}
+                            onChange={(e) => {
+                              setNewPassword(e.target.value);
+                              validateNewPassword(e.target.value);
+                              if (confirmPassword) {
+                                validateConfirmPassword(e.target.value, confirmPassword);
+                              }
+                            }}
                             required
-                            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2.5 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white transition-colors"
+                            className={`mt-1 block w-full border ${
+                              passwordErrors.new ? 'border-red-300 dark:border-red-500' : 'border-gray-300 dark:border-gray-600'
+                            } rounded-md shadow-sm py-2.5 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white transition-colors`}
                           />
+                {passwordErrors.new && (
+                            <p className="mt-1 text-sm text-red-600 dark:text-red-400 flex items-center">
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                              </svg>
+                              {passwordErrors.new}
+                            </p>
+                          )}
                         </div>
                         
                         <div>
@@ -324,12 +496,31 @@ const Profile = () => {
                             type="password"
                             id="confirm-password"
                             value={confirmPassword}
-                            onChange={(e) => setConfirmPassword(e.target.value)}
+                            onChange={(e) => {
+                              setConfirmPassword(e.target.value);
+                              validateConfirmPassword(newPassword, e.target.value);
+                            }}
                             required
-                            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2.5 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white transition-colors"
+                            className={`mt-1 block w-full border ${
+                              passwordErrors.confirm ? 'border-red-300 dark:border-red-500' : 'border-gray-300 dark:border-gray-600'
+                            } rounded-md shadow-sm py-2.5 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white transition-colors`}
                           />
+                {passwordErrors.confirm && (
+                            <p className="mt-1 text-sm text-red-600 dark:text-red-400 flex items-center">
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                              </svg>
+                              {passwordErrors.confirm}
+                            </p>
+                          )}
                         </div>
                       </div>
+
+                      {error && (
+                        <div className="p-4 bg-red-50 dark:bg-red-900/30 border-l-4 border-red-400 dark:border-red-500 text-red-700 dark:text-red-400">
+                          {error}
+                        </div>
+                      )}
 
                       <div className="flex space-x-4 pt-2">
                         <button
@@ -337,15 +528,21 @@ const Profile = () => {
                           className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:bg-blue-700 dark:hover:bg-blue-600 transition-colors"
                         >
                           Enregistrer
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setIsEditingPassword(false);
+                        </button>                        <button
+                          type="button"                          onClick={() => {
+                            // Réinitialiser les champs et les erreurs
                             setPassword('');
                             setNewPassword('');
                             setConfirmPassword('');
                             setError('');
+                            setPasswordErrors({
+                              current: '',
+                              new: '',
+                              confirm: ''
+                            });
+                            // Sortir du mode édition
+                            // Ne pas effacer le message de succès quand on annule
+                            setIsEditingPassword(false);
                           }}
                           className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600 dark:border-gray-600 transition-colors"
                         >

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { PlusCircle, Filter, Calendar as CalendarIcon, CalendarX, Trash2, RotateCcw } from 'lucide-react';
+import { PlusCircle, Calendar as CalendarIcon, CalendarX, Trash2, RotateCcw } from 'lucide-react';
 import AppointmentList from '../components/appointments/AppointmentList';
 import NewAppointmentModal from '../components/appointments/NewAppointmentModal';
 import { Appointment, Service } from '../types';

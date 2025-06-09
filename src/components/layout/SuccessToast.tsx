@@ -15,7 +15,6 @@ const SuccessToast: React.FC<SuccessToastProps> = ({
   show 
 }) => {
   const [isVisible, setIsVisible] = useState(show);
-
   useEffect(() => {
     setIsVisible(show);
     

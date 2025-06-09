@@ -90,7 +90,8 @@ export const serviceService = {
 };
 
 // API Service for Appointments
-export const appointmentService = {  getAll: async (): Promise<Appointment[]> => {
+export const appointmentService = {
+  getAll: async (): Promise<Appointment[]> => {
     // Utilisation de cache: false pour toujours récupérer les données les plus récentes
     const response = await apiClient.get('/appointments', { 
       headers: { 'Cache-Control': 'no-cache' },
@@ -144,7 +145,7 @@ export const appointmentService = {  getAll: async (): Promise<Appointment[]> =>
   },
   
   updateStatus: async (id: string, status: Appointment['status']): Promise<void> => {
-    await apiClient.patch(`/appointments/${id}/status`, { status });
+    await apiClient.put(`/appointments/${id}/status`, { status });
   },
   
   delete: async (id: string): Promise<void> => {

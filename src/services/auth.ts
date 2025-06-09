@@ -55,11 +55,27 @@ const apiClient = axios.create({
 // Add a request interceptor to include the token in requests
 apiClient.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
+  console.log('Interceptor - Token in localStorage:', token ? 'present' : 'not present');
+  
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
+    console.log('Interceptor - Added Authorization header');
+    
+    // Décodez et affichez le contenu du token pour débogage (sans vérification de signature)
+    try {
+      const base64Url = token.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const jsonPayload = decodeURIComponent(atob(base64).split('').map(c => {
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+      }).join(''));
+      console.log('Interceptor - Token payload:', JSON.parse(jsonPayload));
+    } catch (e) {
+      console.error('Interceptor - Failed to decode token:', e);
+    }
   }
   return config;
 }, (error) => {
+  console.error('Interceptor - Request error:', error);
   return Promise.reject(error);
 });
 
@@ -93,11 +109,18 @@ const authService = {    register: async (userData: RegisterData): Promise<AuthR
   login: async (credentials: LoginCredentials): Promise<AuthResponse> => {
     try {
       const response = await apiClient.post<AuthResponse>('/auth/login', credentials);
+      console.log('Login response:', {
+        token: response.data.token ? 'present' : 'not present',
+        user: response.data.user ? 'present' : 'not present'
+      });
       
       // Save token and user to local storage
       if (response.data.token) {
         localStorage.setItem('token', response.data.token);
         localStorage.setItem('user', JSON.stringify(response.data.user));
+        console.log('Saved to localStorage - Token and user data');
+      } else {
+        console.warn('No token received in login response');
       }
       
       return response.data;
@@ -133,11 +156,56 @@ const authService = {    register: async (userData: RegisterData): Promise<AuthR
     }
     
     return response.data;
-  },
-  
-  changePassword: async (passwordData: PasswordChangeData): Promise<{ message: string }> => {
-    const response = await apiClient.put<{ message: string }>('/auth/password', passwordData);
-    return response.data;
+  },  changePassword: async (passwordData: PasswordChangeData): Promise<{ message: string }> => {
+    console.log('Envoi requête changement mot de passe...');
+    
+    // Récupérer le token d'authentification
+    const token = localStorage.getItem('token');
+    
+    if (!token) {
+      console.error('Aucun token d\'authentification trouvé');
+      throw new Error('Vous devez être connecté pour changer votre mot de passe');
+    }
+
+    try {
+      // Créer une requête spécifique pour le changement de mot de passe
+      const response = await axios({
+        method: 'put',
+        url: `${API_URL}/auth/password`,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        data: passwordData
+      });
+      
+      console.log('Réponse changement mot de passe:', response.data);
+      return response.data;    } catch (err: any) {
+      console.error('Erreur changement mot de passe:', {
+        message: err.message,
+        status: err.response?.status,
+        data: err.response?.data
+      });
+      
+      if (err.response?.status === 404) {
+        console.error('Endpoint introuvable. URL utilisée:', `${API_URL}/auth/password`);
+      }      // Détecter toutes les variations possibles de l'erreur de mot de passe incorrect
+      if ((err.response?.status === 401 && 
+          (err.response?.data?.message === 'Current password is incorrect' || 
+           err.response?.data?.code === 'INVALID_CURRENT_PASSWORD')) || 
+          (err.response?.data?.message && 
+           err.response?.data?.message.toLowerCase().includes('password') && 
+           err.response?.data?.message.toLowerCase().includes('incorrect'))) {
+        // Créer une erreur personnalisée pour un mot de passe incorrect avec un type spécial
+        const error = new Error('Current password is incorrect');
+        error.name = 'IncorrectPasswordError'; // Ajout d'un nom spécifique à l'erreur
+        console.log('Erreur de mot de passe incorrect détectée dans le service:', error);
+        throw error;
+      }
+      
+      // Propager l'erreur du serveur si disponible, sinon utiliser un message par défaut
+      throw err.response?.data || err;
+    }
   },
   uploadAvatar: async (file: File): Promise<UploadAvatarResponse> => {
     console.log('Début uploadAvatar avec fichier:', {
