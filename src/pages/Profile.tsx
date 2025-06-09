@@ -1,16 +1,16 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import PageTransition from '../components/layout/PageTransition';
-import SuccessToast from '../components/layout/SuccessToast';
-import AvatarSelector from '../components/profile/AvatarSelector';
 import authService from '../services/auth';
-import { getFullMediaUrl, API_BASE_URL } from '../utils/config';
+import { API_BASE_URL } from '../utils/config';
+import AvatarSelector from '../components/profile/AvatarSelector';
 
 const Profile = () => {
   const { user, updateUser, changePassword } = useAuth();
   
   const [isEditing, setIsEditing] = useState(false);
   const [isEditingPassword, setIsEditingPassword] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [userInfo, setUserInfo] = useState({
     firstName: user?.firstName || '',
     lastName: user?.lastName || '',
@@ -19,8 +19,8 @@ const Profile = () => {
   const [password, setPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [error, setError] = useState('');  const [success, setSuccess] = useState('');
-  const [showSuccessToast, setShowSuccessToast] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   
   // Suivre les changements du message de succès pour débogage
   useEffect(() => {
@@ -35,18 +35,6 @@ const Profile = () => {
       console.log('Mode édition mot de passe désactivé avec message de succès présent:', success);
     }
   }, [isEditingPassword, success]);
-
-  // Gestion du toast de succès
-  useEffect(() => {
-    if (showSuccessToast) {
-      // Le toast disparaîtra après 3 secondes
-      const timer = setTimeout(() => {
-        setShowSuccessToast(false);
-      }, 3000);
-
-      return () => clearTimeout(timer);
-    }
-  }, [showSuccessToast]);
 
   // Gestion du message de succès permanent
   useEffect(() => {
@@ -99,13 +87,13 @@ const Profile = () => {
     // Réinitialisez complètement le message de succès pour éviter toute confusion
     // avec le message de succès du changement de mot de passe
     setSuccess('');
-    setShowSuccessToast(false);
+    setShowSuccessModal(false);
 
     try {
       await updateUser(userInfo);
       // Message de succès spécifique pour la mise à jour des informations
       setSuccess('Informations mises à jour avec succès');
-      setShowSuccessToast(true);
+      setShowSuccessModal(true);
       setIsEditing(false);
     } catch (err: any) {
       setError(err.message || 'Erreur lors de la mise à jour des informations');
@@ -145,8 +133,8 @@ const Profile = () => {
         
         // Mettre à jour les états dans le bon ordre
         setIsEditingPassword(false);
-        setSuccess(successMessage); // Set success message after editing state change
-        setShowSuccessToast(true); // Show toast after success message is set
+        setSuccess(successMessage);
+        setShowSuccessModal(true); // Afficher la modale de succès
       } catch (err: any) {
         console.error('Erreur changement mot de passe dans Profile:', err);
         console.error('Type d\'erreur:', err.constructor.name);
@@ -189,17 +177,37 @@ const Profile = () => {
   return (
     <PageTransition type="fade">
       <div className="max-w-5xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Mon Profil</h1>          <SuccessToast 
-          message={success} 
-          show={showSuccessToast}          onClose={() => {
-            // Fermer uniquement le toast, mais garder le message de succès
-            // pour l'affichage permanent dans la section mot de passe
-            console.log('Fermeture du toast, message de succès conservé:', success);
-            setShowSuccessToast(false);
-          }}
-          duration={5000} // Durée d'affichage du toast
-        />
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Mon Profil</h1>
         
+        {/* Modal de succès */}
+        {showSuccessModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-sm w-full mx-4">
+              <div className="flex items-center justify-center mb-4">
+                <div className="rounded-full bg-green-100 p-3">
+                  <svg className="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+              </div>
+              <h3 className="text-lg font-medium text-center text-gray-900 dark:text-white mb-4">
+                Succès !
+              </h3>
+              <p className="text-center text-gray-600 dark:text-gray-300 mb-6">
+                {success}
+              </p>
+              <div className="flex justify-center">
+                <button
+                  onClick={() => setShowSuccessModal(false)}
+                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                >
+                  OK
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">
           <div className="flex flex-col md:flex-row">
             <div className="p-8 md:w-1/3 bg-gray-50 dark:bg-gray-700/50 border-r border-gray-200 dark:border-gray-700">
@@ -210,7 +218,7 @@ const Profile = () => {
                     try {
                       setError('');
                       setSuccess('');
-                      setShowSuccessToast(false);
+                      setShowSuccessModal(false);
                       console.log('Sélection avatar prédéfini:', avatarUrl);
                       
                       if (avatarUrl.startsWith('/avatars/')) {
@@ -242,7 +250,7 @@ const Profile = () => {
                         });
                         
                         setSuccess('Avatar mis à jour avec succès');
-                        setShowSuccessToast(true);
+                        setShowSuccessModal(true);
                       }
                     } catch (err: any) {
                       console.error('Erreur sélection avatar:', err);

@@ -53,9 +53,8 @@ const Calendar = () => {
               <div className="h-3 w-3 rounded-full bg-blue-500 mr-2"></div>
               Terminé            </div>
           </div>
-        </div>          
-        <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 flex-grow flex flex-col h-full border border-gray-200 dark:border-gray-700">
-            <div className="flex-grow h-full" ref={calendarContainerRef}>
+        </div>            <div className="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
+            <div className="p-6 flex flex-col" style={{ height: 'calc(100vh - 300px)' }} ref={calendarContainerRef}>
               <AppointmentCalendar
                 key={refreshKey}
                 onAppointmentUpdated={handleAppointmentUpdated}

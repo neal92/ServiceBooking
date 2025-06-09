@@ -4,6 +4,7 @@ import { Appointment } from '../../types';
 import ModalPortal from '../layout/ModalPortal';
 import NewAppointmentModal from './NewAppointmentModal';
 import SuccessToast from '../layout/SuccessToast';
+import ErrorToast from '../layout/ErrorToast';
 
 interface AppointmentRecapModalProps {
   isOpen: boolean;
@@ -16,7 +17,9 @@ interface AppointmentRecapModalProps {
 const AppointmentRecapModal: React.FC<AppointmentRecapModalProps> = ({ isOpen, onClose, appointment, onDelete, onStatusChange }) => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showSuccessToast, setShowSuccessToast] = useState(false);
+  const [showErrorToast, setShowErrorToast] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
   
   if (!isOpen || !appointment) return null;
 
@@ -24,10 +27,8 @@ const AppointmentRecapModal: React.FC<AppointmentRecapModalProps> = ({ isOpen, o
     ? new Date(appointment.date).toLocaleDateString('fr-FR', {
         weekday: 'long',
         day: 'numeric',
-        month: 'long',
-        year: 'numeric'
-      })
-    : '';
+        month: 'long'
+    }) : '';
 
   // Fonction pour formater la durée
   const formatDuration = (minutes: number) => {
@@ -95,6 +96,7 @@ const AppointmentRecapModal: React.FC<AppointmentRecapModalProps> = ({ isOpen, o
   const handleEditClose = () => {
     setShowEditModal(false);
   };
+
   // Status update handler
   const handleStatusChange = async (newStatus: Appointment['status']) => {
     try {
@@ -103,6 +105,8 @@ const AppointmentRecapModal: React.FC<AppointmentRecapModalProps> = ({ isOpen, o
       setShowSuccessToast(true);
     } catch (err) {
       console.error('Error updating appointment status:', err);
+      setErrorMessage('Une erreur est survenue lors de la mise à jour du statut');
+      setShowErrorToast(true);
     }
   };
 
@@ -118,6 +122,14 @@ const AppointmentRecapModal: React.FC<AppointmentRecapModalProps> = ({ isOpen, o
             message={successMessage}
             show={showSuccessToast}
             onClose={() => setShowSuccessToast(false)}
+            duration={2000}
+          />
+          
+          {/* Error Toast */}
+          <ErrorToast 
+            message={errorMessage}
+            show={showErrorToast}
+            onClose={() => setShowErrorToast(false)}
             duration={2000}
           />
           
@@ -260,6 +272,20 @@ const AppointmentRecapModal: React.FC<AppointmentRecapModalProps> = ({ isOpen, o
           onDelete={onDelete}
         />
       )}
+      
+      {/* Success Toast */}
+      <SuccessToast 
+        show={showSuccessToast}
+        message={successMessage}
+        onClose={() => setShowSuccessToast(false)}
+      />
+
+      {/* Error Toast */}
+      <ErrorToast
+        show={showErrorToast} 
+        message={errorMessage}
+        onClose={() => setShowErrorToast(false)}
+      />
     </>
   );
 };

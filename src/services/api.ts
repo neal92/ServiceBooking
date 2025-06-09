@@ -142,10 +142,18 @@ export const appointmentService = {
       status: appointment.status,
       notes: appointment.notes || ''
     });
-  },
-  
-  updateStatus: async (id: string, status: Appointment['status']): Promise<void> => {
-    await apiClient.put(`/appointments/${id}/status`, { status });
+  },    updateStatus: async (id: string, status: Appointment['status']): Promise<void> => {
+    try {    const response = await apiClient.patch(`/appointments/${id}/status`, { status });
+    if (!response.data || response.status !== 200) {
+      throw new Error('La mise à jour du statut a échoué');
+    }
+    } catch (error: any) {
+      console.error('Erreur lors de la mise à jour du statut:', error);
+      if (error.response?.status === 404) {
+        throw new Error('Rendez-vous non trouvé');
+      }
+      throw new Error('Erreur lors de la mise à jour du statut');
+    }
   },
   
   delete: async (id: string): Promise<void> => {

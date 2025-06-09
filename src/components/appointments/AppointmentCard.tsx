@@ -8,6 +8,7 @@ import { Appointment } from '../../types';
 import AppointmentRecapModal from './AppointmentRecapModal';
 import ModalPortal from '../layout/ModalPortal';
 import SuccessToast from '../layout/SuccessToast';
+import ErrorToast from '../layout/ErrorToast';
 
 interface AppointmentCardProps {
   appointment: Appointment;
@@ -21,26 +22,11 @@ const AppointmentCard = ({ appointment, onDelete, onStatusChange }: AppointmentC
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [statusToConfirm, setStatusToConfirm] = useState<Appointment['status'] | null>(null);
   const [showSuccessToast, setShowSuccessToast] = useState(false);
+  const [showErrorToast, setShowErrorToast] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
   const buttonRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  // Extract properties and check for existence
-  const clientName = appointment.clientName || '';
-  const clientEmail = appointment.clientEmail || '';
-  const clientPhone = appointment.clientPhone || '';
-  const serviceName = appointment.serviceName || '';
-  const date = appointment.date || '';
-  const time = appointment.time || '';
-  const duration = appointment.duration || 0;
-  const status = appointment.status;
-  const notes = appointment.notes || '';
-  
-  const formattedDate = date ? new Date(date).toLocaleDateString('fr-FR', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long'
-  }) : '';
-  
   // Close menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -59,6 +45,24 @@ const AppointmentCard = ({ appointment, onDelete, onStatusChange }: AppointmentC
     };
   }, [showMenu]);
 
+  // Extract properties and check for existence
+  const clientName = appointment.clientName || '';
+  const clientEmail = appointment.clientEmail || '';
+  const clientPhone = appointment.clientPhone || '';
+  const serviceName = appointment.serviceName || '';
+  const date = appointment.date || '';
+  const time = appointment.time || '';
+  const duration = appointment.duration || 0;
+  const status = appointment.status;
+  const notes = appointment.notes || '';
+  
+  const formattedDate = date ? new Date(date).toLocaleDateString('fr-FR', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long'
+  }) : '';
+  
+  // Get colors and icon based on status
   const getStatusDetails = (status: Appointment['status']) => {
     switch (status) {
       case 'pending':
@@ -106,9 +110,6 @@ const AppointmentCard = ({ appointment, onDelete, onStatusChange }: AppointmentC
     }
   };
 
-  // Get colors and icon based on status
-  const { bgColor, textColor, icon } = getStatusDetails(status);
-
   // Format duration
   const formatDuration = (minutes: number) => {
     if (minutes < 60) return `${minutes} min`;
@@ -142,7 +143,7 @@ const AppointmentCard = ({ appointment, onDelete, onStatusChange }: AppointmentC
     }
   };
 
-  // Confirm status change 
+  // Confirm status change
   const confirmStatusChange = async () => {
     if (statusToConfirm && onStatusChange) {
       try {
@@ -151,6 +152,9 @@ const AppointmentCard = ({ appointment, onDelete, onStatusChange }: AppointmentC
         setShowSuccessToast(true);
       } catch (err) {
         console.error('Error updating status:', err);
+        setShowConfirmDialog(false);
+        setErrorMessage('Une erreur est survenue lors de la mise à jour du statut');
+        setShowErrorToast(true);
       }
     }
   };
@@ -260,8 +264,7 @@ const AppointmentCard = ({ appointment, onDelete, onStatusChange }: AppointmentC
         className="px-6 py-5 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/60 transition-colors cursor-pointer"
         onClick={() => setShowRecapModal(true)}
       >
-        <div className="flex items-center justify-between">
-          <div>
+        <div className="flex items-center justify-between">          <div>
             <p className="text-sm font-medium text-blue-600 dark:text-blue-400 truncate">
               {serviceName}
             </p>
@@ -271,14 +274,19 @@ const AppointmentCard = ({ appointment, onDelete, onStatusChange }: AppointmentC
             </p>
           </div>
           <div className="ml-4 flex-shrink-0">
-            <p className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${bgColor} ${textColor}`}>
-              {icon && <span className="mr-1.5">{icon}</span>}
-              {status === 'pending' && 'En attente'}
-              {status === 'confirmed' && 'Confirmé'}
-              {status === 'in-progress' && 'En cours'}
-              {status === 'cancelled' && 'Annulé'}
-              {status === 'completed' && 'Terminé'}
-            </p>
+            {(() => {
+              const { bgColor, textColor, icon } = getStatusDetails(status);
+              return (
+                <p className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${bgColor} ${textColor}`}>
+                  {icon && <span className="mr-1.5">{icon}</span>}
+                  {status === 'pending' && 'En attente'}
+                  {status === 'confirmed' && 'Confirmé'}
+                  {status === 'in-progress' && 'En cours'}
+                  {status === 'cancelled' && 'Annulé'}
+                  {status === 'completed' && 'Terminé'}
+                </p>
+              );
+            })()}
           </div>
         </div>
         
@@ -400,8 +408,15 @@ const AppointmentCard = ({ appointment, onDelete, onStatusChange }: AppointmentC
       {/* Success Toast */}
       <SuccessToast 
         show={showSuccessToast}
-        message="Status modifié"
+        message="Statut modifié"
         onClose={() => setShowSuccessToast(false)}
+      />
+
+      {/* Error Toast */}
+      <ErrorToast
+        show={showErrorToast} 
+        message={errorMessage}
+        onClose={() => setShowErrorToast(false)}
       />
     </>
   );

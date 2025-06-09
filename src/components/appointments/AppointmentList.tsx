@@ -87,14 +87,14 @@ const AppointmentList = ({ appointments, onDelete, onStatusChange }: Appointment
           </div>
 
           <div className="p-6 space-y-6">
-            {groupedAppointments[date].map((appointment) => (
-              <div 
+            {groupedAppointments[date].map((appointment) => (              <div 
                 key={appointment.id} 
                 className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm transition-all hover:shadow-md"
-              >                <AppointmentCard 
+              >                
+                <AppointmentCard 
                   appointment={appointment} 
-                  onDelete={() => onDelete(appointment.id)} 
-                  onStatusChange={(id, status) => onStatusChange(id.toString(), status)} 
+                  onDelete={onDelete} 
+                  onStatusChange={onStatusChange} 
                 />
               </div>
             ))}

@@ -22,8 +22,17 @@ function enhanceCalendarEvents() {
   eventElements.forEach(eventEl => {
     if (!(eventEl instanceof HTMLElement)) return;
     
-    // Ajouter des classes pour améliorer l'apparence
-    eventEl.classList.add('hover:shadow-md', 'transition-all', 'duration-200');
+    // Améliorer l'apparence générale
+    eventEl.classList.add(
+      'hover:shadow-lg',
+      'transition-all',
+      'duration-200',
+      'rounded-lg',
+      'border-l-4'
+    );
+    
+    // Améliorer l'interaction au survol
+    eventEl.style.cursor = 'pointer';
     
     // Extraire le statut depuis le backgroundColor et ajouter une classe appropriée
     const style = window.getComputedStyle(eventEl);
@@ -31,34 +40,34 @@ function enhanceCalendarEvents() {
     
     if (backgroundColor.includes('76, 175, 80') || backgroundColor.includes('4CAF50')) {
       eventEl.classList.add('event-status-confirmed');
+      eventEl.style.borderColor = '#4CAF50';
     } else if (backgroundColor.includes('255, 152, 0') || backgroundColor.includes('FF9800')) {
       eventEl.classList.add('event-status-pending');
+      eventEl.style.borderColor = '#FF9800';
     } else if (backgroundColor.includes('244, 67, 54') || backgroundColor.includes('F44336')) {
       eventEl.classList.add('event-status-cancelled');
+      eventEl.style.borderColor = '#F44336';
     } else if (backgroundColor.includes('33, 150, 243') || backgroundColor.includes('2196F3')) {
       eventEl.classList.add('event-status-completed');
+      eventEl.style.borderColor = '#2196F3';
     }
-    
-    // Mettre les informations importantes dans le titre pour qu'elles soient visibles
-    const titleEl = eventEl.querySelector('.fc-event-title');
-    if (titleEl) {
-      // Garder le texte mais s'assurer qu'il est bien formaté
-      const text = titleEl.textContent || '';
-      if (text.includes(' - ')) {
-        const [clientName, serviceName] = text.split(' - ');
-        titleEl.innerHTML = `<strong>${clientName}</strong><br><span class="text-xs opacity-90">${serviceName}</span>`;
-      }
+
+    // Améliorer la lisibilité du contenu
+    const contentEl = eventEl.querySelector('.fc-event-main');
+    if (contentEl instanceof HTMLElement) {
+      contentEl.style.padding = '0.5rem';
+      contentEl.style.lineHeight = '1.2';
     }
-    
-    // Ajouter un effet de hover
-    eventEl.addEventListener('mouseenter', function() {
-      this.style.transform = 'translateY(-2px)';
-      this.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.1)';
+
+    // Ajouter des effets interactifs
+    eventEl.addEventListener('mouseenter', () => {
+      eventEl.style.transform = 'scale(1.02)';
+      eventEl.style.zIndex = '5';
     });
-    
-    eventEl.addEventListener('mouseleave', function() {
-      this.style.transform = '';
-      this.style.boxShadow = '';
+
+    eventEl.addEventListener('mouseleave', () => {
+      eventEl.style.transform = 'scale(1)';
+      eventEl.style.zIndex = '1';
     });
   });
 }

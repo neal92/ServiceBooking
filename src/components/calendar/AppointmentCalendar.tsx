@@ -324,51 +324,89 @@ const AppointmentCalendar: React.FC<AppointmentCalendarProps> = ({
     }
   };
   return (
-    <div className="appointment-calendar h-full">
+    <div className="appointment-calendar flex flex-col h-full max-w-[1200px] mx-auto px-4">
       {error && (
         <div className="bg-red-100 dark:bg-red-900/20 border-l-4 border-red-500 dark:border-red-700 text-red-700 dark:text-red-400 p-4 mb-4" role="alert">
           <p>{error}</p>
         </div>
       )}
-        {loading ? (
+      {loading ? (
         <div className="flex justify-center items-center h-64">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 dark:border-blue-400"></div>
         </div>
       ) : (
-        <div className="flex-grow h-full">
+        <div className="flex-1 min-h-0 w-full">
           <FullCalendar
             ref={calendarRef}
             plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin]}
             initialView={calendarView}
             headerToolbar={{
               left: 'prev,next today',
-              center: 'title',              right: 'dayGridMonth,timeGridWeek,timeGridDay'
+              center: 'title',
+              right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek'
             }}
             locale={frLocale}
             editable={true}
             selectable={true}
             selectMirror={true}
-            dayMaxEvents={true}
+            dayMaxEvents={false}
             weekends={true}
             events={calendarEvents}
-            select={handleDateSelect}
-            eventClick={handleEventClick}
-            eventChange={handleEventChange}
             height="100%"
             allDaySlot={false}
             nowIndicator={true}
+            handleWindowResize={true}
             slotMinTime="08:00:00"
-            slotMaxTime="20:00:00"            businessHours={{
-              daysOfWeek: [1, 2, 3, 4, 5, 6], // Lundi au samedi
-              startTime: '09:00',
-              endTime: '19:00',
+            slotMaxTime="20:00:00"
+            slotDuration="00:15:00"
+            expandRows={true}
+            stickyHeaderDates={true}
+            slotEventOverlap={false}
+            select={handleDateSelect}
+            eventClick={handleEventClick}
+            eventChange={handleEventChange}
+            dateClick={(info) => {
+              const clickedDate = new Date(info.date);
+              setSelectedDate(clickedDate.toISOString().split('T')[0]);
+              setSelectedTime(clickedDate.toTimeString().slice(0, 5));
+              setIsNewAppointmentModalOpen(true);
             }}
-            slotMinWidth={70}
-            slotDuration="00:30:00"
+            businessHours={{
+              daysOfWeek: [1, 2, 3, 4, 5, 6],
+              startTime: '08:00',
+              endTime: '20:00'
+            }}
+            selectConstraint="businessHours"
+            selectOverlap={false}
+            eventBackgroundColor="#3b82f6"
+            eventBorderColor="#3b82f6"
+            scrollTime="08:00:00"
+            eventMaxStack={3}
+            eventMinHeight={30}
             slotLabelFormat={{
               hour: '2-digit',
               minute: '2-digit',
               hour12: false
+            }}
+            dayHeaderFormat={{
+              weekday: 'long',
+              day: 'numeric',
+              month: 'short'
+            }}
+            eventTimeFormat={{
+              hour: '2-digit',
+              minute: '2-digit',
+              hour12: false
+            }}
+            eventContent={(arg) => {
+              return (
+                <div className="p-1 w-full">
+                  <div className="font-medium truncate">{arg.event.extendedProps.clientName}</div>
+                  <div className="text-xs truncate text-gray-600 dark:text-gray-400">
+                    {arg.event.extendedProps.serviceName}
+                  </div>
+                </div>
+              )
             }}
           />
         </div>

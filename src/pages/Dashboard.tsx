@@ -59,23 +59,28 @@ const Dashboard = () => {  const { user } = useAuth();
   const handleStatusChange = async (id: number, status: Appointment['status']) => {
     try {
       await appointmentService.updateStatus(id.toString(), status);
-      fetchData();
+      // Mettre à jour le state local
+      setAppointments(appointments.map(a => {
+        if (a.id === id) {
+          return { ...a, status };
+        }
+        return a;
+      }));
     } catch (err) {
-      console.error("Error updating appointment status:", err);
-      setError('Erreur lors de la mise à jour du statut');
+      console.error("Error updating appointment status:", err); 
+      setError('Une erreur est survenue lors de la mise à jour du statut');
+      throw err; // Propager l'erreur pour que les composants enfants puissent la gérer
     }
   };
 
   // Handle appointment deletion (to be implemented)
   const handleDeleteAppointment = async (id: number) => {
-    if (window.confirm('Êtes-vous sûr de vouloir supprimer ce rendez-vous ?')) {
-      try {
-        await appointmentService.delete(id.toString());
-        fetchData();
-      } catch (err) {
-        console.error("Error deleting appointment:", err);
-        setError('Erreur lors de la suppression du rendez-vous');
-      }
+    try {
+      await appointmentService.delete(id.toString());
+      setAppointments(appointments.filter(a => a.id !== id));
+    } catch (err) {
+      console.error("Error deleting appointment:", err);
+      setError('Une erreur est survenue lors de la suppression du rendez-vous');
     }
   };
 
