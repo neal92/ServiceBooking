@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Calendar, CheckCircle, ListTodo, Users } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import { Link } from 'react-router-dom';
+
 import AppointmentCard from '../components/appointments/AppointmentCard';
 import { Appointment, Service, Category } from '../types';
 import { appointmentService, serviceService, categoryService } from '../services/api';
@@ -102,15 +102,42 @@ const Dashboard = () => {  const { user } = useAuth();
         )}
       </div>
 
-      {/* Actions rapides */}
-      <div className="flex justify-end mb-8">
-        <Link 
-          to="/calendar" 
-          className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:bg-blue-700 dark:hover:bg-blue-600"
-        >
-          <Calendar className="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
-          Voir le calendrier
-        </Link>
+      {/* Today's quick overview section */}
+      <div className="bg-gradient-to-br from-blue-600 to-blue-700 dark:from-blue-700 dark:to-blue-800 shadow rounded-lg p-6">
+        <div className="flex flex-col items-center text-white">
+          <div className="text-center mb-4">
+            <h2 className="text-2xl font-semibold mb-2">Aujourd'hui</h2>            <div className="flex items-center justify-center space-x-8">
+              <div className="text-center">
+                <p className="text-3xl font-bold mb-1">
+                  {appointments.filter(a => {
+                    const appointmentDate = new Date(a.date);
+                    const today = new Date();
+                    return appointmentDate.toDateString() === today.toDateString() && a.status === 'confirmed';
+                  }).length}
+                </p>
+                <p className="text-sm opacity-90">Rendez-vous confirmés</p>
+              </div>
+              <div className="text-center">
+                <p className="text-3xl font-bold mb-1">
+                  {appointments.filter(a => a.status === 'pending').length}
+                </p>
+                <p className="text-sm opacity-90">Rendez-vous en attente</p>
+              </div>              <div className="text-center">
+                <p className="text-3xl font-bold mb-1">
+                  {Math.round((appointments.filter(a => a.status === 'completed').length / appointments.length) * 100) || 0}%
+                </p>
+                <p className="text-sm opacity-90">Taux de complétion</p>
+              </div>
+            </div>
+          </div>
+          <a
+            href="/calendar"
+            className="mt-2 inline-flex items-center px-4 py-2 rounded-md bg-white text-blue-600 hover:bg-blue-50 transition-colors duration-200"
+          >
+            <Calendar className="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
+            Voir le calendrier
+          </a>
+        </div>
       </div>
 
       {loading ? (
@@ -119,6 +146,8 @@ const Dashboard = () => {  const { user } = useAuth();
         </div>
       ) : (
         <>
+          <br />
+
           {/* Stats */}
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-8">
             <div className="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
@@ -208,39 +237,24 @@ const Dashboard = () => {  const { user } = useAuth();
                 </a>
               </div>
             </div>
-            <ul className="divide-y divide-gray-200 dark:divide-gray-700">
-              {upcomingAppointments.length > 0 ? (
-                upcomingAppointments.map((appointment) => (
-                  <li key={appointment.id}>
-                    <AppointmentCard 
-                      appointment={appointment} 
-                      onDelete={() => handleDeleteAppointment(appointment.id)}
-                      onStatusChange={(id, status) => handleStatusChange(parseInt(id), status)}
-                    />
+            <div className="py-4"> {/* Ajout du padding */}
+              <ul className="divide-y divide-gray-200 dark:divide-gray-700">
+                {upcomingAppointments.length > 0 ? (
+                  upcomingAppointments.map((appointment) => (
+                    <li key={appointment.id} className="px-4 py-4"> {/* Ajout du padding pour chaque élément */}
+                      <AppointmentCard 
+                        appointment={appointment} 
+                        onDelete={() => handleDeleteAppointment(appointment.id)}
+                        onStatusChange={(id, status) => handleStatusChange(parseInt(id), status)}
+                      />
+                    </li>
+                  ))
+                ) : (
+                  <li className="px-4 py-6 sm:px-6">
+                    <p className="text-sm text-gray-500 dark:text-gray-400 text-center">Aucun rendez-vous à venir</p>
                   </li>
-                ))
-              ) : (
-                <li className="px-4 py-6 sm:px-6">
-                  <p className="text-sm text-gray-500 dark:text-gray-400 text-center">Aucun rendez-vous à venir</p>
-                </li>
-              )}
-            </ul>
-          </div>
-
-          {/* Custom message or additional features can be added here */}
-          <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
-            <div className="flex items-center justify-center">
-              <div className="text-center">
-                <h2 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Vous souhaitez plus d'informations ?</h2>
-                <p className="text-gray-500 dark:text-gray-400 mb-4">Consultez les détails de vos rendez-vous dans l'onglet calendrier</p>
-                <a
-                  href="/calendar"
-                  className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:bg-blue-700 dark:hover:bg-blue-600"
-                >
-                  <Calendar className="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
-                  Voir le calendrier
-                </a>
-              </div>
+                )}
+              </ul>
             </div>
           </div>
         </>

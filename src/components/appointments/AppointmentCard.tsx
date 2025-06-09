@@ -6,9 +6,7 @@ import {
 } from 'lucide-react';
 import { Appointment } from '../../types';
 import AppointmentRecapModal from './AppointmentRecapModal';
-import ModalPortal from '../layout/ModalPortal';
-import SuccessToast from '../layout/SuccessToast';
-import ErrorToast from '../layout/ErrorToast';
+import { ModalPortal, SuccessToast, ErrorToast } from '../layout';
 
 interface AppointmentCardProps {
   appointment: Appointment;
