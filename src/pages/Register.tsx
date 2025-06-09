@@ -110,7 +110,7 @@ const Register = () => {
   }
 
   return (
-    <PageTransition type="zoom" className="w-full h-screen">
+    <PageTransition type="slide" className="w-full h-screen">
       <div className="h-screen w-full bg-gray-100 dark:bg-gray-900 flex justify-center items-center auth-fullscreen-page">
         <div className="flex w-full max-w-6xl rounded-xl shadow-lg overflow-hidden h-auto bg-white dark:bg-gray-800 auth-container">
           {/* Partie gauche avec slider d'images */}

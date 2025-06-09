@@ -171,7 +171,7 @@ const Appointments = () => {
   };
 
   return (
-    <PageTransition type="zoom">
+    <PageTransition type="slide">
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Mes rendez-vous</h1>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Gérez vos rendez-vous existants ou ajoutez-en de nouveaux.</p>

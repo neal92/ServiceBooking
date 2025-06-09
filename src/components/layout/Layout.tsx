@@ -9,14 +9,30 @@ const Layout = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-900">
-      <div className="flex flex-1">
-        {/* Sidebar for mobile */}
-        <div className={`fixed inset-0 z-40 lg:hidden ${sidebarOpen ? 'block' : 'hidden'}`} aria-hidden="true">
-          <div className="absolute inset-0 bg-gray-600 dark:bg-black opacity-75" onClick={() => setSidebarOpen(false)}></div>
-          <div className="relative flex flex-col flex-1 w-full max-w-xs pt-5 pb-4 bg-white dark:bg-gray-800">
-            <Sidebar mobile={true} closeSidebar={() => setSidebarOpen(false)} />
+      <div className="flex flex-1 min-h-0"> {/* Added min-h-0 to prevent overflow */}
+        {/* Sidebar for mobile with overlay */}
+        {sidebarOpen && (
+          <div className="fixed inset-0 z-40 lg:hidden flex">
+            <div className="fixed inset-0 bg-gray-600 dark:bg-black bg-opacity-75" onClick={() => setSidebarOpen(false)}></div>
+            <div className="relative flex-1 flex flex-col w-full max-w-xs shadow-xl">
+              <div className="absolute top-0 right-0 -mr-12 pt-2">
+                <button
+                  type="button"
+                  className="ml-1 flex items-center justify-center h-10 w-10 rounded-full focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
+                  onClick={() => setSidebarOpen(false)}
+                >
+                  <span className="sr-only">Fermer la navigation</span>
+                  <svg className="h-6 w-6 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              <div className="flex-1 h-0 pt-5 pb-4 overflow-y-auto bg-white dark:bg-gray-800">
+                <Sidebar mobile={true} closeSidebar={() => setSidebarOpen(false)} />
+              </div>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Static sidebar for desktop */}
         <div className="hidden lg:flex lg:flex-shrink-0">
@@ -28,7 +44,7 @@ const Layout = () => {
         </div>
 
         {/* Main content */}
-        <div className="flex flex-col flex-1">
+        <div className="flex flex-col flex-1 min-w-0"> {/* Added min-w-0 to prevent overflow */}
           <Header openSidebar={() => setSidebarOpen(true)} />
           <main className="flex-1 relative overflow-y-auto focus:outline-none dark:bg-gray-900">
             <div className="py-6">
@@ -37,10 +53,10 @@ const Layout = () => {
               </div>
             </div>
           </main>
+          {/* Footer - moved inside the main content area */}
+          <Footer />
         </div>
       </div>
-      {/* Footer - outside of the flex container to stay at bottom */}
-      <Footer />
     </div>
   );
 };

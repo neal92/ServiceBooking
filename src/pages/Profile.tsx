@@ -175,7 +175,7 @@ const Profile = () => {
   };
 
   return (
-    <PageTransition type="fade">
+    <PageTransition type="slide">
       <div className="max-w-5xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Mon Profil</h1>
         

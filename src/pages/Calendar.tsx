@@ -24,7 +24,7 @@ const Calendar = () => {
     return () => clearTimeout(timeoutId);
   }, [refreshKey]);
     return (
-    <PageTransition type="zoom">
+    <PageTransition type="slide">
       <div className="h-screen flex flex-col">
         <div className="mb-4">          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Calendrier des rendez-vous</h1>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">

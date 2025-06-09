@@ -102,7 +102,7 @@ const Services = () => {
   );  
   
   return (
-    <PageTransition type="slideBottom">
+    <PageTransition type="slide">
       <div>
         <div className="bg-gradient-to-r from-blue-500 to-teal-500 rounded-xl shadow-lg mb-8 p-6 relative overflow-hidden">
           <div className="absolute right-0 top-0 -mt-4 -mr-16 opacity-10">
