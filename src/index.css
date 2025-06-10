@@ -46,6 +46,185 @@
     100% { opacity: 1; transform: scale(1); }
   }
   
+  @keyframes zoomIn {
+    0% { transform: scale(0.95); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  @keyframes shimmer {
+    0% { background-position: -100% 0; }
+    100% { background-position: 200% 0; }
+  }
+  
+  /* Styles spécifiques pour le calendrier */
+  .appointment-calendar .fc .fc-daygrid-day-top {
+    justify-content: center;
+    padding-top: 0.5rem;
+  }
+  
+  .appointment-calendar .fc .fc-day-today {
+    background-color: rgba(59, 130, 246, 0.05) !important;
+    border-top: 3px solid rgba(59, 130, 246, 0.3) !important;
+  }
+  
+  .appointment-calendar .fc-theme-standard td, 
+  .appointment-calendar .fc-theme-standard th {
+    border-color: rgba(var(--border-color), 0.5);
+  }
+  
+  .appointment-calendar .fc .fc-col-header-cell {
+    background: rgba(var(--bg-card), 0.8);
+    padding: 0.5rem 0;
+  }
+  
+  .appointment-calendar .fc .fc-scrollgrid-section-header th {
+    border-bottom-width: 2px;
+    position: relative;
+  }
+  
+  .appointment-calendar .fc .fc-timegrid-now-indicator-line {
+    border-color: #3b82f6;
+    border-width: 2px;
+  }
+  
+  .appointment-calendar .fc-direction-ltr .fc-timegrid-now-indicator-arrow {
+    border-color: #3b82f6;
+    border-radius: 50%;
+    width: 8px;
+    height: 8px;
+  }
+  
+  .appointment-calendar .fc-event {
+    transition: all 0.2s ease;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+    border-radius: 6px;
+  }
+
+  .appointment-calendar .fc-event:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+  }
+  
+  /* Optimiser l'utilisation de l'espace du calendrier */
+  .appointment-calendar {
+    display: flex !important;
+    flex-direction: column !important;
+    height: 100% !important;
+    min-height: 100% !important;
+    max-height: 100% !important;
+    overflow: hidden !important;
+    position: absolute !important;
+    inset: 0 !important;
+  }
+  
+  /* Maximiser vraiment l'utilisation de l'espace disponible */
+  .calendar-container {
+    display: flex !important;
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    max-height: 100% !important;
+    overflow: hidden !important;
+    width: 100% !important;
+    position: relative !important;
+  }
+  
+  .fc {
+    height: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
+    max-height: 100% !important;
+    overflow: hidden !important;
+  }
+  
+  .fc .fc-view-harness {
+    flex: 1 !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    height: auto !important;
+    overflow: hidden !important;
+  }
+  
+  .fc-view-harness-active {
+    height: 100% !important;
+    flex: 1 !important;
+  }
+  
+  .fc-scrollgrid, .fc-scrollgrid-liquid {
+    height: 100% !important;
+    max-height: 100% !important;
+  }
+  
+  .fc-scrollgrid-section-body, 
+  .fc-scrollgrid-section-body > td {
+    height: 100% !important;
+  }
+  
+  .fc-scroller {
+    height: 100% !important;
+    max-height: none !important;
+    overflow: auto !important;
+  }
+  
+  /* Maximiser l'espace pour la vue principale du calendrier */
+  .appointment-calendar-main {
+    position: absolute !important;
+    inset: 0 !important;
+    overflow: hidden !important;
+  }
+  
+  /* Assurer que tous les conteneurs prennent l'espace maximal */
+  .fc .fc-view-harness-active > div {
+    position: absolute !important;
+    inset: 0 !important;
+    height: 100% !important;
+    width: 100% !important;
+  }
+  
+  /* Styles améliorés pour les événements */
+  .fc-event {
+    margin: 1px !important;
+    border-radius: 5px !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.12) !important;
+    transition: transform 0.15s ease, box-shadow 0.15s ease !important;
+  }
+  
+  .fc-event:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.16) !important;
+    z-index: 5 !important;
+  }
+  
+  .appointment-calendar .fc-button-primary {
+    background-color: rgba(59, 130, 246, 0.1);
+    border-color: rgba(59, 130, 246, 0.3);
+    color: #3b82f6;
+    font-weight: 500;
+  }
+  
+  .appointment-calendar .fc-button-primary:not(:disabled):hover {
+    background-color: rgba(59, 130, 246, 0.2);
+    border-color: rgba(59, 130, 246, 0.5);
+  }
+  
+  .appointment-calendar .fc-button-primary:not(:disabled).fc-button-active {
+    background-color: #3b82f6;
+    border-color: #3b82f6;
+    color: white;
+    font-weight: 600;
+  }
+  
+  .dark .appointment-calendar .fc-button-primary {
+    background-color: rgba(59, 130, 246, 0.2);
+    border-color: rgba(59, 130, 246, 0.4);
+    color: #60a5fa;
+  }
+  
+  .dark .appointment-calendar .fc-button-primary:not(:disabled).fc-button-active {
+    background-color: #2563eb;
+    border-color: #2563eb;
+  }
+  
   /* Styles pour les pages de connexion et inscription */
   .auth-slider-transition {
     transition: opacity 1s ease, transform 1.2s ease;
@@ -67,6 +246,137 @@
     color: rgb(var(--text-main));
     background: rgb(var(--bg-card));
   }
+  
+  /* Styles spécifiques pour les boutons de vue */
+  .fc .fc-dayGridMonth-button,
+  .fc .fc-timeGridWeek-button,
+  .fc .fc-timeGridDay-button,
+  .fc .fc-listWeek-button {
+    position: relative;
+    min-width: 80px;
+    font-weight: 500;
+    margin: 0 2px;
+    padding: 6px 12px;
+    border-radius: 0.5rem;
+    transition: all 0.25s ease;
+  }
+  
+  /* Mode clair - styles par défaut */
+  .fc .fc-dayGridMonth-button,
+  .fc .fc-timeGridWeek-button,
+  .fc .fc-timeGridDay-button,
+  .fc .fc-listWeek-button {
+    background-color: #4b5563 !important;
+    border-color: #374151 !important;
+    color: #f9fafb !important;
+  }
+  
+  /* Mode clair - hover */
+  .fc .fc-dayGridMonth-button:hover:not(.fc-button-active),
+  .fc .fc-timeGridWeek-button:hover:not(.fc-button-active),
+  .fc .fc-timeGridDay-button:hover:not(.fc-button-active),
+  .fc .fc-listWeek-button:hover:not(.fc-button-active) {
+    background-color: #6b7280 !important;
+    border-color: #4b5563 !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1) !important;
+  }
+  
+  /* Mode clair - bouton actif */
+  .fc .fc-dayGridMonth-button.fc-button-active,
+  .fc .fc-timeGridWeek-button.fc-button-active,
+  .fc .fc-timeGridDay-button.fc-button-active,
+  .fc .fc-listWeek-button.fc-button-active {
+    background-color: #3b82f6 !important;
+    border-color: #2563eb !important;
+    color: #ffffff !important;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.15) !important;
+    transform: translateY(-1px);
+    position: relative;
+    overflow: hidden;
+  }
+  
+  /* Effet de brillance sur les boutons actifs */
+  .fc .fc-dayGridMonth-button.fc-button-active::before,
+  .fc .fc-timeGridWeek-button.fc-button-active::before,
+  .fc .fc-timeGridDay-button.fc-button-active::before,
+  .fc .fc-listWeek-button.fc-button-active::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 50%;
+    height: 100%;
+    background: linear-gradient(to right, transparent, rgba(255,255,255,0.2), transparent);
+    transform: skewX(-25deg);
+    animation: shimmer 2.5s infinite;
+  }
+  
+  @keyframes shimmer {
+    0% { left: -100%; }
+    100% { left: 200%; }
+  }
+  
+  /* Mode clair - bouton actif au survol */
+  .fc .fc-dayGridMonth-button.fc-button-active:hover,
+  .fc .fc-timeGridWeek-button.fc-button-active:hover,
+  .fc .fc-timeGridDay-button.fc-button-active:hover,
+  .fc .fc-listWeek-button.fc-button-active:hover {
+    background-color: #2563eb !important;
+    box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3) !important;
+  }
+  
+  /* Mode sombre - styles par défaut */
+  .dark .fc .fc-dayGridMonth-button,
+  .dark .fc .fc-timeGridWeek-button,
+  .dark .fc .fc-timeGridDay-button,
+  .dark .fc .fc-listWeek-button {
+    background-color: #374151 !important;
+    border-color: #4b5563 !important;
+    color: #d1d5db !important;
+  }
+  
+  /* Mode sombre - hover */
+  .dark .fc .fc-dayGridMonth-button:hover:not(.fc-button-active),
+  .dark .fc .fc-timeGridWeek-button:hover:not(.fc-button-active),
+  .dark .fc .fc-timeGridDay-button:hover:not(.fc-button-active),
+  .dark .fc .fc-listWeek-button:hover:not(.fc-button-active) {
+    background-color: #4b5563 !important;
+    border-color: #6b7280 !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.2) !important;
+  }
+  
+  /* Mode sombre - bouton actif */
+  .dark .fc .fc-dayGridMonth-button.fc-button-active,
+  .dark .fc .fc-timeGridWeek-button.fc-button-active,
+  .dark .fc .fc-timeGridDay-button.fc-button-active,
+  .dark .fc .fc-listWeek-button.fc-button-active {
+    background-color: #3b82f6 !important;
+    border-color: #2563eb !important;
+    color: #ffffff !important;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2) !important;
+    transform: translateY(-1px);
+  }
+  
+  /* Mode sombre - bouton actif au survol */
+  .dark .fc .fc-dayGridMonth-button.fc-button-active:hover,
+  .dark .fc .fc-timeGridWeek-button.fc-button-active:hover,
+  .dark .fc .fc-timeGridDay-button.fc-button-active:hover,
+  .dark .fc .fc-listWeek-button.fc-button-active:hover {
+    background-color: #2563eb !important;
+    box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3) !important;
+  }
+  
+  /* Effet de pression sur les boutons au clic */
+  .fc .fc-dayGridMonth-button:active,
+  .fc .fc-timeGridWeek-button:active,
+  .fc .fc-timeGridDay-button:active,
+  .fc .fc-listWeek-button:active {
+    transform: translateY(0) !important;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.2) !important;
+    transition: all 0.1s ease !important;
+  }
 
   /* Style des créneaux horaires */
   .fc-timegrid-slots {
@@ -74,8 +384,13 @@
   }
 
   .fc-timegrid-slot {
-    height: 3rem !important;
+    height: 3.5rem !important;
     border-color: rgb(var(--border-color)) !important;
+  }
+  
+  /* Style alterné pour les créneaux horaires */
+  .fc-timegrid-slot:nth-child(even) {
+    background-color: rgba(var(--bg-main), 0.5) !important;
   }
 
   .fc-theme-standard .fc-scrollgrid {
@@ -297,11 +612,31 @@
   }
   
   /* Assurer que les conteneurs du calendrier prennent tout l'espace */
-  .fc-view-harness,
+  .fc {
+    height: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+  
+  .fc .fc-header-toolbar {
+    margin-bottom: 0.5rem !important;
+  }
+  
+  .fc-view-harness {
+    flex: 1 !important;
+    min-height: unset !important;
+  }
+  
   .fc-view,
   .fc-scrollgrid,
-  .fc-scroller {
-    min-height: 500px !important;
+  .fc-scroller,
+  .fc-scrollgrid-liquid,
+  .fc-liquid-hack,
+  .fc-scrollgrid-section,
+  .fc-scrollgrid-section-body,
+  .fc-daygrid-body,
+  .fc-timegrid-body,
+  .fc-list {
     height: 100% !important;
   }
   

@@ -1,0 +1,179 @@
+/* Styles spécifiques pour le calendrier */
+
+/* Améliorer la visibilité des flèches en mode clair */
+.fc .fc-prev-button,
+.fc .fc-next-button {
+  position: relative;
+  z-index: 5;
+  overflow: visible;
+  border: 2px solid #3b82f6 !important;
+  box-shadow: 0 2px 5px rgba(59, 130, 246, 0.3) !important;
+}
+
+.fc .fc-prev-button::after,
+.fc .fc-next-button::after {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  background-color: rgba(59, 130, 246, 0.1);
+  border-radius: inherit;
+  z-index: -1;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.fc .fc-prev-button:hover::after,
+.fc .fc-next-button:hover::after {
+  opacity: 1;
+}
+
+/* Styling pour les filtres à droite */
+@media (min-width: 768px) {
+  .calendar-container-wrapper {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 1rem;
+  }
+}
+
+/* Amélioration du contraste pour meilleure visibilité */
+.fc .fc-button-primary {
+  text-shadow: none !important;
+}
+
+/* S'assurer que les flèches sont bien centrées et visibles */
+.fc .fc-icon {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  height: 100% !important;
+  width: 100% !important;
+}
+
+/* Ajouter un effet de pulsation subtil aux boutons de navigation en mode clair */
+@keyframes subtle-glow {
+  0%, 100% { box-shadow: 0 0 3px rgba(59, 130, 246, 0.3); }
+  50% { box-shadow: 0 0 8px rgba(59, 130, 246, 0.6); }
+}
+
+.fc .fc-prev-button,
+.fc .fc-next-button {
+  animation: subtle-glow 2s infinite ease-in-out;
+  background-color: #f8fafc !important;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.fc .fc-prev-button:hover,
+.fc .fc-next-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(59, 130, 246, 0.4) !important;
+  background-color: #eff6ff !important;
+}
+
+/* Style des icônes à l'intérieur des boutons */
+.fc .fc-prev-button .fc-icon,
+.fc .fc-next-button .fc-icon {
+  color: #3b82f6 !important;
+  font-size: 1.2em !important;
+  font-weight: bold !important;
+}
+
+/* Masquer complètement les noms des jours de la semaine */
+.fc-col-header-cell-cushion {
+  font-size: 1rem !important;
+  font-weight: bold !important;
+  color: transparent !important;
+  position: relative;
+}
+
+.fc-col-header-cell span.fc-col-header-cell-cushion {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Cacher complètement le texte des jours de la semaine */
+.fc-col-header-cell-cushion span:first-child,
+.fc-col-header-cell-cushion > span {
+  visibility: hidden;
+  font-size: 0 !important;
+  display: none;
+}
+
+/* Style amélioré pour les boutons du calendrier */
+.fc-button-group {
+  display: flex !important;
+  gap: 2px !important;
+  padding: 2px !important;
+  background: rgba(243, 244, 246, 0.5) !important;
+  border-radius: 8px !important;
+}
+
+.fc-dayGridMonth-button,
+.fc-timeGridWeek-button,
+.fc-timeGridDay-button,
+.fc-listWeek-button {
+  padding: 6px 12px !important;
+  font-weight: 600 !important;
+  border-radius: 6px !important;
+  text-transform: uppercase !important;
+  font-size: 0.85rem !important;
+  letter-spacing: 0.5px !important;
+  position: relative;
+}
+
+/* S'assurer que les textes des boutons sont visibles */
+.fc-dayGridMonth-button::after {
+  content: "Mois";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.fc-timeGridWeek-button::after {
+  content: "Semaine";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.fc-timeGridDay-button::after {
+  content: "Jour";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.fc-listWeek-button::after {
+  content: "Planning";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dark .fc-button-group {
+  background: rgba(31, 41, 55, 0.5) !important;
+}

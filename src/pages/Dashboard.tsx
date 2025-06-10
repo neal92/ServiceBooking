@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Calendar } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { Link } from 'react-router-dom';
 
 import AppointmentCard from '../components/appointments/AppointmentCard';
 import { Appointment, Service, Category } from '../types';
@@ -117,8 +118,7 @@ const Dashboard = () => {  const { user } = useAuth();
               </h2>
             </div>
             <div className="p-6">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {/* Confirmés aujourd'hui */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">                {/* Confirmés aujourd'hui */}
                 <div className="bg-gradient-to-br from-blue-500 to-blue-600 dark:from-blue-600 dark:to-blue-700 rounded-xl p-6 transform transition-all duration-200 hover:scale-[1.02] hover:shadow-lg">
                   <div className="flex flex-col h-full">
                     <dt className="text-sm font-medium text-blue-50 truncate">Confirmés aujourd'hui</dt>
@@ -128,51 +128,37 @@ const Dashboard = () => {  const { user } = useAuth();
                         const today = new Date();
                         return appointmentDate.toDateString() === today.toDateString() && a.status === 'confirmed';
                       }).length}
-                    </dd>
-                    <div className="mt-4">
-                      <a 
-                        href="/appointments?status=confirmed" 
+                    </dd>                    <div className="mt-4">
+                      <Link 
+                        to="/appointments?timeFilter=ongoing&statusFilter=confirmed" 
                         className="inline-flex items-center px-4 py-2 rounded-lg bg-white/20 text-white text-sm font-medium hover:bg-white/30 transition-colors duration-200 backdrop-blur-sm"
                       >
                         Voir
-                      </a>
+                      </Link>
                     </div>
                   </div>
-                </div>
-
-                {/* En attente */}
+                </div>                {/* En attente */}
                 <div className="bg-gradient-to-br from-amber-500 to-amber-600 dark:from-amber-600 dark:to-amber-700 rounded-xl p-6 transform transition-all duration-200 hover:scale-[1.02] hover:shadow-lg">
                   <div className="flex flex-col h-full">
                     <dt className="text-sm font-medium text-amber-50 truncate">En attente</dt>
                     <dd className="mt-2 text-4xl font-bold text-white">
                       {appointments.filter(a => a.status === 'pending').length}
-                    </dd>
-                    <div className="mt-4">
-                      <a 
-                        href="/appointments?status=pending" 
+                    </dd>                    <div className="mt-4">
+                      <Link 
+                        to="/appointments?statusFilter=pending" 
                         className="inline-flex items-center px-4 py-2 rounded-lg bg-white/20 text-white text-sm font-medium hover:bg-white/30 transition-colors duration-200 backdrop-blur-sm"
                       >
                         Voir
-                      </a>
+                      </Link>
                     </div>
                   </div>
-                </div>
-
-                {/* Taux de complétion */}
+                </div>{/* Taux de complétion */}
                 <div className="bg-gradient-to-br from-green-500 to-green-600 dark:from-green-600 dark:to-green-700 rounded-xl p-6 transform transition-all duration-200 hover:scale-[1.02] hover:shadow-lg">
                   <div className="flex flex-col h-full">
                     <dt className="text-sm font-medium text-green-50 truncate">Taux de complétion</dt>
                     <dd className="mt-2 text-4xl font-bold text-white">
                       {Math.round((appointments.filter(a => a.status === 'completed').length / appointments.length) * 100) || 0}%
                     </dd>
-                    <div className="mt-4">
-                      <a 
-                        href="/appointments?status=completed" 
-                        className="inline-flex items-center px-4 py-2 rounded-lg bg-white/20 text-white text-sm font-medium hover:bg-white/30 transition-colors duration-200 backdrop-blur-sm"
-                      >
-                        Voir
-                      </a>
-                    </div>
                   </div>
                 </div>
               </div>
@@ -181,11 +167,12 @@ const Dashboard = () => {  const { user } = useAuth();
 
           {/* Upcoming appointments section */}
           <div className="bg-white dark:bg-gray-800 shadow-lg rounded-xl mb-8">
-            <div className="px-6 py-5 border-b border-gray-200 dark:border-gray-700">
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white flex items-center">
-                <Calendar className="w-6 h-6 mr-2 text-blue-600 dark:text-blue-400" />
-                Prochains rendez-vous
-              </h2>
+            <div className="px-6 py-5 border-b border-gray-200 dark:border-gray-700">                <div className="flex items-center justify-between">
+                  <h2 className="text-xl font-semibold text-gray-900 dark:text-white flex items-center">
+                    <Calendar className="w-6 h-6 mr-2 text-blue-600 dark:text-blue-400" />
+                    Prochains rendez-vous
+                  </h2>
+                </div>
             </div>
             <div className="py-4">
               <ul className="divide-y divide-gray-200 dark:divide-gray-700">
@@ -220,14 +207,13 @@ const Dashboard = () => {  const { user } = useAuth();
                   <dd className="text-4xl font-bold text-gray-900 dark:text-white mb-2">{services.length}</dd>
                   <dt className="text-sm text-gray-500 dark:text-gray-400 mb-4">
                     Prestations disponibles pour vos clients. Gérez vos services et leurs tarifs facilement.
-                  </dt>
-                  <div className="mt-auto">
-                    <a 
-                      href="/services" 
+                  </dt>                  <div className="mt-auto">
+                    <Link 
+                      to="/services" 
                       className="inline-flex items-center px-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors duration-200"
                     >
                       Voir
-                    </a>
+                    </Link>
                   </div>
                 </div>
               </div>
@@ -243,14 +229,13 @@ const Dashboard = () => {  const { user } = useAuth();
                   <dd className="text-4xl font-bold text-gray-900 dark:text-white mb-2">{categories.length}</dd>
                   <dt className="text-sm text-gray-500 dark:text-gray-400 mb-4">
                     Organisez vos prestations par catégories pour une meilleure visibilité de vos services.
-                  </dt>
-                  <div className="mt-auto">
-                    <a 
-                      href="/categories" 
+                  </dt>                  <div className="mt-auto">
+                    <Link 
+                      to="/categories" 
                       className="inline-flex items-center px-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors duration-200"
                     >
                       Voir
-                    </a>
+                    </Link>
                   </div>
                 </div>
               </div>

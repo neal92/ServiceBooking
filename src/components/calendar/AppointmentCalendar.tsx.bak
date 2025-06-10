@@ -8,7 +8,7 @@ import frLocale from '@fullcalendar/core/locales/fr';
 import { appointmentService } from '../../services/api';
 import { Appointment } from '../../types';
 import NewAppointmentModal from '../appointments/NewAppointmentModal';
-import { EventClickArg, DateSelectArg, EventChangeArg, DatesSetArg } from '@fullcalendar/core';
+import { EventClickArg, DateSelectArg, EventChangeArg } from '@fullcalendar/core';
 import { enhanceCalendar, enhanceCurrentTimeIndicator, enhanceMonthView, hideWeekdayNames } from '../../utils/calendarEnhancer';
 import '../../calendar-day-headers.css';
 
@@ -118,9 +118,7 @@ const AppointmentCalendar: React.FC<AppointmentCalendarProps> = ({
     setIsMonthView(isMonthViewActive);
     setCalendarView(viewInfo.view.type);
     console.log('Vue du calendrier changée:', viewInfo.view.type, 'isMonthView:', isMonthViewActive);
-  };
-  
-  // Améliorer le calendrier après le rendu
+  };    // Améliorer le calendrier après le rendu
   useEffect(() => {
     if (!loading) {
       // Exécuter immédiatement pour éviter tout délai inutile
@@ -129,7 +127,6 @@ const AppointmentCalendar: React.FC<AppointmentCalendarProps> = ({
       hideWeekdayNames(); // Masquer complètement les noms des jours dans toutes les vues
     }
   }, [loading, appointments, isMonthView]);
-  
   const loadAppointments = async () => {
     console.log('Chargement des rendez-vous...');
     try {
@@ -367,9 +364,7 @@ const AppointmentCalendar: React.FC<AppointmentCalendarProps> = ({
       // Recharger les rendez-vous pour annuler le changement visuel
       loadAppointments();
     }
-  };
-  
-  // Assurer que le calendrier s'affiche même sans données
+  };  // Assurer que le calendrier s'affiche même sans données
   const hasInitialized = useRef(false);
   
   useEffect(() => {
@@ -408,9 +403,7 @@ const AppointmentCalendar: React.FC<AppointmentCalendarProps> = ({
             <p className="mt-2 text-gray-500 dark:text-gray-400 animate-pulse text-sm">Chargement du calendrier...</p>
           </div>
         </div>
-      ) : (
-        <div className="calendar-container flex-1 min-h-0 w-full rounded-lg overflow-hidden">
-          <FullCalendar
+      ) : (        <div className="calendar-container flex-1 min-h-0 w-full rounded-lg overflow-hidden">          <FullCalendar
             ref={calendarRef}
             plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin]}
             initialView={calendarView}
@@ -439,12 +432,10 @@ const AppointmentCalendar: React.FC<AppointmentCalendarProps> = ({
             events={calendarEvents}
             height="100%"
             allDaySlot={false}
-            nowIndicator={true}
-            dayHeaderClassNames="text-sm font-medium text-gray-700 dark:text-gray-300 py-2"
+            nowIndicator={true}            dayHeaderClassNames="text-sm font-medium text-gray-700 dark:text-gray-300 py-2"
             slotLabelClassNames="text-gray-500 dark:text-gray-400 text-xs font-medium"
             viewClassNames="animate-fadeIn transition-opacity duration-300"
-            handleWindowResize={true}
-            slotMinTime="08:00:00"
+            handleWindowResize={true}            slotMinTime="08:00:00"
             slotMaxTime="11:00:00"
             slotDuration="00:15:00"
             expandRows={true}
@@ -453,7 +444,7 @@ const AppointmentCalendar: React.FC<AppointmentCalendarProps> = ({
             select={handleDateSelect}
             eventClick={handleEventClick}
             eventChange={handleEventChange}
-            datesSet={(dateInfo: DatesSetArg) => {
+            {/* Déclencher une fonction lors du changement de vue */}            datesSet={(dateInfo: any) => {
               // Détecter si nous sommes en vue mensuelle
               const isMonthViewActive = dateInfo.view.type === 'dayGridMonth';
               setIsMonthView(isMonthViewActive);
@@ -468,10 +459,15 @@ const AppointmentCalendar: React.FC<AppointmentCalendarProps> = ({
                 hideWeekdayNames(); // Masquer les noms des jours à chaque changement de vue
               }, 50);
             }}
+            
+            {/* Format des en-têtes de jour - afficher uniquement le numéro du jour dans toutes les vues */}
             dayHeaderFormat={{
               weekday: 'narrow',
               day: 'numeric'
             }}
+            
+            {/* Configuration des différentes vues avec seulement les numéros de jour */}
+
             views={{
               dayGridMonth: {
                 dayHeaderFormat: { day: 'numeric' }, // Juste le numéro du jour
@@ -503,7 +499,8 @@ const AppointmentCalendar: React.FC<AppointmentCalendarProps> = ({
               minute: '2-digit',
               hour12: false
             }}
-            eventContent={(arg: any) => {
+            // Simplifier le rendu des événements pour améliorer les performances
+            eventContent={(arg) => {
               // Récupérer le statut pour déterminer les icônes et styles
               const status = arg.event.extendedProps.status;
               

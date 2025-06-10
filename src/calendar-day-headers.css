@@ -1,0 +1,50 @@
+/* Styles spécifiques pour masquer complètement les en-têtes des jours de la semaine */
+
+/* Masquer le texte dans les en-têtes des jours */
+.fc-day-header span.fc-col-header-cell-cushion,
+.fc-col-header-cell-cushion {
+  color: transparent !important;
+  position: relative;
+}
+
+/* Masquer complètement le nom du jour avec plusieurs approches */
+.fc-col-header-cell-cushion span:first-child,
+.fc .fc-col-header-cell-cushion {
+  font-size: 0 !important;
+}
+
+/* S'assurer que le contenu inline est masqué */
+.fc-col-header-cell-cushion::before {
+  content: attr(data-date-num);
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  color: #333;
+  font-weight: bold;
+}
+
+/* S'assurer que tous les jours de la semaine sont masqués dans tous les modes */
+.fc-dayGridMonth-view .fc-col-header-cell-cushion,
+.fc-timeGridWeek-view .fc-col-header-cell-cushion,
+.fc-timeGridDay-view .fc-col-header-cell-cushion,
+.fc-listWeek-view .fc-col-header-cell-cushion {
+  color: transparent !important;
+}
+
+/* Masquer spécifiquement le texte des jours de la semaine */
+.fc-day-header span:not([data-date-num]),
+.fc-col-header-cell span:not([data-date-num]) {
+  display: none !important;
+}
+
+/* Cacher le nom des jours dans l'interface utilisateur */
+.fc .fc-col-header-cell-cushion {
+  visibility: visible;
+  opacity: 0;
+}

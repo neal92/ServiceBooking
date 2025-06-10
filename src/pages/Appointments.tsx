@@ -10,8 +10,7 @@ import ModalPortal from '../components/layout/ModalPortal';
 type AppointmentStatus = 'all' | 'upcoming' | 'ongoing' | 'past';
 type AppointmentStatusFilter = 'all-status' | 'pending' | 'confirmed' | 'in-progress' | 'cancelled' | 'completed';
 
-const Appointments = () => {
-  const [statusFilter, setStatusFilter] = useState<AppointmentStatus>('all');
+const Appointments = () => {  const [statusFilter, setStatusFilter] = useState<AppointmentStatus>('all');
   const [appointmentStatusFilter, setAppointmentStatusFilter] = useState<AppointmentStatusFilter>('all-status');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
@@ -21,6 +20,21 @@ const Appointments = () => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [appointmentToDelete, setAppointmentToDelete] = useState<Appointment | null>(null);
   const [autoUpdateStatus, setAutoUpdateStatus] = useState(true);
+  
+  // Récupération des paramètres d'URL pour initialiser les filtres
+  useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    
+    const timeFilterParam = searchParams.get('timeFilter');
+    if (timeFilterParam && ['all', 'upcoming', 'ongoing', 'past'].includes(timeFilterParam)) {
+      setStatusFilter(timeFilterParam as AppointmentStatus);
+    }
+    
+    const statusFilterParam = searchParams.get('statusFilter');
+    if (statusFilterParam && ['all-status', 'pending', 'confirmed', 'in-progress', 'cancelled', 'completed'].includes(statusFilterParam)) {
+      setAppointmentStatusFilter(statusFilterParam as AppointmentStatusFilter);
+    }
+  }, []);
 
   useEffect(() => {
     fetchData();
