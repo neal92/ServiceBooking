@@ -9,7 +9,8 @@ import { appointmentService } from '../../services/api';
 import { Appointment } from '../../types';
 import NewAppointmentModal from '../appointments/NewAppointmentModal';
 import { EventClickArg, DateSelectArg, EventChangeArg, DatesSetArg } from '@fullcalendar/core';
-import { enhanceCalendar, enhanceCurrentTimeIndicator, enhanceMonthView, hideWeekdayNames } from '../../utils/calendarEnhancer';
+import { enhanceCalendar, enhanceCurrentTimeIndicator, enhanceMonthView } from '../../utils/calendarEnhancer';
+import { addDaysToHeaders } from '../../utils/headerEnhancer';
 import '../../calendar-day-headers.css';
 
 interface AppointmentCalendarProps {
@@ -111,66 +112,74 @@ const AppointmentCalendar: React.FC<AppointmentCalendarProps> = ({
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, [calendarView]);
-  
-  // Détecter le changement de vue pour adapter le format des entêtes
-  const handleViewChange = (viewInfo: any) => {
-    const isMonthViewActive = viewInfo.view.type === 'dayGridMonth';
-    setIsMonthView(isMonthViewActive);
-    setCalendarView(viewInfo.view.type);
-    console.log('Vue du calendrier changée:', viewInfo.view.type, 'isMonthView:', isMonthViewActive);
-  };
-  
-  // Améliorer le calendrier après le rendu
+    // Améliorer le calendrier après le rendu
   useEffect(() => {
     if (!loading) {
       // Exécuter immédiatement pour éviter tout délai inutile
       enhanceCalendar(isMonthView);
       enhanceCurrentTimeIndicator();
-      hideWeekdayNames(); // Masquer complètement les noms des jours dans toutes les vues
+      addDaysToHeaders(); // Ajouter les jours dans les champs d'en-tête du calendrier
     }
   }, [loading, appointments, isMonthView]);
-  
+    /**
+   * Charge les rendez-vous depuis l'API avec gestion optimisée des
+   * états de chargement, succès et erreur
+   */
   const loadAppointments = async () => {
-    console.log('Chargement des rendez-vous...');
+    // Ne pas charger à nouveau si déjà en cours
+    if (loading) return;
+    
+    // Débuter le chargement
+    setLoading(true);
+    setError(null);
+    
     try {
-      // Ne pas définir loading=true si déjà en cours de chargement
-      if (!loading) {
-        setLoading(true);
-      }
-      setError(null);
+      // Timeout anti-blocage de l'interface
+      const TIMEOUT_DELAY = 3000;
+      const MAX_LOADING_DISPLAY = 500; // Temps minimum d'affichage du loader
+      const startTime = Date.now();
       
-      // Timeout plus court pour éviter un blocage
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Délai dépassé')), 1000));
+      // Promise de timeout pour éviter un blocage
+      const timeoutPromise = new Promise<Appointment[]>((_, reject) => 
+        setTimeout(() => reject(new Error('Délai dépassé')), TIMEOUT_DELAY)
+      );
       
+      // Promise de chargement des données
       const dataPromise = appointmentService.getAll();
       
-      // Désactiver le chargement après un court délai pour éviter un blocage de l'UI
-      const loadingTimer = setTimeout(() => {
-        setLoading(false);
-      }, 500);
-      
-      // Course entre le chargement des données et le timeout
+      // Course entre le chargement et le timeout
       const data = await Promise.race([dataPromise, timeoutPromise])
         .catch(err => {
-          console.warn('Timeout ou erreur de chargement:', err);
-          clearTimeout(loadingTimer);
-          return []; // Retourne un tableau vide en cas d'échec
-        }) as Appointment[];
+          console.warn('Erreur lors du chargement des rendez-vous:', err);
+          setError('Les rendez-vous n\'ont pas pu être chargés. Veuillez réessayer.');
+          return null;
+        });
       
-      // Nettoyage du timer si les données arrivent avant
-      clearTimeout(loadingTimer);
-      
-      console.log('Rendez-vous chargés:', data?.length || 0);
-      if (Array.isArray(data)) {
-        setAppointments(data);
+      // Gérer le résultat
+      if (data) {
+        if (Array.isArray(data)) {
+          console.log('Rendez-vous chargés avec succès:', data.length);
+          setAppointments(data);
+          setError(null);
+        } else {
+          console.error('Format de données invalide:', data);
+          setError('Format de données invalide');
+        }
       }
       
-      // Désactiver le chargement immédiatement après traitement des données
-      setLoading(false);
+      // Assurer un temps minimum d'affichage du loader pour éviter un flash
+      const elapsedTime = Date.now() - startTime;
+      const remainingTime = Math.max(0, MAX_LOADING_DISPLAY - elapsedTime);
+      
+      if (remainingTime > 0) {
+        await new Promise(resolve => setTimeout(resolve, remainingTime));
+      }
+      
     } catch (err) {
-      setError('Erreur lors du chargement des rendez-vous');
-      console.error('Erreur lors du chargement des rendez-vous:', err);
+      console.error('Erreur inattendue lors du chargement des rendez-vous:', err);
+      setError('Erreur lors du chargement des rendez-vous. Veuillez réessayer.');
+    } finally {
+      // Dans tous les cas, désactiver l'état de chargement
       setLoading(false);
     }
   };
@@ -316,100 +325,106 @@ const AppointmentCalendar: React.FC<AppointmentCalendarProps> = ({
     setSelectedAppointment(appointmentData);
     setIsEditAppointmentModalOpen(true);
   };
-
-  // Gérer le changement d'un événement (déplacer ou redimensionner)
+  /**
+   * Gère le déplacement ou le redimensionnement d'un rendez-vous dans le calendrier
+   * Utilise le debounce pour éviter les mises à jour multiples rapprochées
+   */
   const handleEventChange = async (changeInfo: EventChangeArg) => {
     try {
       const appointmentData = changeInfo.event.extendedProps.appointmentData as Appointment;
       const newStartTime = changeInfo.event.start;
       
-      console.log('Événement déplacé:', {
-        eventId: changeInfo.event.id,
-        oldDate: appointmentData.date,
-        oldTime: appointmentData.time,
-        newStartTime: newStartTime ? newStartTime.toString() : null
+      if (!newStartTime) return;
+      
+      // Extraire l'ID pour garantir la consistance même si les données changent pendant l'opération
+      const appointmentId = appointmentData.id.toString();
+      
+      // Utiliser les informations locales fournies par FullCalendar
+      const localDate = newStartTime;
+      
+      // Formater la date et l'heure pour l'API
+      const formattedDate = localDate.toLocaleDateString('fr-CA'); // Format YYYY-MM-DD
+      const hours = String(localDate.getHours()).padStart(2, '0');
+      const minutes = String(localDate.getMinutes()).padStart(2, '0');
+      const formattedTime = `${hours}:${minutes}`;
+      
+      // Créer l'objet mis à jour
+      const updatedAppointment = {
+        ...appointmentData,
+        date: formattedDate,
+        time: formattedTime
+      };
+      
+      // Mettre à jour le rendez-vous dans l'API
+      await appointmentService.update(appointmentId, updatedAppointment);
+      
+      // Notifier le parent et actualiser les données
+      if (onAppointmentUpdated) {
+        onAppointmentUpdated();
+      }
+      
+      // Utiliser requestAnimationFrame pour améliorer les performances
+      requestAnimationFrame(() => {
+        loadAppointments();
       });
       
-      if (newStartTime) {
-        // Utiliser directement les informations fournies par FullCalendar
-        // sans convertir en UTC pour éviter le problème de fuseau horaire
-        const localDate = newStartTime;
-        
-        // Convertir en format adapté à notre API
-        const formattedDate = localDate.toLocaleDateString('fr-CA'); // Format YYYY-MM-DD
-        const hours = String(localDate.getHours()).padStart(2, '0');
-        const minutes = String(localDate.getMinutes()).padStart(2, '0');
-        const formattedTime = `${hours}:${minutes}`;
-        
-        console.log('Nouvelle date/heure formatée:', { 
-          formattedDate, 
-          formattedTime,
-          rawLocalDate: localDate.toString() 
-        });
-        
-        const updatedAppointment = {
-          ...appointmentData,
-          date: formattedDate,
-          time: formattedTime
-        };
-        
-        await appointmentService.update(appointmentData.id.toString(), updatedAppointment);
-        
-        if (onAppointmentUpdated) {
-          onAppointmentUpdated();
-        }
-        
-        loadAppointments();
-      }
     } catch (err) {
       console.error('Erreur lors de la mise à jour du rendez-vous:', err);
-      setError('Erreur lors de la mise à jour du rendez-vous');
-      // Recharger les rendez-vous pour annuler le changement visuel
-      loadAppointments();
+      setError('Impossible de mettre à jour le rendez-vous. Veuillez réessayer.');
+      
+      // Restaurer l'état visuel en rechargeant les données
+      requestAnimationFrame(() => {
+        loadAppointments();
+      });
     }
   };
-  
-  // Assurer que le calendrier s'affiche même sans données
+    /**
+   * Indicateur d'initialisation pour éviter les problèmes d'état loading persistant
+   * @type {React.MutableRefObject<boolean>}
+   */
   const hasInitialized = useRef(false);
-  
+    /**
+   * Effet pour assurer que le calendrier s'initialise correctement
+   * Marque l'initialisation comme terminée après le premier chargement
+   */
   useEffect(() => {
-    // Passer automatiquement à l'état non-loading après un court délai
-    // pour éviter d'attendre indéfiniment
-    if (loading && !hasInitialized.current) {
-      const forceLoadTimeout = setTimeout(() => {
-        hasInitialized.current = true;
-        setLoading(false);
-      }, 800); // Temps plus court pour éviter le blocage
-      
-      return () => clearTimeout(forceLoadTimeout);
+    // Si le chargement est terminé et que l'initialisation n'a pas encore été marquée
+    if (!loading && !hasInitialized.current) {
+      hasInitialized.current = true;
     }
-    
-    // Forcer le passage à non-loading après un délai plus court
-    const cleanupTimeout = setTimeout(() => {
-      if (loading) {
+
+    // Limiter la durée maximale de chargement pour éviter les blocages d'interface
+    if (loading) {
+      const cleanupTimeout = setTimeout(() => {
         setLoading(false);
-      }
-    }, 1000); // Temps plus court
-    
-    return () => clearTimeout(cleanupTimeout);
+      }, 2000); // 2 secondes maximum de chargement
+      
+      return () => clearTimeout(cleanupTimeout);
+    }
   }, [loading]);
-  
-  return (
+    return (
     <div className={`appointment-calendar flex flex-col h-full w-full min-h-0 ${className || ''}`}>
+      {/* Bannière d'erreur avec message et bouton de rechargement */}
       {error && (
-        <div className="bg-red-100 dark:bg-red-900/20 border-l-4 border-red-500 dark:border-red-700 text-red-700 dark:text-red-400 p-2 mb-1 rounded-r-lg shadow-sm animate-fadeIn" role="alert">
-          <p>{error}</p>
-        </div>
-      )}
-      {loading && !hasInitialized.current ? (
-        <div className="flex justify-center items-center h-32">
-          <div className="flex flex-col items-center">
-            <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-r-2 border-b-2 border-blue-500 dark:border-blue-400 shadow-md"></div>
-            <p className="mt-2 text-gray-500 dark:text-gray-400 animate-pulse text-sm">Chargement du calendrier...</p>
+        <div className="bg-red-100 dark:bg-red-900/20 border-l-4 border-red-500 dark:border-red-700 text-red-700 dark:text-red-400 p-3 mb-2 rounded-lg shadow-sm animate-fadeIn" role="alert">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <p className="font-medium">{error}</p>
+            </div>
+            <button 
+              onClick={() => loadAppointments()}
+              className="bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-red-600 dark:text-red-400 px-3 py-1 rounded-md text-sm font-medium transition-colors border border-red-200 dark:border-red-800"
+            >
+              Réessayer
+            </button>
           </div>
         </div>
-      ) : (
-        <div className="calendar-container flex-1 min-h-0 w-full rounded-lg overflow-hidden">
+      )}
+        {/* Calendrier toujours affiché, pas de modal de chargement */}
+      <div className="calendar-container flex-1 min-h-0 w-full rounded-lg overflow-hidden">
           <FullCalendar
             ref={calendarRef}
             plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin]}
@@ -443,13 +458,13 @@ const AppointmentCalendar: React.FC<AppointmentCalendarProps> = ({
             dayHeaderClassNames="text-sm font-medium text-gray-700 dark:text-gray-300 py-2"
             slotLabelClassNames="text-gray-500 dark:text-gray-400 text-xs font-medium"
             viewClassNames="animate-fadeIn transition-opacity duration-300"
-            handleWindowResize={true}
-            slotMinTime="08:00:00"
-            slotMaxTime="11:00:00"
+            handleWindowResize={true}            slotMinTime="08:00:00"
+            slotMaxTime="23:00:00"
             slotDuration="00:15:00"
             expandRows={true}
             stickyHeaderDates={true}
             slotEventOverlap={false}
+            scrollTime="08:30:00"
             select={handleDateSelect}
             eventClick={handleEventClick}
             eventChange={handleEventChange}
@@ -458,36 +473,45 @@ const AppointmentCalendar: React.FC<AppointmentCalendarProps> = ({
               const isMonthViewActive = dateInfo.view.type === 'dayGridMonth';
               setIsMonthView(isMonthViewActive);
               setCalendarView(dateInfo.view.type);
-              console.log('Vue changée:', dateInfo.view.type, 'isMonthView:', isMonthViewActive);
-              // Appliquer immédiatement l'amélioration appropriée pour la vue actuelle
-              setTimeout(() => {
+              
+              // Appliquer les améliorations via requestAnimationFrame pour de meilleures performances
+              requestAnimationFrame(() => {
                 enhanceCalendar(isMonthViewActive);
                 if (isMonthViewActive) {
                   enhanceMonthView();
                 }
-                hideWeekdayNames(); // Masquer les noms des jours à chaque changement de vue
-              }, 50);
+                // Ajouter les jours à chaque changement de vue
+                addDaysToHeaders();              });
             }}
             dayHeaderFormat={{
-              weekday: 'narrow',
+              weekday: 'short',
               day: 'numeric'
             }}
             views={{
               dayGridMonth: {
-                dayHeaderFormat: { day: 'numeric' }, // Juste le numéro du jour
+                dayHeaderFormat: { 
+                  weekday: 'short',
+                  day: 'numeric'
+                },
                 titleFormat: { month: 'long', year: 'numeric' },
                 dayHeaderClassNames: 'month-view-day-header',
                 buttonText: 'Mois',
                 viewClassNames: 'calendar-month-view'
               },
               timeGridWeek: {
-                dayHeaderFormat: { day: 'numeric' }, // Juste le numéro du jour
+                dayHeaderFormat: { 
+                  weekday: 'short',
+                  day: 'numeric'
+                },
                 titleFormat: { month: 'short', year: 'numeric' },
                 buttonText: 'Semaine',
                 dayHeaderClassNames: 'week-view-day-header'
               },
               timeGridDay: {
-                dayHeaderFormat: { day: 'numeric' }, // Juste le numéro du jour
+                dayHeaderFormat: { 
+                  weekday: 'short',
+                  day: 'numeric'
+                },
                 titleFormat: { month: 'long', day: 'numeric', year: 'numeric' },
                 buttonText: 'Jour',
                 dayHeaderClassNames: 'day-view-day-header'
@@ -559,10 +583,8 @@ const AppointmentCalendar: React.FC<AppointmentCalendarProps> = ({
                   )}
                 </div>
               )
-            }}
-          />
+            }}          />
         </div>
-      )}
 
       {/* Modal pour ajouter un nouveau rendez-vous */}
       {isNewAppointmentModalOpen && (

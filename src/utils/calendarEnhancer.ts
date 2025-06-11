@@ -1,4 +1,5 @@
 import { optimizeCalendarSpace } from './optimizeCalendarSpace';
+import { addDaysToHeaders } from './headerEnhancer';
 
 /**
  * Améliore l'apparence et le comportement du calendrier FullCalendar
@@ -7,35 +8,29 @@ import { optimizeCalendarSpace } from './optimizeCalendarSpace';
  */
 export function enhanceCalendar(isMonthView = false): void {
   try {
-    // Optimisation de l'espace du calendrier (initial)
-    optimizeCalendarSpace();
-    
-    // Effectuer les améliorations visuelles en séquence avec de petits délais
-    setTimeout(() => {
-      enhanceCurrentTimeIndicator();
+    // Utiliser requestAnimationFrame pour synchroniser avec le rendu du navigateur
+    requestAnimationFrame(() => {
+      // Optimisation de l'espace du calendrier (initial)
+      optimizeCalendarSpace();
       
-      setTimeout(() => {
-        enhanceDayHeaders();
-        
-        // Appliquer les améliorations spécifiques à la vue mensuelle si nécessaire
-        if (isMonthView) {
-          enhanceMonthView();
-        }
-        
-        setTimeout(() => {
-          enhanceNavigationButtons();
-          
-          setTimeout(() => {
-            enhanceCalendarEvents();
-            
-            // Optimisation finale après un court délai
-            setTimeout(() => {
-              optimizeCalendarSpace();
-            }, 100);
-          }, 50);
-        }, 50);
-      }, 50);
-    }, 50);
+      // Appliquer toutes les améliorations en une seule fois
+      enhanceCurrentTimeIndicator();
+      enhanceDayHeaders();
+      
+      // Ajouter les jours dans les champs d'en-tête du calendrier
+      addDaysToHeaders();
+      
+      // Appliquer les améliorations spécifiques à la vue mensuelle si nécessaire
+      if (isMonthView) {
+        enhanceMonthView();
+      }
+      
+      enhanceNavigationButtons();
+      enhanceCalendarEvents();
+      
+      // Optimisation finale
+      optimizeCalendarSpace();
+    });
   } catch (error) {
     console.error('Erreur lors de l\'amélioration du calendrier:', error);
   }
@@ -487,55 +482,33 @@ export function enhanceMonthView(): void {
 }
 
 /**
- * Masque complètement les noms des jours de la semaine dans toutes les vues
+ * Applique des styles aux en-têtes des jours de la semaine
+ * Cette fonction ne masque plus les jours, mais s'assure qu'ils sont correctement stylisés
  */
 export function hideWeekdayNames(): void {
   try {
-    // Ne créer le style que s'il n'existe pas déjà
-    const styleId = 'hide-weekday-names';
+    // Puisque maintenant nous affichons les jours, nous allons juste préparer les en-têtes
+    // pour qu'ils soient correctement stylisés par notre fonction addDaysToHeaders
     
-    if (!document.getElementById(styleId)) {
-      const styleElement = document.createElement('style');
-      styleElement.id = styleId;
-      
-      // Styles pour masquer complètement les noms des jours dans toutes les vues
-      styleElement.innerHTML = `
-        /* Masquer complètement les noms des jours de la semaine */
-        .fc-col-header-cell-cushion {
-          color: transparent !important;
-          font-size: 0 !important;
+    // Appliquer l'effet après un court délai pour s'assurer que les éléments sont chargés
+    requestAnimationFrame(() => {
+      // Trouver tous les en-têtes et s'assurer qu'ils sont visibles
+      const headers = document.querySelectorAll('.fc-col-header-cell-cushion');
+      headers.forEach(header => {
+        if (header instanceof HTMLElement) {
+          // Retirer les styles qui masquaient le contenu
+          header.style.color = '';
+          header.style.fontSize = '';
+          header.style.visibility = 'visible';
+          header.style.opacity = '1';
         }
-        
-        /* S'assurer que tous les textes dans les en-têtes sont masqués */
-        .fc-col-header-cell span.fc-col-header-cell-cushion {
-          visibility: visible;
-          opacity: 0;
-        }
-        
-        /* Forcer le masquage dans tous les types de vue */
-        .fc-timeGridWeek-view .fc-col-header-cell-cushion,
-        .fc-timeGridDay-view .fc-col-header-cell-cushion,
-        .fc-dayGridMonth-view .fc-col-header-cell-cushion,
-        .fc-listWeek-view .fc-list-day-cushion {
-          color: transparent !important;
-        }
-      `;
+      });
       
-      document.head.appendChild(styleElement);
-      
-      // Appliquer l'effet après un court délai pour s'assurer que les éléments sont chargés
-      setTimeout(() => {
-        const headers = document.querySelectorAll('.fc-col-header-cell-cushion');
-        headers.forEach(header => {
-          if (header instanceof HTMLElement) {
-            header.style.color = 'transparent';
-            header.style.fontSize = '0';
-          }
-        });
-      }, 100);
-    }
+      // Ajouter les jours dans les en-têtes
+      addDaysToHeaders();
+    });
   } catch (error) {
-    console.error('Erreur lors du masquage des noms des jours de la semaine:', error);
+    console.error('Erreur lors de la préparation des en-têtes des jours de la semaine:', error);
   }
 }
 

@@ -1,3 +1,4 @@
+import * as React from 'react';
 import { useState, useEffect, useRef } from 'react';
 import { Menu, Bell, Sun, Moon, LogOut } from 'lucide-react';
 import { getFullMediaUrl } from '../../utils/config';

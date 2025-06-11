@@ -1,3 +1,4 @@
+import * as React from 'react';
 import { useState, useEffect } from 'react';
 import { Calendar } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';

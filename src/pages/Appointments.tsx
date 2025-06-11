@@ -1,3 +1,4 @@
+import * as React from 'react';
 import { useState, useEffect } from 'react';
 import { PlusCircle, Calendar as CalendarIcon, CalendarX, Trash2, RotateCcw } from 'lucide-react';
 import AppointmentList from '../components/appointments/AppointmentList';

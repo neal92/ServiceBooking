@@ -1,3 +1,4 @@
+import * as React from 'react';
 import { CalendarX } from 'lucide-react';
 import AppointmentCard from './AppointmentCard';
 import { Appointment } from '../../types';

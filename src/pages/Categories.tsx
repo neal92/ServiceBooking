@@ -1,3 +1,4 @@
+import * as React from 'react';
 import { useState, useEffect } from 'react';
 import { PlusCircle, Edit, Trash, Search, Tag } from 'lucide-react';
 import { Category } from '../types';

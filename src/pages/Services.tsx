@@ -1,3 +1,4 @@
+import * as React from 'react';
 import { useState, useEffect } from 'react';
 import { PlusCircle, Search, ShoppingBag, Trash } from 'lucide-react';
 import ServiceCard from '../components/services/ServiceCard';
