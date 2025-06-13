@@ -1,5 +1,51 @@
 import { optimizeCalendarSpace } from './optimizeCalendarSpace';
 import { addDaysToHeaders } from './headerEnhancer';
+import { hideAxisHeader } from './hideAxisHeader';
+
+import { fixNavigationButtons } from './fixNavigationButtons';
+
+/**
+ * Détecte et gère les boutons de navigation dupliqués
+ */
+function detectAndFixDuplicateButtons(): void {
+  try {
+    console.log("Recherche de boutons de navigation dupliqués...");
+    
+    // Chercher tous les boutons de navigation
+    const dayButtons = document.querySelectorAll('.fc-dayGridMonth-button');
+    const weekButtons = document.querySelectorAll('.fc-timeGridWeek-button');
+    const dayViewButtons = document.querySelectorAll('.fc-timeGridDay-button');
+    const listButtons = document.querySelectorAll('.fc-listWeek-button');
+    
+    console.log(`Boutons trouvés - Mois: ${dayButtons.length}, Semaine: ${weekButtons.length}, Jour: ${dayViewButtons.length}, Planning: ${listButtons.length}`);
+
+    // Si nous détectons des doublons, masquer les boutons externes
+    if (dayButtons.length > 1 || weekButtons.length > 1 || dayViewButtons.length > 1 || listButtons.length > 1) {
+      console.log("Boutons dupliqués détectés, application du correctif...");
+      
+      // Trouver les conteneurs des boutons
+      const toolbarChunks = document.querySelectorAll('.fc-toolbar-chunk');
+      
+      // Pour chaque chunk, vérifier s'il contient des boutons de navigation
+      toolbarChunks.forEach((chunk, index) => {
+        console.log(`Analyse du chunk ${index}:`, chunk);
+        
+        // Si c'est le chunk de droite (généralement le 3ème), vérifier les boutons
+        if (index === 2 || chunk.querySelector('.fc-dayGridMonth-button, .fc-timeGridWeek-button, .fc-timeGridDay-button, .fc-listWeek-button')) {
+          console.log(`Trouvé conteneur de boutons de navigation: chunk ${index}`);
+          
+          // On ne masque pas les boutons standard de FullCalendar
+          if (chunk.querySelector('.fc-button-group') && index !== 2) {
+            console.log("Masquage des boutons dupliqués externes");
+            (chunk as HTMLElement).style.display = 'none';
+          }
+        }
+      });
+    }
+  } catch (error) {
+    console.error("Erreur lors de la détection des boutons dupliqués:", error);
+  }
+}
 
 /**
  * Améliore l'apparence et le comportement du calendrier FullCalendar
@@ -17,6 +63,9 @@ export function enhanceCalendar(isMonthView = false): void {
       enhanceCurrentTimeIndicator();
       enhanceDayHeaders();
       
+      // Masquer la colonne d'axe dans l'en-tête
+      hideAxisHeader();
+      
       // Ajouter les jours dans les champs d'en-tête du calendrier
       addDaysToHeaders();
       
@@ -27,6 +76,12 @@ export function enhanceCalendar(isMonthView = false): void {
       
       enhanceNavigationButtons();
       enhanceCalendarEvents();
+      
+      // Réparer les boutons de navigation pour les filtres jour/mois
+      fixNavigationButtons();
+      
+      // Détecter et corriger les boutons dupliqués
+      detectAndFixDuplicateButtons();
       
       // Optimisation finale
       optimizeCalendarSpace();

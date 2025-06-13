@@ -1,10 +1,11 @@
 import * as React from 'react';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import PageTransition from '../components/layout/PageTransition';
 import authService from '../services/auth';
 import { API_BASE_URL } from '../utils/config';
 import AvatarSelector from '../components/profile/AvatarSelector';
+import '../styles/profile-fix.css';
 
 const Profile = () => {
   const { user, updateUser, changePassword } = useAuth();
@@ -22,26 +23,7 @@ const Profile = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  
-  // Suivre les changements du message de succès pour débogage
-  useEffect(() => {
-    if (success) {
-      console.log('Message de succès mis à jour:', success, 'isEditingPassword =', isEditingPassword);
-    }
-  }, [success, isEditingPassword]);
-
-  // Effet pour suivre les changements de l'état isEditingPassword
-  useEffect(() => {
-    if (!isEditingPassword && success) {
-      console.log('Mode édition mot de passe désactivé avec message de succès présent:', success);
-    }
-  }, [isEditingPassword, success]);
-
-  // Gestion du message de succès permanent
-  useEffect(() => {
-    console.log('État du message de succès:', success);
-    console.log('État d\'édition:', isEditingPassword);
-  }, [success, isEditingPassword]);
+    // Aucun effet de débogage n'est nécessaire en production
 
   const [passwordErrors, setPasswordErrors] = useState({
     current: '',
@@ -111,7 +93,7 @@ const Profile = () => {
       confirm: ''
     });
     
-    console.log('Tentative de changement de mot de passe...');
+    // Début du processus de changement de mot de passe
     
     // Validation de tous les champs
     const isCurrentPasswordValid = validateCurrentPassword(password);
@@ -125,7 +107,7 @@ const Profile = () => {
         
         // Définir d'abord le message de succès
         const successMessage = 'Mot de passe modifié avec succès';
-        console.log('Définition du message de succès:', successMessage);
+        // Définition du message de succès
         
         // Réinitialiser les champs
         setPassword('');
@@ -136,11 +118,7 @@ const Profile = () => {
         setIsEditingPassword(false);
         setSuccess(successMessage);
         setShowSuccessModal(true); // Afficher la modale de succès
-      } catch (err: any) {
-        console.error('Erreur changement mot de passe dans Profile:', err);
-        console.error('Type d\'erreur:', err.constructor.name);
-        console.error('Nom d\'erreur:', err.name);
-        console.error('Message d\'erreur:', err.message);
+      } catch (err: any) {        // Capture simplifiée de l'erreur
         
         // Effacer le message de succès en cas d'erreur
         setSuccess('');
@@ -148,7 +126,7 @@ const Profile = () => {
         // Gérer les différents types d'erreurs
         if (err.name === 'IncorrectPasswordError' || 
             (err.message && err.message.includes('Current password is incorrect'))) {
-          console.log('Erreur de mot de passe incorrect détectée');
+          // Erreur de mot de passe incorrect détectée
           // Réinitialiser l'erreur générale et configurer l'erreur spécifique au champ
           setError('');
           setPasswordErrors(prev => ({ 
@@ -169,15 +147,14 @@ const Profile = () => {
           setError('Service indisponible. Veuillez réessayer plus tard.');
         } else {
           setError(err.message || 'Erreur lors de la modification du mot de passe');
-          console.error('Erreur complète:', err);
+          // Capture de l'erreur générique
         }
       }
     }
   };
-
   return (
     <PageTransition type="slide">
-      <div className="max-w-5xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-5xl mx-auto py-8 px-4 sm:px-6 lg:px-8 profile-container">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Mon Profil</h1>
         
         {/* Modal de succès */}
@@ -220,27 +197,25 @@ const Profile = () => {
                       setError('');
                       setSuccess('');
                       setShowSuccessModal(false);
-                      console.log('Sélection avatar prédéfini:', avatarUrl);
+                      // Sélection avatar prédéfini
                       
                       if (avatarUrl.startsWith('/avatars/')) {
                         const fileName = avatarUrl.split('/').pop() || 'avatar.svg';
                         
-                        console.log(`Récupération du contenu SVG depuis ${avatarUrl}`);
+                        // Récupération du contenu SVG
                         const response = await fetch(`${API_BASE_URL}${avatarUrl}`);
                         if (!response.ok) {
                           throw new Error(`Erreur lors du chargement de l'avatar: ${response.statusText}`);
                         }
                         
                         const svgContent = await response.text();
-                        console.log(`Contenu SVG récupéré (${svgContent.length} caractères)`);
+                        // Contenu SVG récupéré
                         
                         const file = new File([svgContent], fileName, { 
                           type: 'image/svg+xml',
                         });
-                        
-                        console.log('Upload avatar prédéfini:', file.name);
+                          // Upload de l'avatar
                         const uploadResponse = await authService.uploadAvatar(file);
-                        console.log('Upload réussi:', uploadResponse.avatarUrl);
                         
                         await updateUser({
                           firstName: user?.firstName,
@@ -254,7 +229,7 @@ const Profile = () => {
                         setShowSuccessModal(true);
                       }
                     } catch (err: any) {
-                      console.error('Erreur sélection avatar:', err);
+                      // Gestion de l'erreur de sélection d'avatar
                       setError(err.message || 'Erreur lors de la mise à jour de l\'avatar');
                     }
                   }}

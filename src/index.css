@@ -1,3 +1,6 @@
+/* Import des correctifs de profil - Doit être placé avant les autres règles CSS */
+@import './styles/profile-fix.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

@@ -11,7 +11,17 @@ import NewAppointmentModal from '../appointments/NewAppointmentModal';
 import { EventClickArg, DateSelectArg, EventChangeArg, DatesSetArg } from '@fullcalendar/core';
 import { enhanceCalendar, enhanceCurrentTimeIndicator, enhanceMonthView } from '../../utils/calendarEnhancer';
 import { addDaysToHeaders } from '../../utils/headerEnhancer';
+import { formatDayViewTitle } from '../../utils/formatDayViewTitle';
+import { fixNavigationButtons } from '../../utils/fixNavigationButtons';
 import '../../calendar-day-headers.css';
+import './titleStyles.css'; // Import des styles pour l'alignement du titre
+import './navigationButtonStyles.css'; // Import des styles pour les boutons de navigation
+import './todayButtonStyle.css'; // Import des styles pour le bouton Aujourd'hui
+import './headerButtonsPosition.css'; // Import des styles pour inverser la position des boutons
+import './calendarHeaderFix.css'; // Import des styles pour corriger l'espace dans les en-têtes
+import './hideAxisColumn.css'; // Import des styles pour masquer complètement la colonne d'axe
+import './fixNavigationButtons.css'; // Import des styles pour réparer les boutons de navigation
+import './hideNavigationDuplicates.css'; // Import des styles pour masquer les boutons dupliqués
 
 interface AppointmentCalendarProps {
   onAppointmentAdded?: () => void;
@@ -112,13 +122,14 @@ const AppointmentCalendar: React.FC<AppointmentCalendarProps> = ({
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, [calendarView]);
-    // Améliorer le calendrier après le rendu
+  // Améliorer le calendrier après le rendu
   useEffect(() => {
     if (!loading) {
       // Exécuter immédiatement pour éviter tout délai inutile
       enhanceCalendar(isMonthView);
       enhanceCurrentTimeIndicator();
       addDaysToHeaders(); // Ajouter les jours dans les champs d'en-tête du calendrier
+      fixNavigationButtons(); // Réparer les boutons de navigation (filtres jour/mois)
     }
   }, [loading, appointments, isMonthView]);
     /**
@@ -424,8 +435,7 @@ const AppointmentCalendar: React.FC<AppointmentCalendarProps> = ({
         </div>
       )}
         {/* Calendrier toujours affiché, pas de modal de chargement */}
-      <div className="calendar-container flex-1 min-h-0 w-full rounded-lg overflow-hidden">
-          <FullCalendar
+      <div className="calendar-container flex-1 min-h-0 w-full rounded-lg overflow-hidden">          <FullCalendar
             ref={calendarRef}
             plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin]}
             initialView={calendarView}
@@ -461,13 +471,20 @@ const AppointmentCalendar: React.FC<AppointmentCalendarProps> = ({
             handleWindowResize={true}            slotMinTime="08:00:00"
             slotMaxTime="23:00:00"
             slotDuration="00:15:00"
-            expandRows={true}
-            stickyHeaderDates={true}
+            expandRows={true}            stickyHeaderDates={true}
             slotEventOverlap={false}
             scrollTime="08:30:00"
             select={handleDateSelect}
             eventClick={handleEventClick}
-            eventChange={handleEventChange}
+            eventChange={handleEventChange}            titleFormat={(info) => {
+              // Format personnalisé pour la vue jour
+              const currentViewType = calendarRef.current?.getApi()?.view?.type;
+              if (currentViewType === 'timeGridDay') {
+                return formatDayViewTitle(info.date);
+              }
+              // Utiliser le format par défaut pour les autres vues
+              return '';
+            }}
             datesSet={(dateInfo: DatesSetArg) => {
               // Détecter si nous sommes en vue mensuelle
               const isMonthViewActive = dateInfo.view.type === 'dayGridMonth';
@@ -506,13 +523,11 @@ const AppointmentCalendar: React.FC<AppointmentCalendarProps> = ({
                 titleFormat: { month: 'short', year: 'numeric' },
                 buttonText: 'Semaine',
                 dayHeaderClassNames: 'week-view-day-header'
-              },
-              timeGridDay: {
+              },              timeGridDay: {
                 dayHeaderFormat: { 
                   weekday: 'short',
                   day: 'numeric'
                 },
-                titleFormat: { month: 'long', day: 'numeric', year: 'numeric' },
                 buttonText: 'Jour',
                 dayHeaderClassNames: 'day-view-day-header'
               },

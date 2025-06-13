@@ -26,9 +26,7 @@ function App() {
             </ProtectedRoute>
           }>            <Route index element={<Dashboard />} />
             <Route path="services" element={<Services />} />
-            <Route path="categories" element={<Categories />} />
-            <Route path="appointments" element={<Appointments />} />
-            <Route path="calendar" element={<Calendar />} />
+            <Route path="categories" element={<Categories />} />            <Route path="appointments" element={<Appointments />} />            <Route path="calendar" element={<Calendar />} />
             <Route path="profile" element={<Profile />} />
           </Route>
           <Route path="*" element={<NotFound />} />

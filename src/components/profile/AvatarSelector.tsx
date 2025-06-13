@@ -1,3 +1,4 @@
+import * as React from 'react';
 import { useState } from 'react';
 import { User, Camera, X } from 'lucide-react';
 import { getFullMediaUrl } from '../../utils/config';

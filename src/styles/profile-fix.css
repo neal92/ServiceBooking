@@ -1,0 +1,43 @@
+/* styles/profile-fix.css */
+/* Styles de correction simples pour la page profil */
+
+/* Garantir que les conteneurs de profil sont visibles */
+.profile-container {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  z-index: 5 !important;
+}
+
+/* Garantir que le contenu est visible */
+.profile-container * {
+  visibility: visible !important;
+}
+
+/* Assurer une taille minimale pour le contenu */
+.profile-container {
+  min-height: 300px;
+}
+
+/* Styles pour assurer la visibilité des éléments de l'avatar */
+.avatar-selector,
+.avatar-preview {
+  display: block !important;
+  visibility: visible !important;
+}
+
+/* Assurer que les boutons sont cliquables */
+.profile-container button,
+.avatar-selector button {
+  pointer-events: auto !important;
+}
+
+/* Style de contenu pour montrer clairement le chargement */
+.profile-container:empty::after {
+  content: "Chargement du profil...";
+  display: block;
+  text-align: center;
+  padding: 2rem;
+  font-style: italic;
+  color: #666;
+}

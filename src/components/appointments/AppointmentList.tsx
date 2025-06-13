@@ -24,7 +24,7 @@ const AppointmentList = ({ appointments, onDelete, onStatusChange }: Appointment
     
     return groups;
   };
-
+  
   // Formater les dates pour l'affichage
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -74,33 +74,42 @@ const AppointmentList = ({ appointments, onDelete, onStatusChange }: Appointment
 
   return (
     <div className="space-y-8">
-      {sortedDates.map((date) => (
-        <div key={date} className="bg-white dark:bg-gray-800 shadow-md rounded-lg overflow-hidden">
-          <div className="sticky top-0 z-10">
-            <div className="px-6 py-4 bg-gradient-to-b from-gray-50 to-white dark:from-gray-800/95 dark:to-gray-800 backdrop-blur-sm border-b border-gray-200 dark:border-gray-700">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                {formatDate(date)}
-              </h3>
-              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                {groupedAppointments[date].length} rendez-vous
-              </p>
+      {sortedDates.map((date, index) => (
+        <React.Fragment key={date}>
+          {/* Ajouter un séparateur avec <br> si ce n'est pas le premier élément */}
+          {index > 0 && (
+            <div className="my-4 text-center">
+              <br />
+            </div>
+          )}
+          <div className="bg-white dark:bg-gray-800 shadow-md rounded-lg overflow-hidden">
+            <div className="sticky top-0 z-10">
+              <div className="px-6 py-4 bg-gradient-to-b from-gray-50 to-white dark:from-gray-800/95 dark:to-gray-800 backdrop-blur-sm border-b border-gray-200 dark:border-gray-700">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  {formatDate(date)}
+                </h3>
+                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                  {groupedAppointments[date].length} rendez-vous
+                </p>
+              </div>
+            </div>
+
+            <div className="p-6 space-y-6">
+              {groupedAppointments[date].map((appointment) => (
+                <div 
+                  key={appointment.id} 
+                  className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm transition-all hover:shadow-md"
+                >                
+                  <AppointmentCard 
+                    appointment={appointment} 
+                    onDelete={onDelete} 
+                    onStatusChange={onStatusChange} 
+                  />
+                </div>
+              ))}
             </div>
           </div>
-
-          <div className="p-6 space-y-6">
-            {groupedAppointments[date].map((appointment) => (              <div 
-                key={appointment.id} 
-                className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm transition-all hover:shadow-md"
-              >                
-                <AppointmentCard 
-                  appointment={appointment} 
-                  onDelete={onDelete} 
-                  onStatusChange={onStatusChange} 
-                />
-              </div>
-            ))}
-          </div>
-        </div>
+        </React.Fragment>
       ))}
     </div>
   );

@@ -12,6 +12,16 @@ dist
 dist-ssr
 *.local
 
+# Fichiers liés au calendrier qui causent des problèmes
+src/components/calendar/
+src/utils/calendarEnhancer.ts
+src/utils/fixNavigationButtons.ts
+src/utils/removeExtraButtons.js
+src/utils/fixProfilePage.*
+src/utils/diagnosticProfile.*
+src/utils/headerEnhancer.ts
+src/calendar-*.css
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
