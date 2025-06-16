@@ -2,6 +2,7 @@ import * as React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
+import AdminRoute from './components/AdminRoute';
 import Layout from './components/layout/Layout';
 import Dashboard from './pages/Dashboard';
 import Login from './pages/Login';
@@ -23,10 +24,21 @@ function App() {
           <Route path="/" element={
             <ProtectedRoute>
               <Layout />
-            </ProtectedRoute>
-          }>            <Route index element={<Dashboard />} />
-            <Route path="services" element={<Services />} />
-            <Route path="categories" element={<Categories />} />            <Route path="appointments" element={<Appointments />} />            <Route path="calendar" element={<Calendar />} />
+            </ProtectedRoute>          }>
+            <Route index element={<Dashboard />} />
+            <Route path="services" element={
+              <AdminRoute>
+                <Services />
+              </AdminRoute>
+            } />
+            <Route path="categories" element={
+              <AdminRoute>
+                <Categories />
+              </AdminRoute>
+            } />
+            <Route path="appointments" element={<Appointments />} />
+            {/* Page temporaire en attendant la reconstruction du calendrier */}
+            <Route path="calendar" element={<Calendar />} />
             <Route path="profile" element={<Profile />} />
           </Route>
           <Route path="*" element={<NotFound />} />

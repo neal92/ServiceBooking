@@ -1,7 +1,9 @@
 import React from 'react';
 import { Calendar } from 'lucide-react';
+import { useAuth } from '../../contexts/AuthContext';
 
 const Footer: React.FC = () => {
+  const { user } = useAuth();
   return (
     <footer className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 mt-auto">
       <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
@@ -26,18 +28,18 @@ const Footer: React.FC = () => {
               <li>
                 <a href="/dashboard" className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400">
                   Tableau de bord
-                </a>
-              </li>
+                </a>              </li>
               <li>
                 <a href="/calendar" className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400">
                   Calendrier
                 </a>
-              </li>
-              <li>
-                <a href="/services" className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400">
-                  Prestations
-                </a>
-              </li>
+              </li>              {user?.role === 'admin' && (
+                <li>
+                  <a href="/services" className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400">
+                    Prestations
+                  </a>
+                </li>
+              )}
               <li>
                 <a href="/appointments" className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400">
                   Rendez-vous

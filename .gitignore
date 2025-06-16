@@ -12,6 +12,9 @@ dist
 dist-ssr
 *.local
 
+# Variables d'environnement
+.env
+
 # Fichiers liés au calendrier qui causent des problèmes
 src/components/calendar/
 src/utils/calendarEnhancer.ts

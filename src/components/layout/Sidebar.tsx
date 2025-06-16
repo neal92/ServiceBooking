@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { Calendar, FileText, Tag, LayoutDashboard, X, User, Settings, LogOut, ClipboardList } from 'lucide-react';
+import { FileText, Tag, LayoutDashboard, X, User, Settings, LogOut, ClipboardList, Calendar } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { getFullMediaUrl } from '../../utils/config';
 
@@ -14,13 +14,23 @@ const Sidebar = ({ mobile, closeSidebar }: SidebarProps) => {
   const { user, logout } = useAuth();
   const [showUserMenu, setShowUserMenu] = useState(false);
   
-  const navigation = [
+  // Navigation de base pour tous les utilisateurs
+  const baseNavigation = [
     { name: 'Tableau de bord', href: '/', icon: LayoutDashboard },
     { name: 'Mes Rendez-vous', href: '/appointments', icon: ClipboardList },
     { name: 'Calendrier', href: '/calendar', icon: Calendar },
+  ];
+  
+  // Navigation supplémentaire pour les administrateurs
+  const adminNavigation = [
     { name: 'Prestations', href: '/services', icon: FileText },
     { name: 'Catégories', href: '/categories', icon: Tag },
   ];
+  
+  // Combinaison des éléments de navigation en fonction du rôle de l'utilisateur
+  const navigation = user?.role === 'admin' 
+    ? [...baseNavigation, ...adminNavigation] 
+    : baseNavigation;
 
   return (
     <div className="flex flex-col h-full">
@@ -36,7 +46,7 @@ const Sidebar = ({ mobile, closeSidebar }: SidebarProps) => {
           </button>
         )}
         <div className="flex items-center">
-          <Calendar className="h-8 w-8 text-blue-600" />
+          <ClipboardList className="h-8 w-8 text-blue-600" />
           <h1 className="ml-2 text-xl font-bold text-blue-600">RDV Manager</h1>
         </div>
       </div>

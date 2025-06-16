@@ -11,6 +11,26 @@ const Appointment = {
     return rows;
   },
   
+  getByUserId: async (userId) => {
+    const [rows] = await db.query(`
+      SELECT a.*, s.name as serviceName, s.price, s.duration
+      FROM appointments a
+      LEFT JOIN services s ON a.serviceId = s.id
+      WHERE a.userId = ?
+      ORDER BY a.date DESC, a.time DESC
+    `, [userId]);
+    return rows;
+  },
+  
+  getCompletedCountByUserId: async (userId) => {
+    const [rows] = await db.query(`
+      SELECT COUNT(*) as completedCount
+      FROM appointments
+      WHERE userId = ? AND status = 'completed'
+    `, [userId]);
+    return rows[0].completedCount;
+  },
+  
   getById: async (id) => {
     const [rows] = await db.query(`
       SELECT a.*, s.name as serviceName, s.price, s.duration

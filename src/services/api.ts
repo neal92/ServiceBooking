@@ -3,8 +3,9 @@ import { Appointment, Service, Category } from '../types';
 // Auth service is imported in this file but currently not used directly
 // It may be needed for future authentication features
 // import authService from './auth';
+import { API_BASE_URL } from '../utils/config';
 
-const API_URL = 'http://localhost:5000/api';
+const API_URL = API_BASE_URL;
 
 const apiClient = axios.create({
   baseURL: API_URL,
