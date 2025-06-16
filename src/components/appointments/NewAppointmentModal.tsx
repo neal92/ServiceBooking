@@ -3,6 +3,7 @@ import { X } from 'lucide-react';
 import { Appointment, Service } from '../../types';
 import { serviceService, appointmentService } from '../../services/api';
 import ModalPortal from '../layout/ModalPortal';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface NewAppointmentModalProps {
   isOpen: boolean;
@@ -13,6 +14,9 @@ interface NewAppointmentModalProps {
 }
 
 const NewAppointmentModal: React.FC<NewAppointmentModalProps> = ({ isOpen, onClose, appointment, services: initialServices, onDelete }) => {
+  // Récupérer les informations de l'utilisateur connecté
+  const { user } = useAuth();
+  
   const [serviceId, setServiceId] = useState('');
   const [clientName, setClientName] = useState('');
   const [clientEmail, setClientEmail] = useState('');
@@ -51,10 +55,10 @@ const NewAppointmentModal: React.FC<NewAppointmentModalProps> = ({ isOpen, onClo
       setValidatedServices(validated);
     }
   }, [services]);
-
-  // Set form values when editing an appointment
+  // Set form values when editing an appointment or when opening the form
   useEffect(() => {
     if (appointment) {
+      // Si on édite un rendez-vous existant, utiliser ses valeurs
       setServiceId(appointment.serviceId.toString());
       setClientName(appointment.clientName);
       setClientEmail(appointment.clientEmail || '');
@@ -66,15 +70,26 @@ const NewAppointmentModal: React.FC<NewAppointmentModalProps> = ({ isOpen, onClo
       setTime(appointment.time);
       setNotes(appointment.notes || '');
     } else {
+      // Création d'un nouveau rendez-vous
       setServiceId('');
-      setClientName('');
-      setClientEmail('');
+      
+      // Si l'utilisateur est connecté et n'est pas admin, pré-remplir ses informations
+      if (user && user.role !== 'admin') {
+        setClientName(`${user.firstName} ${user.lastName}`);
+        setClientEmail(user.email);
+        // Le téléphone n'est peut-être pas disponible dans le profil utilisateur
+      } else {
+        // Si c'est un admin ou utilisateur non connecté, vider les champs
+        setClientName('');
+        setClientEmail('');
+      }
+      
       setClientPhone('');
       setDate('');
       setTime('');
       setNotes('');
     }
-  }, [appointment, isOpen]);
+  }, [appointment, isOpen, user]);
 
   const fetchServices = async () => {
     setIsLoading(true);
@@ -173,8 +188,7 @@ const NewAppointmentModal: React.FC<NewAppointmentModalProps> = ({ isOpen, onClo
         console.error('Erreur lors de la vérification des rendez-vous existants:', err);
         // Continue with the submission even if we couldn't check for conflicts
       }
-      
-      // Create a fully type-compliant appointment object
+        // Create a fully type-compliant appointment object
       const appointmentData = {
         clientName: clientName || '',
         clientEmail: clientEmail || '',
@@ -184,7 +198,8 @@ const NewAppointmentModal: React.FC<NewAppointmentModalProps> = ({ isOpen, onClo
         date: formattedDate,
         time: time || '',
         status: 'pending' as const, // Type assertion to ensure correct status type
-        notes: notes || ''
+        notes: notes || '',
+        createdBy: user && user.role === 'admin' ? 'admin' : 'client' // Indique qui a créé le rendez-vous
       } satisfies Omit<Appointment, 'id'>; // Validate against type
       
       console.log('Donnée du rendez-vous à envoyer:', appointmentData);
@@ -319,9 +334,7 @@ const NewAppointmentModal: React.FC<NewAppointmentModalProps> = ({ isOpen, onClo
                           ))
                       }
                     </select>
-                  </div>
-
-                  <div className="sm:col-span-6">
+                  </div>                  <div className="sm:col-span-6">
                     <label htmlFor="clientName" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                       Nom du client
                     </label>
@@ -331,10 +344,16 @@ const NewAppointmentModal: React.FC<NewAppointmentModalProps> = ({ isOpen, onClo
                         name="clientName"
                         id="clientName"
                         value={clientName}
-                        onChange={(e) => setClientName(e.target.value)}
-                        className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full text-base py-3 px-4 border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md"
+                        onChange={(e) => setClientName(e.target.value)}                        className={`shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full text-base py-3 px-4 border-gray-300 dark:border-gray-600 ${
+                          user && user.role && user.role !== 'admin' ? 'bg-gray-100 dark:bg-gray-600' : 'dark:bg-gray-700'
+                        } dark:text-white rounded-md`}
                         required
-                      />
+                        readOnly={Boolean(user && user.role && user.role !== 'admin')}
+                      />                      {user && user.role && user.role !== 'admin' && (
+                        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                          Ce champ est automatiquement rempli avec vos informations
+                        </p>
+                      )}
                     </div>
                   </div>
 
@@ -374,9 +393,7 @@ const NewAppointmentModal: React.FC<NewAppointmentModalProps> = ({ isOpen, onClo
                         required
                       />
                     </div>
-                  </div>
-
-                  <div className="sm:col-span-3">
+                  </div>                  <div className="sm:col-span-3">
                     <label htmlFor="clientEmail" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                       Email du client
                     </label>
@@ -386,9 +403,15 @@ const NewAppointmentModal: React.FC<NewAppointmentModalProps> = ({ isOpen, onClo
                         name="clientEmail"
                         id="clientEmail"
                         value={clientEmail}
-                        onChange={(e) => setClientEmail(e.target.value)}
-                        className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full text-base py-3 px-4 border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md"
-                      />
+                        onChange={(e) => setClientEmail(e.target.value)}                        className={`shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full text-base py-3 px-4 border-gray-300 dark:border-gray-600 ${
+                          user && user.role && user.role !== 'admin' ? 'bg-gray-100 dark:bg-gray-600' : 'dark:bg-gray-700'
+                        } dark:text-white rounded-md`}
+                        readOnly={Boolean(user && user.role && user.role !== 'admin')}
+                      />                      {user && user.role && user.role !== 'admin' && (
+                        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                          Ce champ est automatiquement rempli avec votre email
+                        </p>
+                      )}
                     </div>
                   </div>
 

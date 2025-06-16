@@ -14,23 +14,24 @@ const Sidebar = ({ mobile, closeSidebar }: SidebarProps) => {
   const { user, logout } = useAuth();
   const [showUserMenu, setShowUserMenu] = useState(false);
   
-  // Navigation de base pour tous les utilisateurs
-  const baseNavigation = [
-    { name: 'Tableau de bord', href: '/', icon: LayoutDashboard },
+  // Navigation pour les administrateurs
+  const adminNavigation = [
+    { name: 'Tableau de bord', href: '/dashboard', icon: LayoutDashboard },
     { name: 'Mes Rendez-vous', href: '/appointments', icon: ClipboardList },
     { name: 'Calendrier', href: '/calendar', icon: Calendar },
-  ];
-  
-  // Navigation supplémentaire pour les administrateurs
-  const adminNavigation = [
     { name: 'Prestations', href: '/services', icon: FileText },
     { name: 'Catégories', href: '/categories', icon: Tag },
   ];
   
-  // Combinaison des éléments de navigation en fonction du rôle de l'utilisateur
-  const navigation = user?.role === 'admin' 
-    ? [...baseNavigation, ...adminNavigation] 
-    : baseNavigation;
+  // Navigation pour les utilisateurs ordinaires
+  const userNavigation = [
+    { name: 'Accueil', href: '/home', icon: LayoutDashboard },
+    { name: 'Mes Rendez-vous', href: '/appointments', icon: ClipboardList },
+    { name: 'Calendrier', href: '/calendar', icon: Calendar },
+  ];
+  
+  // Sélection des éléments de navigation en fonction du rôle de l'utilisateur
+  const navigation = user?.role === 'admin' ? adminNavigation : userNavigation;
 
   return (
     <div className="flex flex-col h-full">

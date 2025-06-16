@@ -47,10 +47,8 @@ const Appointment = {
       // Extract just the date part from ISO date string
       formattedDate = appointmentData.date.split('T')[0];
       console.log(`Formatted date for database: ${formattedDate}`);
-    }
-
-    const [result] = await db.query(
-      'INSERT INTO appointments (clientName, clientEmail, clientPhone, serviceId, date, time, status, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+    }    const [result] = await db.query(
+      'INSERT INTO appointments (clientName, clientEmail, clientPhone, serviceId, date, time, status, notes, createdBy) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [
         appointmentData.clientName,
         appointmentData.clientEmail,
@@ -59,7 +57,8 @@ const Appointment = {
         formattedDate,  // Using the formatted date
         appointmentData.time,
         appointmentData.status || 'pending',
-        appointmentData.notes || ''
+        appointmentData.notes || '',
+        appointmentData.createdBy || 'client'  // Default to client if not specified
       ]
     );
     return result.insertId;
@@ -121,7 +120,51 @@ const Appointment = {
   delete: async (id) => {
     const [result] = await db.query('DELETE FROM appointments WHERE id = ?', [id]);
     return result.affectedRows > 0;
-  }
+  },
+  
+  getByClientEmail: async (email) => {
+    const [rows] = await db.query(`
+      SELECT a.*, s.name as serviceName, s.price, s.duration
+      FROM appointments a
+      LEFT JOIN services s ON a.serviceId = s.id
+      WHERE a.clientEmail = ?
+      ORDER BY a.date DESC, a.time DESC
+    `, [email]);
+    return rows;
+  },
+  
+  linkAppointmentToUser: async (appointmentId, userId) => {
+    const [result] = await db.query(
+      'UPDATE appointments SET userId = ? WHERE id = ?',
+      [userId, appointmentId]
+    );
+    return result.affectedRows > 0;
+  },
+  
+  // Pour la création de rendez-vous par l'admin
+  createByAdmin: async (appointmentData) => {
+    // Format the date to YYYY-MM-DD format for MySQL
+    let formattedDate = appointmentData.date;
+    if (formattedDate && formattedDate.includes('T')) {
+      formattedDate = appointmentData.date.split('T')[0];
+    }
+
+    const [result] = await db.query(
+      'INSERT INTO appointments (clientName, clientEmail, clientPhone, serviceId, date, time, status, notes, createdBy) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [
+        appointmentData.clientName,
+        appointmentData.clientEmail,
+        appointmentData.clientPhone,
+        appointmentData.serviceId,
+        formattedDate,
+        appointmentData.time,
+        'confirmed', // Statut confirmé par défaut pour création admin
+        appointmentData.notes || '',
+        'admin' // Indiquer que c'est créé par admin
+      ]
+    );
+    return result.insertId;
+  },
 };
 
 module.exports = Appointment;

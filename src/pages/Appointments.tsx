@@ -5,13 +5,18 @@ import AppointmentList from '../components/appointments/AppointmentList';
 import NewAppointmentModal from '../components/appointments/NewAppointmentModal';
 import { Appointment, Service } from '../types';
 import { appointmentService, serviceService } from '../services/api';
+import { useAuth } from '../contexts/AuthContext';
 import PageTransition from '../components/layout/PageTransition';
 import ModalPortal from '../components/layout/ModalPortal';
 
 type AppointmentStatus = 'all' | 'upcoming' | 'ongoing' | 'past';
 type AppointmentStatusFilter = 'all-status' | 'pending' | 'confirmed' | 'in-progress' | 'cancelled' | 'completed';
 
-const Appointments = () => {  const [statusFilter, setStatusFilter] = useState<AppointmentStatus>('all');
+const Appointments = () => {
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'admin';
+  
+  const [statusFilter, setStatusFilter] = useState<AppointmentStatus>('all');
   const [appointmentStatusFilter, setAppointmentStatusFilter] = useState<AppointmentStatusFilter>('all-status');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
@@ -98,15 +103,26 @@ const Appointments = () => {  const [statusFilter, setStatusFilter] = useState<A
 
     return () => clearInterval(interval);
   }, [autoUpdateStatus, appointments]);
-
   const fetchData = async () => {
     try {
       setLoading(true);
       setError(null);
-      const [appointmentsData, servicesData] = await Promise.all([
-        appointmentService.getAll(),
-        serviceService.getAll()
-      ]);
+      
+      let appointmentsData;
+      
+      // Si c'est un admin, récupérer tous les rendez-vous
+      // Si c'est un utilisateur normal, récupérer uniquement ses propres rendez-vous
+      if (isAdmin) {
+        appointmentsData = await appointmentService.getAll();
+      } else if (user?.email) {
+        // Utiliser l'email de l'utilisateur connecté pour filtrer ses rendez-vous
+        appointmentsData = await appointmentService.getByClientEmail(user.email);
+      } else {
+        appointmentsData = [];
+      }
+      
+      // Récupérer les services dans tous les cas
+      const servicesData = await serviceService.getAll();
       
       setAppointments(appointmentsData);
       setServices(servicesData);
@@ -344,18 +360,20 @@ const Appointments = () => {  const [statusFilter, setStatusFilter] = useState<A
                 onClick={() => setAppointmentStatusFilter('completed')}
               >
                 Terminé
-              </button>
-              <button
-                type="button"
-                className={`px-3 py-2 rounded-md text-sm font-medium ${
-                  appointmentStatusFilter === 'cancelled'
-                    ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
-                    : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-                }`}
-                onClick={() => setAppointmentStatusFilter('cancelled')}
-              >
-                Annulé
-              </button>
+              </button>              {/* Bouton "Annulé" visible uniquement pour les admins */}
+              {isAdmin && (
+                <button
+                  type="button"
+                  className={`px-3 py-2 rounded-md text-sm font-medium ${
+                    appointmentStatusFilter === 'cancelled'
+                      ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
+                      : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                  }`}
+                  onClick={() => setAppointmentStatusFilter('cancelled')}
+                >
+                  Annulé
+                </button>
+              )}
             </div>
           </div>
         </div>

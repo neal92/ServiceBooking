@@ -12,6 +12,7 @@ export interface Appointment {
   price?: number; // From JOIN with services
   duration?: number; // From JOIN with services
   createdAt?: string;
+  createdBy?: 'client' | 'admin'; // Indique qui a créé le rendez-vous
   Service?: Service; // Relation avec le service
 }
 

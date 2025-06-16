@@ -25,6 +25,23 @@ exports.getAppointmentById = async (req, res) => {
   }
 };
 
+// Get appointments for a specific client by email
+exports.getClientAppointments = async (req, res) => {
+  try {
+    const { email } = req.query;
+    
+    if (!email) {
+      return res.status(400).json({ message: 'Email parameter is required' });
+    }
+    
+    const appointments = await Appointment.getByClientEmail(email);
+    res.status(200).json(appointments);
+  } catch (error) {
+    console.error('Error fetching client appointments:', error);
+    res.status(500).json({ message: 'Server error while fetching client appointments' });
+  }
+};
+
 // Create new appointment
 exports.createAppointment = async (req, res) => {
   try {
@@ -34,13 +51,13 @@ exports.createAppointment = async (req, res) => {
       clientPhone, 
       serviceId, 
       date, 
-      time, 
-      status,
-      notes 
+      time,
+      notes,
+      createdBy 
     } = req.body;
     
     console.log('Creating appointment with data:', { 
-      clientName, clientEmail, clientPhone, serviceId, date, time, status, notes 
+      clientName, clientEmail, clientPhone, serviceId, date, time, createdBy, notes 
     });
     
     // Validation
@@ -91,18 +108,35 @@ exports.createAppointment = async (req, res) => {
         message: 'Un rendez-vous existe déjà à cette date et heure'
       });
     }
-    
-    try {
-      const appointmentId = await Appointment.create({ 
-        clientName, 
-        clientEmail, 
-        clientPhone, 
-        serviceId, 
-        date, 
-        time, 
-        status: status || 'pending',
-        notes: notes || ''
-      });
+      try {
+      let appointmentId;
+      
+      // Déterminer si c'est un admin qui crée le rendez-vous
+      if (createdBy === 'admin') {
+        // Création par admin - statut automatiquement confirmé
+        appointmentId = await Appointment.createByAdmin({ 
+          clientName, 
+          clientEmail, 
+          clientPhone, 
+          serviceId, 
+          date, 
+          time, 
+          notes: notes || ''
+        });
+      } else {
+        // Création par client - statut pending par défaut
+        appointmentId = await Appointment.create({ 
+          clientName, 
+          clientEmail, 
+          clientPhone, 
+          serviceId, 
+          date, 
+          time, 
+          status: 'pending',
+          notes: notes || '',
+          createdBy: 'client'
+        });
+      }
       
       res.status(201).json({ 
         message: 'Appointment created successfully', 
@@ -117,6 +151,48 @@ exports.createAppointment = async (req, res) => {
         code: dbError.code
       });
     }
+  } catch (error) {
+    console.error('Error creating appointment:', error);
+    res.status(500).json({ message: 'Server error while creating appointment' });
+  }
+};
+
+// Create appointment by admin (automatically confirmed)
+exports.createAppointmentByAdmin = async (req, res) => {
+  try {
+    const { 
+      clientName, 
+      clientEmail, 
+      clientPhone, 
+      serviceId, 
+      date, 
+      time,
+      notes 
+    } = req.body;
+    
+    console.log('Admin creating appointment with data:', { 
+      clientName, clientEmail, clientPhone, serviceId, date, time, notes 
+    });
+    
+    // Validation
+    if (!clientName || !clientEmail || !serviceId || !date || !time) {
+      return res.status(400).json({ 
+        message: 'Client name, email, service ID, date and time are required' 
+      });
+    }
+    
+    const appointmentData = {
+      clientName,
+      clientEmail,
+      clientPhone,
+      serviceId,
+      date,
+      time, 
+      notes
+    };
+    
+    const appointmentId = await Appointment.createByAdmin(appointmentData);
+    res.status(201).json({ id: appointmentId, message: 'Appointment created successfully' });
   } catch (error) {
     console.error('Error creating appointment:', error);
     res.status(500).json({ message: 'Server error while creating appointment' });

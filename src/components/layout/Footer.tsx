@@ -24,16 +24,17 @@ const Footer: React.FC = () => {
             <h3 className="text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wider">
               Navigation
             </h3>
-            <ul className="mt-4 space-y-2">
-              <li>
-                <a href="/dashboard" className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400">
-                  Tableau de bord
-                </a>              </li>
+            <ul className="mt-4 space-y-2">              <li>
+                <a href={user?.role === 'admin' ? "/dashboard" : "/home"} className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400">
+                  {user?.role === 'admin' ? "Tableau de bord" : "Accueil"}
+                </a>
+              </li>
               <li>
                 <a href="/calendar" className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400">
                   Calendrier
                 </a>
-              </li>              {user?.role === 'admin' && (
+              </li>
+              {user?.role === 'admin' && (
                 <li>
                   <a href="/services" className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400">
                     Prestations

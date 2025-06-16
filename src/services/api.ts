@@ -117,8 +117,7 @@ export const appointmentService = {
       // Pour la compatibilité avec l'ancien format
       service: appointment.serviceName || appointment.serviceId,
     };
-  },
-    create: async (appointment: Omit<Appointment, 'id'>): Promise<{ appointmentId: string }> => {
+  },    create: async (appointment: Omit<Appointment, 'id'>): Promise<{ appointmentId: string }> => {
     const response = await apiClient.post('/appointments', {
       clientName: appointment.clientName,
       clientEmail: appointment.clientEmail || '',
@@ -127,7 +126,8 @@ export const appointmentService = {
       date: appointment.date,
       time: appointment.time,
       status: appointment.status,
-      notes: appointment.notes || ''
+      notes: appointment.notes || '',
+      createdBy: appointment.createdBy || 'client' // Ajout du champ createdBy
     });
     return response.data;
   },
@@ -159,7 +159,23 @@ export const appointmentService = {
   
   delete: async (id: string): Promise<void> => {
     await apiClient.delete(`/appointments/${id}`);
-  }
+  },
+
+  getByClientEmail: async (email: string): Promise<Appointment[]> => {
+    // Utilisation de cache: false pour toujours récupérer les données les plus récentes
+    const response = await apiClient.get('/appointments/client', { 
+      headers: { 'Cache-Control': 'no-cache' },
+      params: { email, timestamp: new Date().getTime() }
+    });
+    
+    return response.data.map((appointment: any) => ({
+      ...appointment,
+      id: Number(appointment.id),
+      serviceId: Number(appointment.serviceId),
+      // Pour la compatibilité avec l'ancien format
+      service: appointment.serviceName || appointment.serviceId,
+    }));
+  },
 };
 
 export default {

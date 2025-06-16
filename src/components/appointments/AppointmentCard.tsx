@@ -2,11 +2,12 @@ import React, { useState, useEffect, useRef } from 'react';
 import { 
   Clock, Calendar, User, Mail, Phone, 
   MoreHorizontal, CheckCircle, AlertTriangle, 
-  XCircle, Trash
+  XCircle, Trash, Shield
 } from 'lucide-react';
 import { Appointment } from '../../types';
 import AppointmentRecapModal from './AppointmentRecapModal';
 import { ModalPortal, SuccessToast, ErrorToast } from '../layout';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface AppointmentCardProps {
   appointment: Appointment;
@@ -15,6 +16,9 @@ interface AppointmentCardProps {
 }
 
 const AppointmentCard = ({ appointment, onDelete, onStatusChange }: AppointmentCardProps) => {
+  const { user } = useAuth(); // Récupérer les informations de l'utilisateur connecté
+  const isAdmin = user?.role === 'admin'; // Vérifier si l'utilisateur est un administrateur
+  
   const [showMenu, setShowMenu] = useState(false);
   const [showRecapModal, setShowRecapModal] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
@@ -187,13 +191,12 @@ const AppointmentCard = ({ appointment, onDelete, onStatusChange }: AppointmentC
           </button>
         </>
       );
-    }
-
-    // Options for pending or confirmed appointments
+    }    // Options for pending or confirmed appointments
     if (status === 'pending' || status === 'confirmed') {
       return (
         <>
-          {status === 'pending' && (
+          {/* Seul l'admin peut confirmer un rendez-vous */}
+          {status === 'pending' && isAdmin && (
             <button
               onClick={(e) => {
                 e.stopPropagation();
@@ -206,7 +209,14 @@ const AppointmentCard = ({ appointment, onDelete, onStatusChange }: AppointmentC
               Confirmer
             </button>
           )}
+            {/* Message d'information pour les utilisateurs non-admin */}
+          {status === 'pending' && !isAdmin && (
+            <div className="block w-full text-left px-4 py-2 text-sm text-gray-500 dark:text-gray-400 whitespace-normal break-words">
+              En attente de confirmation par l'administrateur
+            </div>
+          )}
 
+          {/* Statut "En cours" accessible pour tous une fois confirmé */}
           {status === 'confirmed' && (
             <button
               onClick={(e) => {
@@ -331,9 +341,8 @@ const AppointmentCard = ({ appointment, onDelete, onStatusChange }: AppointmentC
                 >
                   <MoreHorizontal className="h-5 w-5" />
                 </button>
-                
-                {showMenu && (
-                  <div ref={menuRef} className="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 z-10">
+                  {showMenu && (
+                  <div ref={menuRef} className="absolute right-0 mt-2 w-64 rounded-md shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 z-10">
                     <div className="py-1" role="menu" aria-orientation="vertical" aria-labelledby="options-menu">
                       {getMenuOptions()}
                     </div>
