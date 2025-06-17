@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X } from 'lucide-react';
+import { X, AlertTriangle } from 'lucide-react';
 import { Appointment, Service } from '../../types';
 import { serviceService, appointmentService } from '../../services/api';
 import ModalPortal from '../layout/ModalPortal';
@@ -10,14 +10,24 @@ interface NewAppointmentModalProps {
   onClose: () => void;
   appointment?: Appointment | null;
   services?: Service[]; // Pour une initialisation directe des services depuis le parent
+  selectedServiceId?: string | null; // ID du service présélectionné (pour la réservation depuis la page d'accueil)
+  onAppointmentCreated?: () => Promise<void>; // Callback appelé après la création d'un rendez-vous
   onDelete?: (id: number) => Promise<void>; // Fonction pour supprimer un rendez-vous
 }
 
-const NewAppointmentModal: React.FC<NewAppointmentModalProps> = ({ isOpen, onClose, appointment, services: initialServices, onDelete }) => {
+const NewAppointmentModal: React.FC<NewAppointmentModalProps> = ({ 
+  isOpen, 
+  onClose, 
+  appointment, 
+  services: initialServices, 
+  selectedServiceId,
+  onAppointmentCreated,
+  onDelete 
+}) => {
   // Récupérer les informations de l'utilisateur connecté
   const { user } = useAuth();
   
-  const [serviceId, setServiceId] = useState('');
+  const [serviceId, setServiceId] = useState(selectedServiceId || '');
   const [clientName, setClientName] = useState('');
   const [clientEmail, setClientEmail] = useState('');
   const [clientPhone, setClientPhone] = useState('');
@@ -30,7 +40,6 @@ const NewAppointmentModal: React.FC<NewAppointmentModalProps> = ({ isOpen, onClo
   const [isLoading, setIsLoading] = useState(false);
   const [validatedServices, setValidatedServices] = useState<Service[]>([]);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-
   // Fetch services when modal opens if no services were provided
   useEffect(() => {
     if (isOpen && (!initialServices || initialServices.length === 0)) {
@@ -38,7 +47,11 @@ const NewAppointmentModal: React.FC<NewAppointmentModalProps> = ({ isOpen, onClo
     } else if (isOpen && initialServices && initialServices.length > 0) {
       setServices(initialServices);
     }
-  }, [isOpen, initialServices]);
+    // Si un serviceId est fourni, le sélectionner
+    if (selectedServiceId && isOpen) {
+      setServiceId(selectedServiceId);
+    }
+  }, [isOpen, initialServices, selectedServiceId]);
   
   // Validate and process services data to ensure consistent types
   useEffect(() => {
@@ -207,8 +220,7 @@ const NewAppointmentModal: React.FC<NewAppointmentModalProps> = ({ isOpen, onClo
       if (appointment && appointment.id && appointment.id !== 0) {
         await appointmentService.update(appointment.id.toString(), appointmentData);
         console.log("Rendez-vous mis à jour avec succès");
-        
-        // Attendre un peu avant de fermer pour permettre à l'API de terminer
+          // Attendre un peu avant de fermer pour permettre à l'API de terminer
         setTimeout(() => {
           // Émettre un événement personnalisé pour indiquer que les données ont changé
           const event = new CustomEvent('appointmentUpdated', { detail: appointmentData });
@@ -220,10 +232,16 @@ const NewAppointmentModal: React.FC<NewAppointmentModalProps> = ({ isOpen, onClo
         console.log("Nouveau rendez-vous créé avec succès:", newAppointment);
         
         // Attendre un peu avant de fermer pour permettre à l'API de terminer
-        setTimeout(() => {
+        setTimeout(async () => {
           // Émettre un événement personnalisé pour indiquer que les données ont changé
           const event = new CustomEvent('appointmentCreated', { detail: appointmentData });
           window.dispatchEvent(event);
+          
+          // Appeler le callback si disponible
+          if (onAppointmentCreated) {
+            await onAppointmentCreated();
+          }
+          
           onClose();
         }, 300);
       }
@@ -492,11 +510,8 @@ const NewAppointmentModal: React.FC<NewAppointmentModalProps> = ({ isOpen, onClo
           <div className="fixed inset-0 z-60 flex items-center justify-center overflow-y-auto modal-backdrop animate-fadeIn">
             <div className="fixed inset-0 bg-black bg-opacity-40" onClick={() => setIsDeleteModalOpen(false)}></div>
             
-            <div className="relative bg-white dark:bg-gray-800 rounded-lg shadow-2xl max-w-md w-full mx-4 animate-fadeIn" style={{ maxHeight: 'calc(100vh - 40px)' }}>
-              <div className="p-6 text-center">
-                <svg className="mx-auto mb-4 text-red-500 w-14 h-14" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                </svg>
+            <div className="relative bg-white dark:bg-gray-800 rounded-lg shadow-2xl max-w-md w-full mx-4 animate-fadeIn" style={{ maxHeight: 'calc(100vh - 40px)' }}>              <div className="p-6 text-center">
+                <AlertTriangle className="mx-auto mb-4 text-red-500 w-14 h-14" />
                 <h3 className="mb-5 text-lg font-medium text-gray-900 dark:text-white">Êtes-vous sûr de vouloir supprimer ce rendez-vous ?</h3>
                 <p className="mb-5 text-gray-600 dark:text-gray-400">Cette action est irréversible et supprimera définitivement le rendez-vous.</p>
                 <div className="flex justify-center gap-4">

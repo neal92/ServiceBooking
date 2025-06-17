@@ -353,6 +353,20 @@ const AppointmentCard = ({ appointment, onDelete, onStatusChange }: AppointmentC
           </div>
         </div>
         
+        {/* Afficher un message d'information pour les rendez-vous en attente des utilisateurs non-admin */}
+        {status === 'pending' && !isAdmin && (
+          <div className="mt-2 sm:flex sm:justify-start">
+            <div className="bg-yellow-50 dark:bg-yellow-900/20 border-l-4 border-yellow-400 p-3 w-full">
+              <div className="flex items-start">
+                <AlertTriangle className="h-4 w-4 text-yellow-500 mt-0.5 mr-2" />
+                <p className="text-sm text-yellow-700 dark:text-yellow-400">
+                  En attente de confirmation par l'administrateur
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+        
         {notes && (
           <div className="mt-2 sm:flex sm:justify-start">
             <div className="text-sm text-gray-600 dark:text-gray-400 border-t border-gray-100 dark:border-gray-700 pt-2 w-full">
