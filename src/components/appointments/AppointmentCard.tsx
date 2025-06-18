@@ -162,22 +162,30 @@ const AppointmentCard = ({ appointment, onDelete, onStatusChange }: AppointmentC
   };
 
   // Menu options based on status
-  const getMenuOptions = () => {
-    // Options for in-progress appointments
+  const getMenuOptions = () => {    // Options for in-progress appointments
     if (status === 'in-progress') {
       return (
         <>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              handleStatusChange('completed');
-            }}
-            className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
-            role="menuitem"
-          >
-            <CheckCircle className="inline mr-2 h-4 w-4 text-blue-500" />
-            Terminer
-          </button>
+          {/* Seul l'admin peut marquer un rendez-vous comme terminé */}
+          {isAdmin && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                handleStatusChange('completed');
+              }}
+              className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+              role="menuitem"
+            >
+              <CheckCircle className="inline mr-2 h-4 w-4 text-blue-500" />
+              Terminer
+            </button>
+          )}
+          {/* Message d'information pour les utilisateurs non-admin */}
+          {!isAdmin && (
+            <div className="block w-full text-left px-4 py-2 text-sm text-gray-500 dark:text-gray-400 whitespace-normal break-words">
+              Le rendez-vous est en cours. Seul l'administrateur peut le marquer comme terminé.
+            </div>
+          )}
           <button
             onClick={(e) => {
               e.stopPropagation();
@@ -214,10 +222,8 @@ const AppointmentCard = ({ appointment, onDelete, onStatusChange }: AppointmentC
             <div className="block w-full text-left px-4 py-2 text-sm text-gray-500 dark:text-gray-400 whitespace-normal break-words">
               En attente de confirmation par l'administrateur
             </div>
-          )}
-
-          {/* Statut "En cours" accessible pour tous une fois confirmé */}
-          {status === 'confirmed' && (
+          )}          {/* Statut "En cours" accessible uniquement pour les admin */}
+          {status === 'confirmed' && isAdmin && (
             <button
               onClick={(e) => {
                 e.stopPropagation();
@@ -229,6 +235,15 @@ const AppointmentCard = ({ appointment, onDelete, onStatusChange }: AppointmentC
               <Clock className="inline mr-2 h-4 w-4 text-orange-500" />
               En cours
             </button>
+          )}
+            {/* Message d'information pour les utilisateurs non-admin avec rendez-vous confirmés */}
+          {status === 'confirmed' && !isAdmin && (
+            <div className="block w-full text-left px-4 py-2 pb-3 text-sm text-gray-500 dark:text-gray-400 whitespace-normal break-words max-w-full">
+              <div className="flex items-center">
+                <CheckCircle className="inline mr-2 h-4 w-4 text-green-500 flex-shrink-0" />
+                <span>Votre rendez-vous est confirmé. Veuillez vous présenter à l'heure indiquée.</span>
+              </div>
+            </div>
           )}
 
           <button

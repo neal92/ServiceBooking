@@ -238,19 +238,22 @@ exports.uploadAvatar = async (req, res) => {
     if (!req.files || !req.files.avatar) {
       console.error('uploadAvatar - Aucun fichier trouvé dans la requête');
       return res.status(400).json({ message: 'No file uploaded' });
-    }
-
-    const avatarFile = req.files.avatar;
+    }    const avatarFile = req.files.avatar;
+    // Vérifier que req.body existe
+    const isPredefined = req.body && req.body.isPredefined === 'true';
+    
     console.log('uploadAvatar - Fichier reçu:', {
       name: avatarFile.name,
       type: avatarFile.mimetype,
       size: avatarFile.size,
-      isPredefined: req.body.isPredefined
-    });    let fileName;
+      isPredefined: isPredefined
+    });
+    
+    let fileName;
     let uploadPath;
     
     // Si c'est un avatar prédéfini, pas besoin de sauvegarder le fichier
-    if (req.body.isPredefined === 'true') {
+    if (isPredefined) {
       fileName = avatarFile.name;
       console.log('uploadAvatar - Utilisation de l\'avatar prédéfini:', fileName);
     } else {
@@ -275,23 +278,21 @@ exports.uploadAvatar = async (req, res) => {
         console.error('uploadAvatar - Erreur lors du déplacement du fichier:', err);
         throw err;
       }
-    }// Update user's avatar in database
-    console.log('uploadAvatar - Mise à jour de l\'avatar dans la base de données');
+    }// Update user's avatar in database    console.log('uploadAvatar - Mise à jour de l\'avatar dans la base de données');
     let avatarUrl;
     
-    if (req.body.isPredefined === 'true') {
+    if (isPredefined) {
       // Pour les avatars prédéfinis, utiliser directement le chemin
       avatarUrl = `/avatars/${fileName}`;
       console.log('uploadAvatar - Utilisation de l\'avatar prédéfini:', avatarUrl);
     } else {
       // Pour les avatars personnalisés
       avatarUrl = `/uploads/${fileName}`;
-    }
-
-    try {
+      console.log('uploadAvatar - Utilisation de l\'avatar personnalisé:', avatarUrl);
+    }    try {
       await User.update(req.user.userId, { 
         avatar: avatarUrl,
-        isPresetAvatar: req.body.isPredefined === 'true'
+        isPresetAvatar: isPredefined
       });
       console.log('uploadAvatar - Base de données mise à jour avec succès');
     } catch (err) {

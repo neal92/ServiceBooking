@@ -206,8 +206,7 @@ const authService = {    register: async (userData: RegisterData): Promise<AuthR
       // Propager l'erreur du serveur si disponible, sinon utiliser un message par défaut
       throw err.response?.data || err;
     }
-  },
-  uploadAvatar: async (file: File): Promise<UploadAvatarResponse> => {
+  },  uploadAvatar: async (file: File): Promise<UploadAvatarResponse> => {
     console.log('Début uploadAvatar avec fichier:', {
       name: file.name,
       type: file.type,
@@ -215,17 +214,24 @@ const authService = {    register: async (userData: RegisterData): Promise<AuthR
     });
 
     const formData = new FormData();
-    formData.append('avatar', file);
-
-    // Si le nom du fichier commence par avatar et finit par .svg, c'est un avatar prédéfini
+    formData.append('avatar', file);    // Si le nom du fichier commence par avatar et finit par .svg, c'est un avatar prédéfini
     const isPredefined = file.name.match(/^avatar\d+\.svg$/);
     if (isPredefined) {
       console.log('Avatar prédéfini détecté:', file.name);
       formData.append('isPredefined', 'true');
+    } else {
+      console.log('Avatar personnalisé détecté:', file.name);
+      formData.append('isPredefined', 'false');
     }
 
     try {
-      console.log('Envoi de la requête POST /auth/avatar');
+      // Assurons-nous d'avoir un token d'authentification
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('Vous devez être connecté pour changer votre avatar');
+      }
+      
+      console.log('Envoi de la requête POST /auth/avatar avec token d\'authentification');
       const response = await apiClient.post<UploadAvatarResponse>('/auth/avatar', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',

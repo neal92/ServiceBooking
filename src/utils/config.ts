@@ -27,3 +27,35 @@ export function getFullMediaUrl(path: string | null | undefined): string {
   // Sinon, ajouter l'URL de base
   return `${MEDIA_BASE_URL}${path.startsWith('/') ? '' : '/'}${path}`;
 }
+
+/**
+ * Précharge une image et vérifie qu'elle est correctement chargée
+ * @param url - URL de l'image à précharger
+ * @returns Promise qui se résout si l'image est chargée correctement, ou se rejette en cas d'erreur
+ */
+export function preloadImage(url: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve();
+    img.onerror = () => reject(new Error(`Failed to load image: ${url}`));
+    img.src = url;
+  });
+}
+
+/**
+ * Vérifie si un avatar est accessible
+ * @param avatarPath - Chemin de l'avatar à vérifier
+ * @returns Promise qui se résout avec true si l'avatar est accessible, false sinon
+ */
+export async function isAvatarAccessible(avatarPath: string | null | undefined): Promise<boolean> {
+  if (!avatarPath) return false;
+  
+  const url = getFullMediaUrl(avatarPath);
+  try {
+    await preloadImage(url);
+    return true;
+  } catch (error) {
+    console.error(`Avatar inaccessible: ${url}`, error);
+    return false;
+  }
+}

@@ -179,7 +179,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     } finally {
       setLoading(false);    }
   };
-  
   // Upload avatar
   const uploadAvatar = async (file: File) => {
     setLoading(true);
@@ -196,26 +195,37 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       console.log('Upload réussi, URL reçue:', response.avatarUrl);
       
       if (user) {
-        const updatedUser = { 
-          ...user, 
+        // Détermine si c'est un avatar prédéfini
+        const isPresetAvatar = file.name.match(/^avatar\d+\.svg$/) ? true : false;
+        
+        // Mettre à jour le profil utilisateur complet pour s'assurer que tout est cohérent
+        await updateUser({
+          firstName: user.firstName,
+          lastName: user.lastName,
+          email: user.email,
           avatar: response.avatarUrl,
-          isPresetAvatar: file.name.match(/^avatar\d+\.svg$/) ? true : false
-        };
-        
-        // Mettre à jour l'état utilisateur
-        setUser(updatedUser);
-        
-        // Mettre à jour l'utilisateur dans le localStorage et déclencher un événement
-        localStorage.setItem('user', JSON.stringify(updatedUser));
-        
-        // Créer et dispatcher un événement de stockage pour informer les autres composants
-        const event = new StorageEvent('storage', {
-          key: 'user',
-          newValue: JSON.stringify(updatedUser)
+          isPresetAvatar
         });
-        window.dispatchEvent(event);
         
-        console.log('Données utilisateur mises à jour dans le localStorage avec le nouvel avatar et événement dispatché');
+        // Force un rechargement des données utilisateur depuis le serveur pour s'assurer que tout est à jour
+        try {
+          const updatedUserData = await authService.getCurrentUser();
+          if (updatedUserData) {
+            // Mettre à jour l'état utilisateur avec les données les plus récentes
+            setUser(updatedUserData);
+            
+            // Mettre à jour l'utilisateur dans le localStorage
+            localStorage.setItem('user', JSON.stringify(updatedUserData));
+            
+            // Dispatcher un événement pour informer les autres composants
+            const event = new Event('userUpdated');
+            window.dispatchEvent(event);
+            
+            console.log('Données utilisateur complètement rafraîchies après changement d\'avatar');
+          }
+        } catch (refreshError) {
+          console.error('Erreur lors du rafraîchissement des données utilisateur:', refreshError);
+        }
       }
     } catch (err: any) {
       setError(err.response?.data?.message || "Échec de l'upload de l'avatar.");

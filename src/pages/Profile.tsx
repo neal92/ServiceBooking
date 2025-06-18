@@ -191,30 +191,29 @@ const Profile = () => {
             <div className="p-8 md:w-1/3 bg-gray-50 dark:bg-gray-700/50 border-r border-gray-200 dark:border-gray-700">
               <div className="flex flex-col items-center justify-center h-full max-w-sm mx-auto">                <AvatarSelector
                   currentAvatar={user?.avatar}
-                  userFirstName={user?.firstName}
-                  onAvatarSelect={async (avatarUrl) => {
+                  userFirstName={user?.firstName}                  onAvatarSelect={async (avatarUrl) => {
                     try {
                       setError('');
                       setSuccess('');
                       setShowSuccessModal(false);
-                      // Sélection avatar prédéfini
                       
+                      console.log('Traitement de l\'avatar URL:', avatarUrl ? avatarUrl.substring(0, 30) + '...' : 'null');
+                      
+                      // Cas 1: Avatar prédéfini
                       if (avatarUrl.startsWith('/avatars/')) {
                         const fileName = avatarUrl.split('/').pop() || 'avatar.svg';
                         
-                        // Récupération du contenu SVG
-                        const response = await fetch(`${API_BASE_URL}${avatarUrl}`);
-                        if (!response.ok) {
-                          throw new Error(`Erreur lors du chargement de l'avatar: ${response.statusText}`);
-                        }
+                        // Créer un blob avec un contenu minimal pour représenter l'avatar
+                        const dummyContent = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"></svg>`;
+                        const blob = new Blob([dummyContent], { type: 'image/svg+xml' });
                         
-                        const svgContent = await response.text();
-                        // Contenu SVG récupéré
-                        
-                        const file = new File([svgContent], fileName, { 
+                        const file = new File([blob], fileName, { 
                           type: 'image/svg+xml',
                         });
-                          // Upload de l'avatar
+                        
+                        console.log('Sélection d\'avatar prédéfini:', fileName);
+                          
+                        // Upload de l'avatar avec l'indication que c'est un avatar prédéfini
                         const uploadResponse = await authService.uploadAvatar(file);
                         
                         await updateUser({
@@ -225,7 +224,44 @@ const Profile = () => {
                           isPresetAvatar: true,
                         });
                         
-                        setSuccess('Avatar mis à jour avec succès');
+                        setSuccess('Avatar prédéfini mis à jour avec succès');
+                        setShowSuccessModal(true);
+                      } 
+                      // Cas 2: Avatar personnalisé avec initiales (URL blob ou data URL)
+                      else if (avatarUrl.startsWith('blob:') || avatarUrl.startsWith('data:')) {
+                        console.log('Traitement d\'avatar personnalisé avec initiales');
+                        
+                        // Récupérer le contenu de l'URL
+                        let content;
+                        if (avatarUrl.startsWith('blob:')) {
+                          const response = await fetch(avatarUrl);
+                          content = await response.text();
+                        } else {
+                          // Pour data:image/svg+xml;base64
+                          const base64Content = avatarUrl.split(',')[1];
+                          content = atob(base64Content);
+                        }
+                          // Créer un fichier à partir du contenu
+                        const blob = new Blob([content], { type: 'image/svg+xml' });
+                        const fileName = `initials-avatar-${Date.now()}.svg`;
+                        const file = new File([blob], fileName, { 
+                          type: 'image/svg+xml',
+                        });
+                        
+                        console.log('Envoi de l\'avatar personnalisé au serveur:', fileName);
+                        // Upload de l'avatar (on s'assure que le service comprend que ce n'est PAS un avatar prédéfini)
+                        const uploadResponse = await authService.uploadAvatar(file);
+                        
+                        // Mise à jour du profil utilisateur
+                        await updateUser({
+                          firstName: user?.firstName,
+                          lastName: user?.lastName,
+                          email: user?.email,
+                          avatar: uploadResponse.avatarUrl,
+                          isPresetAvatar: false,
+                        });
+                        
+                        setSuccess('Avatar personnalisé mis à jour avec succès');
                         setShowSuccessModal(true);
                       }
                     } catch (err: any) {

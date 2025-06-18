@@ -76,10 +76,8 @@ const AppointmentList = ({ appointments, onDelete, onStatusChange }: Appointment
     <div className="space-y-8">
       {sortedDates.map((date, index) => (
         <React.Fragment key={date}>
-          {/* Ajouter un séparateur avec <br> si ce n'est pas le premier élément */}
           {index > 0 && (
             <div className="my-4 text-center">
-              <br />
             </div>
           )}
           <div className="bg-white dark:bg-gray-800 shadow-md rounded-lg overflow-hidden">
