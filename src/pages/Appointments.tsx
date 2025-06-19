@@ -635,36 +635,42 @@ const Appointments = () => {
           selectedServiceId={selectedServiceId}
           onAppointmentCreated={fetchData}
         />
-      </ModalPortal>
-
-      {/* Modal de confirmation de suppression */}
+      </ModalPortal>      {/* Modal de confirmation de suppression */}
       <ModalPortal isOpen={isDeleteModalOpen && appointmentToDelete !== null}>
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg max-w-sm w-full">
-          <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-              Confirmer la suppression
-            </h3>
-            <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-              Êtes-vous sûr de vouloir supprimer ce rendez-vous ? Cette action est irréversible.
-            </p>
-          </div>
-          <div className="p-4 flex justify-end gap-2">
-            <button
-              type="button"
-              className="px-3 py-2 text-sm font-medium rounded-md bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 text-white"
-              onClick={handleDeleteAppointment}
-            >
-              Supprimer
-              </button>              <button
-                type="button"
-                className="px-3 py-2 text-sm font-medium rounded-md bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                onClick={() => setIsDeleteModalOpen(false)}
-              >
-                Annuler
-              </button>
+        {/* Overlay qui couvre tout l'écran et permet de cliquer en dehors pour fermer */}
+        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto overflow-x-hidden bg-black bg-opacity-50">
+          {/* Container principal de la modale, centré dans l'écran */}
+          <div className="relative w-full max-w-sm mx-auto my-6 animate-fadeIn">
+            {/* Contenu de la modale */}
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl overflow-hidden">
+              <div className="p-5 border-b border-gray-200 dark:border-gray-700">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  Confirmer la suppression
+                </h3>
+                <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                  Êtes-vous sûr de vouloir supprimer ce rendez-vous ? Cette action est irréversible.
+                </p>
+              </div>
+              <div className="p-4 flex justify-end gap-2">
+                <button
+                  type="button"
+                  className="px-4 py-2 text-sm font-medium rounded-md bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 text-white"
+                  onClick={handleDeleteAppointment}
+                >
+                  Supprimer
+                </button>
+                <button
+                  type="button"
+                  className="px-4 py-2 text-sm font-medium rounded-md bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  onClick={() => setIsDeleteModalOpen(false)}
+                >
+                  Annuler
+                </button>
+              </div>
             </div>
           </div>
-        </ModalPortal>
+        </div>
+      </ModalPortal>
     </PageTransition>
   );
 };
