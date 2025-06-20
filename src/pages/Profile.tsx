@@ -5,6 +5,7 @@ import PageTransition from '../components/layout/PageTransition';
 import authService from '../services/auth';
 import { API_BASE_URL } from '../utils/config';
 import AvatarSelector from '../components/profile/AvatarSelector';
+import { SuccessToast } from '../components/layout';
 import '../styles/profile-fix.css';
 
 const Profile = () => {
@@ -21,10 +22,10 @@ const Profile = () => {
   const [password, setPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
-    // Aucun effet de débogage n'est nécessaire en production
-
+  const [error, setError] = useState('');  const [success, setSuccess] = useState('');
+  const [showSuccessToast, setShowSuccessToast] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
+  
   const [passwordErrors, setPasswordErrors] = useState({
     current: '',
     new: '',
@@ -72,12 +73,11 @@ const Profile = () => {
     setSuccess('');
     setShowSuccessModal(false);
 
-    try {
-      await updateUser(userInfo);
-      // Message de succès spécifique pour la mise à jour des informations
-      setSuccess('Informations mises à jour avec succès');
-      setShowSuccessModal(true);
+    try {      await updateUser(userInfo);
+      // Fermer d'abord le mode édition
       setIsEditing(false);
+        // Puis afficher la notification de succès
+      showSuccess('Informations personnelles mises à jour avec succès');
     } catch (err: any) {
       setError(err.message || 'Erreur lors de la mise à jour des informations');
     }
@@ -105,25 +105,23 @@ const Profile = () => {
       try {
         await changePassword(password, newPassword);
         
-        // Définir d'abord le message de succès
-        const successMessage = 'Mot de passe modifié avec succès';
-        // Définition du message de succès
-        
         // Réinitialiser les champs
         setPassword('');
         setNewPassword('');
         setConfirmPassword('');
         
-        // Mettre à jour les états dans le bon ordre
+        // D'abord fermer le formulaire
         setIsEditingPassword(false);
-        setSuccess(successMessage);
-        setShowSuccessModal(true); // Afficher la modale de succès
-      } catch (err: any) {        // Capture simplifiée de l'erreur
+        
+        // Puis afficher la notification de succès
+        showSuccess('Mot de passe modifié avec succès');
+      } catch (err: any) {
+        console.error('Erreur lors du changement de mot de passe:', err);
         
         // Effacer le message de succès en cas d'erreur
         setSuccess('');
         
-        // Gérer les différents types d'erreurs
+        // Gérer les différents types d'erreurs possibles
         if (err.name === 'IncorrectPasswordError' || 
             (err.message && err.message.includes('Current password is incorrect'))) {
           // Erreur de mot de passe incorrect détectée
@@ -152,6 +150,18 @@ const Profile = () => {
       }
     }
   };
+  // Fonction utilitaire pour afficher une notification de succès
+  const showSuccess = (message: string) => {
+    // Pour le toast qui apparaît puis disparaît
+    setSuccessMessage(message);
+    setShowSuccessToast(true);
+    
+    // Pour le message permanent dans la section mot de passe
+    if (message.includes('mot de passe') || message.includes('Mot de passe')) {
+      setSuccess(message);
+    }
+  };
+
   return (
     <PageTransition type="slide">
       <div className="max-w-5xl mx-auto py-8 px-4 sm:px-6 lg:px-8 profile-container">
@@ -223,9 +233,8 @@ const Profile = () => {
                           avatar: uploadResponse.avatarUrl,
                           isPresetAvatar: true,
                         });
-                        
-                        setSuccess('Avatar prédéfini mis à jour avec succès');
-                        setShowSuccessModal(true);
+                  // Afficher la notification de succès
+                        showSuccess('Avatar prédéfini mis à jour avec succès');
                       } 
                       // Cas 2: Avatar personnalisé avec initiales (URL blob ou data URL)
                       else if (avatarUrl.startsWith('blob:') || avatarUrl.startsWith('data:')) {
@@ -259,10 +268,8 @@ const Profile = () => {
                           email: user?.email,
                           avatar: uploadResponse.avatarUrl,
                           isPresetAvatar: false,
-                        });
-                        
-                        setSuccess('Avatar personnalisé mis à jour avec succès');
-                        setShowSuccessModal(true);
+                        });                        // Afficher la notification de succès
+                        showSuccess('Avatar personnalisé mis à jour avec succès');
                       }
                     } catch (err: any) {
                       // Gestion de l'erreur de sélection d'avatar
@@ -412,22 +419,21 @@ const Profile = () => {
                     Changer le mot de passe
                   </h3>
                 </div>
-                  <div className="p-6">
-                  {/* Message de succès permanent */}
+                  <div className="p-6">                  {/* Message de succès permanent */}
                   {success && !isEditingPassword && (
                     <div 
                       key={success} 
-                      className="mb-6 p-4 rounded-md bg-green-50 border border-green-200"
+                      className="mb-6 p-4 rounded-md bg-green-50 dark:bg-green-900/20 border-l-4 border-green-500 animate-pulse"
                       role="alert"
                     >
                       <div className="flex">
                         <div className="flex-shrink-0">
-                          <svg className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
+                          <svg className="h-6 w-6 text-green-500" viewBox="0 0 20 20" fill="currentColor">
                             <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                           </svg>
                         </div>
                         <div className="ml-3">
-                          <p className="text-sm font-medium text-green-800">{success}</p>
+                          <p className="text-base font-medium text-green-800 dark:text-green-400">{success}</p>
                         </div>
                       </div>
                     </div>
@@ -451,7 +457,7 @@ const Profile = () => {
                         <div>
                           <label htmlFor="current-password" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                             Mot de passe actuel
-                          </label><input
+                          </label>                          <input
                             type="password"
                             id="current-password"
                             value={password}
@@ -465,16 +471,18 @@ const Profile = () => {
                             }}
                             required
                             className={`mt-1 block w-full border ${
-                              passwordErrors.current ? 'border-red-300 dark:border-red-500' : 'border-gray-300 dark:border-gray-600'
+                              passwordErrors.current ? 'border-red-500 dark:border-red-500' : 'border-gray-300 dark:border-gray-600'
                             } rounded-md shadow-sm py-2.5 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white transition-colors`}
                           />
                           {passwordErrors.current && (
-                            <p className="mt-1 text-sm text-red-600 dark:text-red-400 flex items-center">
-                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                              </svg>
-                              {passwordErrors.current}
-                            </p>
+                            <div className="mt-2 p-2 bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 text-sm text-red-700 dark:text-red-400">
+                              <div className="flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                </svg>
+                                <strong>{passwordErrors.current}</strong>
+                              </div>
+                            </div>
                           )}
                         </div>
                         
@@ -574,9 +582,16 @@ const Profile = () => {
                 </div>
               </div>
             </div>
-          </div>
-        </div>
+          </div>        </div>
       </div>
+      
+      {/* Notification de succès */}
+      <SuccessToast 
+        show={showSuccessToast}
+        message={successMessage}
+        duration={4000}
+        onClose={() => setShowSuccessToast(false)}
+      />
     </PageTransition>
   );
 };

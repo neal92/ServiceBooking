@@ -132,15 +132,21 @@ const AppointmentCard = ({ appointment, onDelete, onStatusChange }: AppointmentC
     setShowConfirmDialog(true);
     setShowMenu(false);
   };
-
   // Delete handler
   const handleDelete = async () => {
     if (onDelete) {
       try {
         await onDelete(appointment.id);
         setShowMenu(false);
+        
+        // Show success notification after a short delay
+        setTimeout(() => {
+          setShowSuccessToast(true);
+        }, 300);
       } catch (err) {
         console.error('Error deleting appointment:', err);
+        setErrorMessage('Erreur lors de la suppression du rendez-vous');
+        setShowErrorToast(true);
       }
     }
   };
@@ -259,23 +265,26 @@ const AppointmentCard = ({ appointment, onDelete, onStatusChange }: AppointmentC
           </button>
         </>
       );
-    }
-
-    // Delete option for completed or cancelled appointments
-    if ((status === 'completed' || status === 'cancelled') && onDelete) {
-      return (
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            handleDelete();
-          }}
-          className="block w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30"
-          role="menuitem"
-        >
-          <Trash className="inline mr-2 h-4 w-4 text-red-500" />
-          Supprimer
-        </button>
-      );
+    }    // Delete option for appointments based on status and role
+    // Admin can delete completed/cancelled appointments
+    // Non-admin can delete any of their own appointments
+    if ((isAdmin && (status === 'completed' || status === 'cancelled')) || 
+        (!isAdmin)) {
+      if (onDelete) {
+        return (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              handleDelete();
+            }}
+            className="block w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30"
+            role="menuitem"
+          >
+            <Trash className="inline mr-2 h-4 w-4 text-red-500" />
+            Supprimer
+          </button>
+        );
+      }
     }
 
     return null;
@@ -341,9 +350,8 @@ const AppointmentCard = ({ appointment, onDelete, onStatusChange }: AppointmentC
               )}
             </div>
           </div>
-          
-          <div className="relative" onClick={handleMenuClick}>
-            {onDelete && onStatusChange && (
+            <div className="relative" onClick={handleMenuClick}>
+            {user && onDelete && onStatusChange && (
               <>
                 <button
                   ref={buttonRef}
@@ -439,12 +447,10 @@ const AppointmentCard = ({ appointment, onDelete, onStatusChange }: AppointmentC
             </div>
           </div>
         </ModalPortal>
-      )}
-
-      {/* Success Toast */}
+      )}      {/* Success Toast */}
       <SuccessToast 
         show={showSuccessToast}
-        message="Statut modifié"
+        message={statusToConfirm ? "Statut modifié" : "Rendez-vous supprimé avec succès"}
         onClose={() => setShowSuccessToast(false)}
       />
 

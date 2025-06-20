@@ -238,13 +238,14 @@ const AppointmentRecapModal: React.FC<AppointmentRecapModalProps> = ({ isOpen, o
                   <Pencil className="inline-block mr-1 h-4 w-4" />
                   Modifier
                 </button>
-              </div>              {appointment.status === 'completed' && onDelete && (
+              </div>              {onDelete && (
                 <button
                   type="button"
                   className="px-4 py-2 border border-red-300 dark:border-red-600 shadow-sm text-sm font-medium rounded-md text-red-600 dark:text-red-400 bg-white dark:bg-gray-800 hover:bg-red-50 dark:hover:bg-red-900/20 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
                   onClick={() => {
                     onDelete(appointment.id);
                     onClose();
+                    // The success notification will be handled by the parent component
                   }}
                 >
                   <Trash className="inline-block mr-1 h-4 w-4" />

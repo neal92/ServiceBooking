@@ -9,6 +9,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useLocation } from 'react-router-dom';
 import PageTransition from '../components/layout/PageTransition';
 import ModalPortal from '../components/layout/ModalPortal';
+import SuccessToast from '../components/layout/SuccessToast';
 
 type AppointmentStatus = 'all' | 'upcoming' | 'ongoing' | 'past';
 type AppointmentStatusFilter = 'all-status' | 'pending' | 'confirmed' | 'in-progress' | 'cancelled' | 'completed';
@@ -27,9 +28,10 @@ const Appointments = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [appointmentToDelete, setAppointmentToDelete] = useState<Appointment | null>(null);
-  const [autoUpdateStatus, setAutoUpdateStatus] = useState(true);
-  const [viewMode, setViewMode] = useState<'list' | 'history'>(isAdmin ? 'list' : 'history');
+  const [appointmentToDelete, setAppointmentToDelete] = useState<Appointment | null>(null);  const [autoUpdateStatus, setAutoUpdateStatus] = useState(true);
+  const [viewMode, setViewMode] = useState<'list' | 'history'>(isAdmin ? 'list' : 'list');
+  const [successMessage, setSuccessMessage] = useState('');
+  const [showSuccessToast, setShowSuccessToast] = useState(false);
     // Récupération des paramètres d'URL pour initialiser les filtres et actions
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
@@ -151,11 +153,27 @@ const Appointments = () => {
       setError('Erreur lors du chargement des rendez-vous');
       setLoading(false);
     }
-  };
-  const handleStatusChange = async (id: string, status: Appointment['status']) => {
+  };  const handleStatusChange = async (id: string, status: Appointment['status']) => {
     try {
       await appointmentService.updateStatus(id, status);
       fetchData();
+      
+      // Définir les messages pour chaque statut
+      const statusMessages = {
+        'pending': 'Le statut a été changé à "En attente"',
+        'confirmed': 'Le rendez-vous a été confirmé avec succès',
+        'cancelled': 'Le rendez-vous a été annulé',
+        'completed': 'Le rendez-vous a été marqué comme terminé',
+        'in-progress': 'Le rendez-vous est maintenant en cours'
+      };
+      
+      // Préparer le message
+      setSuccessMessage(statusMessages[status] || 'Le statut du rendez-vous a été mis à jour');
+      
+      // Afficher la notification avec un léger délai pour une meilleure UX
+      setTimeout(() => {
+        setShowSuccessToast(true);
+      }, 100);
     } catch (err) {
       console.error("Error updating appointment status:", err);
       setError('Erreur lors de la mise à jour du statut');
@@ -164,28 +182,41 @@ const Appointments = () => {
   const confirmDeleteAppointment = async (appointment: Appointment): Promise<void> => {
     setAppointmentToDelete(appointment);
     setIsDeleteModalOpen(true);
-  };
-
-  const handleDeleteAppointment = async () => {
+  };  const handleDeleteAppointment = async () => {
     if (!appointmentToDelete) return;
     
     try {
       await appointmentService.delete(appointmentToDelete.id.toString());
-      fetchData();
+      
+      // D'abord fermer la modale
       setIsDeleteModalOpen(false);
       setAppointmentToDelete(null);
+      
+      // Rafraîchir les données
+      await fetchData();
+      
+      // Puis afficher la notification après un court délai
+      setSuccessMessage('Le rendez-vous a été supprimé avec succès');
+      
+      // Afficher la notification après un court délai
+      setTimeout(() => {
+        setShowSuccessToast(true);
+      }, 300);
     } catch (err) {
       console.error("Error deleting appointment:", err);
-      setError('Failed to delete appointment');
+      setError('Erreur lors de la suppression du rendez-vous');
+      setIsDeleteModalOpen(false);
     }
-  };
-  // Fonction pour ouvrir le modal de confirmation de suppression
+  };  // Fonction pour ouvrir le modal de confirmation de suppression
   const handleOpenDeleteModal = (id: number): Promise<void> => {
     return new Promise(resolve => {
       const appointment = appointments.find(app => app.id === id);
       if (appointment) {
         setAppointmentToDelete(appointment);
         setIsDeleteModalOpen(true);
+      } else {
+        console.error(`Could not find appointment with id ${id}`);
+        setError('Erreur: rendez-vous introuvable');
       }
       resolve();
     });
@@ -627,13 +658,18 @@ const Appointments = () => {
       
       {renderMainContent()}
       
-      <ModalPortal isOpen={isModalOpen}>
-        <NewAppointmentModal 
+      <ModalPortal isOpen={isModalOpen}>        <NewAppointmentModal 
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
           services={services}
           selectedServiceId={selectedServiceId}
           onAppointmentCreated={fetchData}
+          onSuccess={(message) => {
+            setSuccessMessage(message);
+            setTimeout(() => {
+              setShowSuccessToast(true);
+            }, 300);
+          }}
         />
       </ModalPortal>      {/* Modal de confirmation de suppression */}
       <ModalPortal isOpen={isDeleteModalOpen && appointmentToDelete !== null}>
@@ -669,8 +705,13 @@ const Appointments = () => {
               </div>
             </div>
           </div>
-        </div>
-      </ModalPortal>
+        </div>      </ModalPortal>      {/* Notification de succès */}
+      <SuccessToast 
+        show={showSuccessToast}
+        message={successMessage}
+        duration={4000}
+        onClose={() => setShowSuccessToast(false)}
+      />
     </PageTransition>
   );
 };

@@ -28,10 +28,14 @@ const SuccessToast: React.FC<SuccessToastProps> = ({
     }
   }, [show, duration, onClose]);
   if (!isVisible) return null;
-
   return (
-    <div className="fixed top-4 right-4 z-[9999] flex items-center p-4 mb-4 w-full max-w-xs text-gray-500 bg-white rounded-lg shadow-lg dark:text-gray-400 dark:bg-gray-800 transition-all transform duration-300 ease-in-out">
-      <div className="inline-flex flex-shrink-0 justify-center items-center w-8 h-8 text-green-500 bg-green-100 rounded-lg dark:bg-green-800 dark:text-green-200">
+    <div 
+      className={`fixed top-4 right-4 z-[9999] flex items-center p-4 mb-4 w-full max-w-xs text-gray-500 bg-white rounded-lg shadow-xl dark:text-gray-400 dark:bg-gray-800 transition-all transform duration-500 ease-in-out animate-slideInRight`}
+      style={{
+        boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)'
+      }}
+    >
+      <div className="inline-flex flex-shrink-0 justify-center items-center w-8 h-8 text-green-500 bg-green-100 rounded-lg dark:bg-green-800 dark:text-green-200 animate-pulse">
         <CheckCircle className="w-5 h-5" />
       </div>
       <div className="ml-3 text-sm font-normal">{message}</div>

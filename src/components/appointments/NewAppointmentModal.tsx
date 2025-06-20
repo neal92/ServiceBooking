@@ -13,16 +13,17 @@ interface NewAppointmentModalProps {
   selectedServiceId?: string | null; // ID du service présélectionné (pour la réservation depuis la page d'accueil)
   onAppointmentCreated?: () => Promise<void>; // Callback appelé après la création d'un rendez-vous
   onDelete?: (id: number) => Promise<void>; // Fonction pour supprimer un rendez-vous
+  onSuccess?: (message: string) => void; // Callback pour afficher une notification de succès
 }
 
 const NewAppointmentModal: React.FC<NewAppointmentModalProps> = ({ 
   isOpen, 
   onClose, 
   appointment, 
-  services: initialServices, 
-  selectedServiceId,
+  services: initialServices,   selectedServiceId,
   onAppointmentCreated,
-  onDelete 
+  onDelete,
+  onSuccess
 }) => {
   // Récupérer les informations de l'utilisateur connecté
   const { user } = useAuth();
@@ -35,11 +36,9 @@ const NewAppointmentModal: React.FC<NewAppointmentModalProps> = ({
   const [time, setTime] = useState('');
   const [notes, setNotes] = useState('');
   const [services, setServices] = useState<Service[]>(initialServices || []);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);  const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [validatedServices, setValidatedServices] = useState<Service[]>([]);
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [validatedServices, setValidatedServices] = useState<Service[]>([]);  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   // Fetch services when modal opens if no services were provided
   useEffect(() => {
     if (isOpen && (!initialServices || initialServices.length === 0)) {
@@ -215,35 +214,41 @@ const NewAppointmentModal: React.FC<NewAppointmentModalProps> = ({
         createdBy: user && user.role === 'admin' ? 'admin' : 'client' // Indique qui a créé le rendez-vous
       } satisfies Omit<Appointment, 'id'>; // Validate against type
       
-      console.log('Donnée du rendez-vous à envoyer:', appointmentData);
-      
-      if (appointment && appointment.id && appointment.id !== 0) {
+      console.log('Donnée du rendez-vous à envoyer:', appointmentData);      if (appointment && appointment.id && appointment.id !== 0) {
         await appointmentService.update(appointment.id.toString(), appointmentData);
         console.log("Rendez-vous mis à jour avec succès");
-          // Attendre un peu avant de fermer pour permettre à l'API de terminer
-        setTimeout(() => {
-          // Émettre un événement personnalisé pour indiquer que les données ont changé
-          const event = new CustomEvent('appointmentUpdated', { detail: appointmentData });
-          window.dispatchEvent(event);
-          onClose();
-        }, 300);
-      } else {
+          // Fermer d'abord la modale
+        // Émettre un événement personnalisé pour indiquer que les données ont changé
+        const event = new CustomEvent('appointmentUpdated', { detail: appointmentData });
+        window.dispatchEvent(event);
+        onClose();
+        
+        // Afficher la notification de succès via le callback parent
+        if (onSuccess) {
+          setTimeout(() => {
+            onSuccess('Le rendez-vous a été mis à jour avec succès');
+          }, 300);
+        }} else {
         const newAppointment = await appointmentService.create(appointmentData);
         console.log("Nouveau rendez-vous créé avec succès:", newAppointment);
-        
-        // Attendre un peu avant de fermer pour permettre à l'API de terminer
-        setTimeout(async () => {
           // Émettre un événement personnalisé pour indiquer que les données ont changé
-          const event = new CustomEvent('appointmentCreated', { detail: appointmentData });
-          window.dispatchEvent(event);
-          
-          // Appeler le callback si disponible
-          if (onAppointmentCreated) {
-            await onAppointmentCreated();
-          }
-          
-          onClose();
-        }, 300);
+        const event = new CustomEvent('appointmentCreated', { detail: appointmentData });
+        window.dispatchEvent(event);
+        
+        // Appeler le callback si disponible
+        if (onAppointmentCreated) {
+          await onAppointmentCreated();
+        }
+        
+        // D'abord fermer la modale
+        onClose();
+        
+        // Afficher la notification de succès via le callback parent
+        if (onSuccess) {
+          setTimeout(() => {
+            onSuccess('Votre rendez-vous a été créé avec succès');
+          }, 300);
+        }
       }
     } catch (err) {
       console.error('Error saving appointment:', err);
@@ -267,14 +272,20 @@ const NewAppointmentModal: React.FC<NewAppointmentModalProps> = ({
         // Fallback: appeler directement le service si aucune fonction de suppression n'est fournie
         await appointmentService.delete(appointment.id.toString());
       }
-      
-      // Fermer la modal après la suppression
+        // Fermer la modal après la suppression
       setIsDeleteModalOpen(false);
       onClose();
       
       // Émettre un événement pour notifier la suppression
       const event = new CustomEvent('appointmentDeleted', { detail: { id: appointment.id } });
       window.dispatchEvent(event);
+      
+      // Afficher une notification de succès via le callback parent
+      if (onSuccess) {
+        setTimeout(() => {
+          onSuccess('Le rendez-vous a été supprimé avec succès');
+        }, 300);
+      }
     } catch (err) {
       console.error('Erreur lors de la suppression du rendez-vous:', err);
       setError('Erreur lors de la suppression du rendez-vous');
@@ -532,9 +543,7 @@ const NewAppointmentModal: React.FC<NewAppointmentModalProps> = ({
                   </button>
                 </div>
               </div>
-            </div>
-          </div>
-        </ModalPortal>
+            </div>          </div>        </ModalPortal>
       )}
     </>
   );
