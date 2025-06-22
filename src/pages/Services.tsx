@@ -7,16 +7,18 @@ import { Service, Category } from '../types';
 import { serviceService, categoryService } from '../services/api';
 import PageTransition from '../components/layout/PageTransition';
 import ModalPortal from '../components/layout/ModalPortal';
+import SuccessToast from '../components/layout/SuccessToast';
 
 const Services = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
   const [services, setServices] = useState<Service[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [loading, setLoading] = useState(true);  
+  const [categories, setCategories] = useState<Category[]>([]);  const [loading, setLoading] = useState(true);  
   const [error, setError] = useState('');
   const [editingService, setEditingService] = useState<Service | null>(null);
+  const [showSuccessToast, setShowSuccessToast] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
 
   useEffect(() => {
     fetchData();
@@ -49,7 +51,6 @@ const Services = () => {
     setServiceToDelete(service);
     setIsDeleteModalOpen(true);
   };
-
   const handleConfirmDelete = async () => {
     if (serviceToDelete) {
       try {
@@ -58,12 +59,26 @@ const Services = () => {
         setIsDeleteModalOpen(false);
         setServiceToDelete(null);
         // Refresh services after deletion
-        fetchData();
+        await fetchData();
+        
+        // Afficher la notification de succès
+        setSuccessMessage('Service supprimé avec succès');
+        setShowSuccessToast(true);
       } catch (err) {
         console.error("Error deleting service:", err);
         setError('Failed to delete service');
       }
     }
+  };
+  
+  // Gérer le succès des opérations (création/modification)
+  const handleOperationSuccess = (message: string) => {
+    // Rafraîchir les données en arrière-plan
+    fetchData();
+    
+    // Afficher le message de succès
+    setSuccessMessage(message);
+    setShowSuccessToast(true);
   };
 
   const handleCancelDelete = () => {
@@ -235,11 +250,11 @@ const Services = () => {
             )}
           </>
         )}
-        
-        <NewServiceModal 
+          <NewServiceModal 
           isOpen={isModalOpen} 
           onClose={handleCloseModal} 
           service={editingService}
+          onSuccess={handleOperationSuccess}
         />
         
         {/* Modal de confirmation de suppression */}
@@ -273,10 +288,17 @@ const Services = () => {
                     </button>
                   </div>
                 </div>
-              </div>
-            </div>
+              </div>            </div>
           </ModalPortal>
         )}
+        
+        {/* Notification de succès */}
+        <SuccessToast 
+          show={showSuccessToast}
+          message={successMessage}
+          duration={3000}
+          onClose={() => setShowSuccessToast(false)}
+        />
       </div>
     </PageTransition>
   );

@@ -3,15 +3,15 @@ import { X } from 'lucide-react';
 import { Service, Category } from '../../types';
 import { serviceService, categoryService } from '../../services/api';
 import ModalPortal from '../layout/ModalPortal';
-import SuccessToast from '../layout/SuccessToast';
 
 interface NewServiceModalProps {
   isOpen: boolean;
   onClose: () => void;
   service?: Service | null;
+  onSuccess?: (message: string) => void; // Callback when operation is successful
 }
 
-const NewServiceModal = ({ isOpen, onClose, service }: NewServiceModalProps) => {
+const NewServiceModal = ({ isOpen, onClose, service, onSuccess }: NewServiceModalProps) => {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState('');
@@ -21,8 +21,6 @@ const NewServiceModal = ({ isOpen, onClose, service }: NewServiceModalProps) => 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [showSuccessToast, setShowSuccessToast] = useState(false);
-  const [successMessage, setSuccessMessage] = useState('');
 
   // Fetch categories when modal opens
   useEffect(() => {
@@ -60,7 +58,6 @@ const NewServiceModal = ({ isOpen, onClose, service }: NewServiceModalProps) => 
       setIsLoading(false);
     }
   };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -75,17 +72,22 @@ const NewServiceModal = ({ isOpen, onClose, service }: NewServiceModalProps) => 
         categoryId: parseInt(categoryId)
       };
 
+      let successMsg = '';
       if (service && service.id) {
         await serviceService.update(service.id.toString(), serviceData);
-        setSuccessMessage('Service modifié avec succès');
+        successMsg = 'Service modifié avec succès';
       } else {
         await serviceService.create(serviceData);
-        setSuccessMessage('Service créé avec succès');
+        successMsg = 'Service créé avec succès';
       }
-      setShowSuccessToast(true);
-      setTimeout(() => {
-        onClose();
-      }, 1000);
+      
+      // Fermer la modale
+      onClose();
+      
+      // Appeler le callback onSuccess avec le message
+      if (onSuccess) {
+        onSuccess(successMsg);
+      }
     } catch (err) {
       console.error("Error saving service:", err);
       setError('Failed to save service');
@@ -98,17 +100,8 @@ const NewServiceModal = ({ isOpen, onClose, service }: NewServiceModalProps) => 
   
   return (
     <ModalPortal isOpen={isOpen}>
-      <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto modal-backdrop animate-fadeIn">
-        {/* Overlay */}
+      <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto modal-backdrop animate-fadeIn">        {/* Overlay */}
         <div className="fixed inset-0 bg-black bg-opacity-40" onClick={onClose}></div>
-        
-        {/* Success Toast */}
-        <SuccessToast 
-          message={successMessage}
-          show={showSuccessToast}
-          onClose={() => setShowSuccessToast(false)}
-          duration={2000}
-        />
         
         {/* Modal content */}
         <div className="relative w-full max-w-2xl bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow-xl animate-fadeIn mx-4" style={{ maxHeight: 'calc(100vh - 40px)' }}>

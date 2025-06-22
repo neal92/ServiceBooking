@@ -6,6 +6,7 @@ import NewCategoryModal from '../components/categories/NewCategoryModal';
 import { categoryService } from '../services/api';
 import PageTransition from '../components/layout/PageTransition';
 import ModalPortal from '../components/layout/ModalPortal';
+import SuccessToast from '../components/layout/SuccessToast';
 
 const Categories = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -16,6 +17,8 @@ const Categories = () => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [categoryToDelete, setCategoryToDelete] = useState<Category | null>(null);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  const [successMessage, setSuccessMessage] = useState('');
+  const [showSuccessToast, setShowSuccessToast] = useState(false);
 
   useEffect(() => {
     fetchCategories();
@@ -49,7 +52,6 @@ const Categories = () => {
     setEditingCategory(category);
     setIsModalOpen(true);
   };
-
   const handleCloseModal = () => {
     setEditingCategory(null);
     setIsModalOpen(false);
@@ -57,11 +59,20 @@ const Categories = () => {
     fetchCategories();
   };
   
+  const showSuccess = (message: string) => {
+    setSuccessMessage(message);
+    setShowSuccessToast(true);
+    
+    // Hide the toast after 5 seconds
+    setTimeout(() => {
+      setShowSuccessToast(false);
+    }, 5000);
+  };
+  
   const handleDeleteClick = (category: Category) => {
     setCategoryToDelete(category);
     setIsDeleteModalOpen(true);
   };
-
   const handleConfirmDelete = async () => {
     if (categoryToDelete) {
       try {
@@ -70,6 +81,9 @@ const Categories = () => {
         setIsDeleteModalOpen(false);
         setCategoryToDelete(null);
         fetchCategories();
+        
+        // Afficher le message de succès après la suppression
+        showSuccess(`La catégorie ${categoryToDelete.name} a été supprimée avec succès`);
       } catch (err) {
         console.error('Error deleting category:', err);
         setError('Failed to delete category');
@@ -238,6 +252,7 @@ const Categories = () => {
         isOpen={isModalOpen} 
         onClose={handleCloseModal} 
         category={editingCategory}
+        onSuccess={showSuccess}
       />
       
       {/* Modal de confirmation de suppression */}
@@ -279,8 +294,12 @@ const Categories = () => {
             </div>
           </div>
         </ModalPortal>
-      )}
-      </div>
+      )}      </div>
+      
+      {/* Toast de succès */}      <SuccessToast 
+        show={showSuccessToast} 
+        message={successMessage} 
+      />
     </PageTransition>
   );
 };

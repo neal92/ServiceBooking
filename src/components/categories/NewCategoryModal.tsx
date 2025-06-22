@@ -3,7 +3,6 @@ import { X } from 'lucide-react';
 import { Category } from '../../types';
 import { categoryService } from '../../services/api';
 import ModalPortal from '../layout/ModalPortal';
-import SuccessToast from '../layout/SuccessToast';
 
 // Extended Category interface with color field for UI purposes
 interface CategoryWithColor extends Category {
@@ -14,6 +13,7 @@ interface NewCategoryModalProps {
   isOpen: boolean;
   onClose: () => void;
   category?: CategoryWithColor | null;
+  onSuccess?: (message: string) => void;
 }
 
 const colors = [
@@ -26,14 +26,12 @@ const colors = [
   { name: 'orange', value: 'orange' },
 ];
 
-const NewCategoryModal = ({ isOpen, onClose, category }: NewCategoryModalProps) => {
+const NewCategoryModal = ({ isOpen, onClose, category, onSuccess }: NewCategoryModalProps) => {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [color, setColor] = useState('blue');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
-  const [showSuccessToast, setShowSuccessToast] = useState(false);
-  const [successMessage, setSuccessMessage] = useState('');
 
   useEffect(() => {
     if (category) {
@@ -50,26 +48,29 @@ const NewCategoryModal = ({ isOpen, onClose, category }: NewCategoryModalProps) 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    setError('');
-
-    try {
+    setError('');    try {
       const categoryData = {
         name,
         description,
         color
       };
 
+      let successMsg = '';
       if (category && category.id) {
         await categoryService.update(category.id.toString(), categoryData);
-        setSuccessMessage('Catégorie modifiée avec succès');
+        successMsg = 'Catégorie modifiée avec succès';
       } else {
         await categoryService.create(categoryData);
-        setSuccessMessage('Catégorie créée avec succès');
+        successMsg = 'Catégorie créée avec succès';
       }
-      setShowSuccessToast(true);
-      setTimeout(() => {
-        onClose();
-      }, 1000);
+      
+      // Fermer la modale
+      onClose();
+      
+      // Appeler le callback onSuccess avec le message
+      if (onSuccess) {
+        onSuccess(successMsg);
+      }
     } catch (err) {
       console.error('Error saving category:', err);
       setError('Échec de l\'enregistrement de la catégorie. Veuillez réessayer.');
@@ -81,17 +82,8 @@ const NewCategoryModal = ({ isOpen, onClose, category }: NewCategoryModalProps) 
 
   return (
     <ModalPortal isOpen={isOpen}>
-      <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto modal-backdrop animate-fadeIn">
-        {/* Overlay semi-transparent */}
+      <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto modal-backdrop animate-fadeIn">        {/* Overlay semi-transparent */}
         <div className="fixed inset-0 bg-black bg-opacity-40" onClick={onClose}></div>
-        
-        {/* Success Toast */}
-        <SuccessToast 
-          message={successMessage}
-          show={showSuccessToast}
-          onClose={() => setShowSuccessToast(false)}
-          duration={2000}
-        />
         
         {/* Modal content */}
         <div className="relative w-full max-w-lg bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow-lg animate-fadeIn mx-4" style={{ maxHeight: 'calc(100vh - 40px)' }}>
