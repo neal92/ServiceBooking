@@ -5,7 +5,7 @@ import PageTransition from '../components/layout/PageTransition';
 import authService from '../services/auth';
 import { API_BASE_URL } from '../utils/config';
 import AvatarSelector from '../components/profile/AvatarSelector';
-import { SuccessToast } from '../components/layout';
+import { SuccessToast, ErrorToast } from '../components/layout';
 import '../styles/profile-fix.css';
 
 const Profile = () => {
@@ -94,16 +94,21 @@ const Profile = () => {
     });
     
     // Début du processus de changement de mot de passe
+    console.log("Début du processus de changement de mot de passe");
     
     // Validation de tous les champs
     const isCurrentPasswordValid = validateCurrentPassword(password);
     const isNewPasswordValid = validateNewPassword(newPassword);
     const isConfirmPasswordValid = validateConfirmPassword(newPassword, confirmPassword);
 
+    console.log("Validation des champs:", { isCurrentPasswordValid, isNewPasswordValid, isConfirmPasswordValid });
+
     // Si toutes les validations sont ok, procéder au changement
     if (isCurrentPasswordValid && isNewPasswordValid && isConfirmPasswordValid) {
       try {
+        console.log("Appel de l'API pour changer le mot de passe");
         await changePassword(password, newPassword);
+        console.log("Mot de passe changé avec succès");
         
         // Réinitialiser les champs
         setPassword('');
@@ -113,8 +118,13 @@ const Profile = () => {
         // D'abord fermer le formulaire
         setIsEditingPassword(false);
         
+        // Mettre à jour le message permanent
+        setSuccess('Mot de passe modifié avec succès');
+        
         // Puis afficher la notification de succès
-        showSuccess('Mot de passe modifié avec succès');
+        console.log("Affichage du toast de succès");
+        setSuccessMessage('Mot de passe modifié avec succès');
+        setShowSuccessToast(true);
       } catch (err: any) {
         console.error('Erreur lors du changement de mot de passe:', err);
         
@@ -124,15 +134,18 @@ const Profile = () => {
         // Gérer les différents types d'erreurs possibles
         if (err.name === 'IncorrectPasswordError' || 
             (err.message && err.message.includes('Current password is incorrect'))) {
+          console.log("Erreur détectée: mot de passe incorrect");
           // Erreur de mot de passe incorrect détectée
           // Réinitialiser l'erreur générale et configurer l'erreur spécifique au champ
-          setError('');
           setPasswordErrors(prev => ({ 
             ...prev, 
             current: 'Le mot de passe actuel est incorrect' 
           }));
           // Vider uniquement le champ du mot de passe actuel pour permettre une nouvelle saisie
           setPassword('');
+          
+          // Afficher aussi le toast d'erreur
+          setError('Le mot de passe actuel est incorrect');
         } else if (err.message && err.message.includes('User not found')) {
           setError('Utilisateur non trouvé. Veuillez vous reconnecter.');
           // Optionnellement, rediriger vers la page de connexion après un délai
@@ -145,20 +158,29 @@ const Profile = () => {
           setError('Service indisponible. Veuillez réessayer plus tard.');
         } else {
           setError(err.message || 'Erreur lors de la modification du mot de passe');
-          // Capture de l'erreur générique
         }
       }
     }
-  };
-  // Fonction utilitaire pour afficher une notification de succès
+  };  // Fonction utilitaire pour afficher une notification de succès
   const showSuccess = (message: string) => {
+    console.log("showSuccess appelé avec message:", message);
+    
     // Pour le toast qui apparaît puis disparaît
     setSuccessMessage(message);
     setShowSuccessToast(true);
     
     // Pour le message permanent dans la section mot de passe
-    if (message.includes('mot de passe') || message.includes('Mot de passe')) {
+    if (message.toLowerCase().includes('mot de passe')) {
+      console.log("Message concernant le mot de passe détecté, mise à jour de 'success'");
       setSuccess(message);
+      
+      // Si c'est un changement de mot de passe réussi, afficher aussi un popup de confirmation
+      if (message.toLowerCase().includes('modifié avec succès')) {
+        // Afficher une boîte de dialogue pour confirmer que tout s'est bien passé
+        setTimeout(() => {
+          alert("Votre mot de passe a été modifié avec succès!");
+        }, 500);
+      }
     }
   };
 
@@ -453,11 +475,32 @@ const Profile = () => {
                       {/* Dans le formulaire d'édition, nous n'affichons pas le message de succès
                           car il sera affiché dans la section parente uniquement quand !isEditingPassword */}
                       
+                      {/* Affichage direct de l'erreur si le mot de passe est incorrect */}
+                      {passwordErrors.current && (
+                        <div className="bg-red-50 dark:bg-red-900/30 border-l-4 border-red-500 p-4 mb-4">
+                          <div className="flex">
+                            <div className="flex-shrink-0">
+                              <svg className="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                              </svg>
+                            </div>
+                            <div className="ml-3">
+                              <h3 className="text-sm font-medium text-red-800 dark:text-red-300">
+                                Erreur de mot de passe
+                              </h3>
+                              <div className="mt-2 text-sm text-red-700 dark:text-red-200">
+                                <p>{passwordErrors.current}</p>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                      
                       <div className="space-y-4">
                         <div>
                           <label htmlFor="current-password" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                             Mot de passe actuel
-                          </label>                          <input
+                          </label><input
                             type="password"
                             id="current-password"
                             value={password}
@@ -584,13 +627,22 @@ const Profile = () => {
             </div>
           </div>        </div>
       </div>
-      
-      {/* Notification de succès */}
+        {/* Notification de succès */}
       <SuccessToast 
         show={showSuccessToast}
         message={successMessage}
         duration={4000}
         onClose={() => setShowSuccessToast(false)}
+      />
+
+      {/* Notification d'erreur */}
+      <ErrorToast
+        show={!!error || !!passwordErrors.current}
+        message={error || passwordErrors.current || "Une erreur s'est produite"}
+        duration={5000}
+        onClose={() => {
+          setError('');
+        }}
       />
     </PageTransition>
   );

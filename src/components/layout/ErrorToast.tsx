@@ -30,9 +30,8 @@ const ErrorToast: React.FC<ErrorToastProps> = ({
   }, [show, duration, onClose]);
 
   if (!isVisible) return null;
-
   return (
-    <div className="fixed top-4 right-4 z-[9999] flex items-center p-4 mb-4 w-full max-w-xs text-gray-500 bg-white rounded-lg shadow-lg dark:text-gray-400 dark:bg-gray-800 transition-all transform duration-300 ease-in-out">
+    <div className="fixed top-4 right-4 z-[9999] flex items-center p-4 mb-4 w-full max-w-xs text-gray-500 bg-white rounded-lg shadow-lg dark:text-gray-400 dark:bg-gray-800 animate-slideInRight">
       <div className="inline-flex flex-shrink-0 justify-center items-center w-8 h-8 text-red-500 bg-red-100 rounded-lg dark:bg-red-800 dark:text-red-200">
         <AlertTriangle className="w-5 h-5" />
       </div>

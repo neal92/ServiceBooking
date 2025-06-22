@@ -186,19 +186,22 @@ const Appointments = () => {
     if (!appointmentToDelete) return;
     
     try {
+      // 1. D'abord fermer la modale avant l'appel API pour une meilleure expérience utilisateur
+      setIsDeleteModalOpen(false);
+      
+      // 2. Supprimer le rendez-vous
       await appointmentService.delete(appointmentToDelete.id.toString());
       
-      // D'abord fermer la modale
-      setIsDeleteModalOpen(false);
+      // 3. Réinitialiser l'état
       setAppointmentToDelete(null);
       
-      // Rafraîchir les données
+      // 4. Rafraîchir les données
       await fetchData();
       
-      // Puis afficher la notification après un court délai
+      // 5. Préparer et afficher la notification de succès
       setSuccessMessage('Le rendez-vous a été supprimé avec succès');
       
-      // Afficher la notification après un court délai
+      // Afficher la notification après un court délai pour s'assurer que la modale est fermée
       setTimeout(() => {
         setShowSuccessToast(true);
       }, 300);
@@ -206,8 +209,9 @@ const Appointments = () => {
       console.error("Error deleting appointment:", err);
       setError('Erreur lors de la suppression du rendez-vous');
       setIsDeleteModalOpen(false);
+      setAppointmentToDelete(null);
     }
-  };  // Fonction pour ouvrir le modal de confirmation de suppression
+  };// Fonction pour ouvrir le modal de confirmation de suppression
   const handleOpenDeleteModal = (id: number): Promise<void> => {
     return new Promise(resolve => {
       const appointment = appointments.find(app => app.id === id);
@@ -673,39 +677,43 @@ const Appointments = () => {
         />
       </ModalPortal>      {/* Modal de confirmation de suppression */}
       <ModalPortal isOpen={isDeleteModalOpen && appointmentToDelete !== null}>
-        {/* Overlay qui couvre tout l'écran et permet de cliquer en dehors pour fermer */}
-        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto overflow-x-hidden bg-black bg-opacity-50">
-          {/* Container principal de la modale, centré dans l'écran */}
-          <div className="relative w-full max-w-sm mx-auto my-6 animate-fadeIn">
-            {/* Contenu de la modale */}
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl overflow-hidden">
-              <div className="p-5 border-b border-gray-200 dark:border-gray-700">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                  Confirmer la suppression
-                </h3>
-                <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-                  Êtes-vous sûr de vouloir supprimer ce rendez-vous ? Cette action est irréversible.
-                </p>
+        <div className="fixed inset-0 z-60 flex items-center justify-center overflow-y-auto modal-backdrop animate-fadeIn">
+          <div className="fixed inset-0 bg-black bg-opacity-40" onClick={() => setIsDeleteModalOpen(false)}></div>
+          
+          <div className="relative bg-white dark:bg-gray-800 rounded-lg shadow-lg max-w-md w-full mx-4 animate-fadeIn" style={{ maxHeight: 'calc(100vh - 40px)' }}>
+            <div className="p-6 text-center">
+              <div className="mx-auto mb-4 h-14 w-14 flex items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30">
+                <Trash2 className="h-6 w-6 text-red-600 dark:text-red-400" />
               </div>
-              <div className="p-4 flex justify-end gap-2">
+              <h3 className="mb-3 text-lg font-medium text-gray-900 dark:text-white">Confirmer la suppression</h3>
+              <p className="mb-5 text-gray-600 dark:text-gray-400">
+                Êtes-vous sûr de vouloir supprimer ce rendez-vous 
+                {appointmentToDelete?.serviceName && (
+                  <span> pour <strong className="text-gray-700 dark:text-gray-300">{appointmentToDelete?.serviceName}</strong></span>
+                )} ? 
+                <br />Cette action est irréversible.
+              </p>
+            
+              <div className="flex justify-center gap-4 mt-6">
                 <button
                   type="button"
-                  className="px-4 py-2 text-sm font-medium rounded-md bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 text-white"
-                  onClick={handleDeleteAppointment}
+                  onClick={() => setIsDeleteModalOpen(false)}
+                  className="py-2 px-5 text-gray-500 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-500 transition-all duration-200"
                 >
-                  Supprimer
+                  Annuler
                 </button>
                 <button
                   type="button"
-                  className="px-4 py-2 text-sm font-medium rounded-md bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                  onClick={() => setIsDeleteModalOpen(false)}
+                  onClick={handleDeleteAppointment}
+                  className="py-2 px-5 text-white bg-red-600 dark:bg-red-700 border border-red-600 dark:border-red-700 rounded-lg hover:bg-red-700 dark:hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-300 dark:focus:ring-red-500 transition-all duration-200"
                 >
-                  Annuler
+                  Supprimer
                 </button>
               </div>
             </div>
           </div>
-        </div>      </ModalPortal>      {/* Notification de succès */}
+        </div>
+      </ModalPortal>{/* Notification de succès */}
       <SuccessToast 
         show={showSuccessToast}
         message={successMessage}

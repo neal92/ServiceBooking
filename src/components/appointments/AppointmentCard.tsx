@@ -131,21 +131,19 @@ const AppointmentCard = ({ appointment, onDelete, onStatusChange }: AppointmentC
     setStatusToConfirm(newStatus);
     setShowConfirmDialog(true);
     setShowMenu(false);
-  };
-  // Delete handler
+  };  // Delete handler - Ouvre la modale de confirmation au lieu de supprimer directement
   const handleDelete = async () => {
     if (onDelete) {
       try {
+        // Appeler onDelete qui ouvrira la modale de confirmation
         await onDelete(appointment.id);
         setShowMenu(false);
         
-        // Show success notification after a short delay
-        setTimeout(() => {
-          setShowSuccessToast(true);
-        }, 300);
+        // Pas besoin d'afficher de notification ici, car la suppression n'est pas encore effectuée
+        // La notification sera affichée après confirmation dans le composant parent
       } catch (err) {
-        console.error('Error deleting appointment:', err);
-        setErrorMessage('Erreur lors de la suppression du rendez-vous');
+        console.error('Error initiating appointment deletion:', err);
+        setErrorMessage('Erreur lors de l\'initialisation de la suppression');
         setShowErrorToast(true);
       }
     }
@@ -447,10 +445,10 @@ const AppointmentCard = ({ appointment, onDelete, onStatusChange }: AppointmentC
             </div>
           </div>
         </ModalPortal>
-      )}      {/* Success Toast */}
+      )}      {/* Success Toast - Uniquement pour le changement de statut maintenant */}
       <SuccessToast 
         show={showSuccessToast}
-        message={statusToConfirm ? "Statut modifié" : "Rendez-vous supprimé avec succès"}
+        message="Statut modifié avec succès"
         onClose={() => setShowSuccessToast(false)}
       />
 

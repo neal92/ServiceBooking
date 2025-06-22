@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, Navigate } from 'react-router-dom';
+import { Link, Navigate, useLocation } from 'react-router-dom';
 import { Calendar } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import PageTransition from '../components/layout/PageTransition';
@@ -9,6 +9,8 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [slideIndex, setSlideIndex] = useState(0);
   const { login, user, loading, error } = useAuth();
+  const [sessionExpired, setSessionExpired] = useState(false);
+  const location = useLocation();
   
   // Images pour le slider (thème rendez-vous professionnels et entreprise)
   const slideImages = [
@@ -16,8 +18,7 @@ const Login = () => {
     'https://images.unsplash.com/photo-1576267423048-15c0040fec78?q=80&w=1200&auto=format&fit=crop&ixlib=rb-4.0.3', // Calendrier de bureau
     'https://images.unsplash.com/photo-1600880292203-757bb62b4baf?q=80&w=1200&auto=format&fit=crop&ixlib=rb-4.0.3', // Réunion d'entreprise
   ];
-  
-  // Préchargement des images et changement toutes les 5 secondes
+    // Préchargement des images et changement toutes les 5 secondes
   useEffect(() => {
     // Précharger les images
     slideImages.forEach(src => {
@@ -30,9 +31,32 @@ const Login = () => {
     }, 5000);
     return () => clearInterval(interval);
   }, []);
-
+  // Vérifier si l'utilisateur a été redirigé suite à une expiration de session
+  useEffect(() => {
+    // Récupérer le paramètre 'expired' de l'URL
+    const params = new URLSearchParams(location.search);
+    const expired = params.get('expired');
+    
+    if (expired === 'true') {
+      console.log('Détection du paramètre expired=true dans l\'URL');
+      
+      // Afficher le message d'expiration de session
+      setSessionExpired(true);
+      
+      // Clean up URL parameter after setting the state
+      // This prevents the message from showing again on refresh
+      const cleanUrl = window.location.pathname;
+      window.history.replaceState({}, document.title, cleanUrl);
+      
+      // S'assurer que l'utilisateur est bien déconnecté
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+    }
+  }, [location]);
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    // Clear session expired message when attempting to login
+    setSessionExpired(false);
     await login(email, password);
   };
 
@@ -80,8 +104,20 @@ const Login = () => {
                 créez un nouveau compte
               </Link>
             </p>
-            
-            <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+              <form className="mt-8 space-y-6" onSubmit={handleSubmit}>              {sessionExpired && (
+                <div className="bg-amber-50 border-l-4 border-amber-400 p-4 mb-4 animate-fadeIn">
+                  <div className="flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-amber-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div>
+                      <h4 className="font-medium text-amber-800">Session expirée</h4>
+                      <p className="text-sm text-amber-700">Votre session a expiré pour des raisons de sécurité. Veuillez vous reconnecter pour continuer.</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
               {error && (
                 <div className="bg-red-50 border-l-4 border-red-400 p-4">
                   <div className="flex">

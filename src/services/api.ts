@@ -1,9 +1,28 @@
 import axios from 'axios';
 import { Appointment, Service, Category } from '../types';
-// Auth service is imported in this file but currently not used directly
-// It may be needed for future authentication features
-// import authService from './auth';
+// Import authService to handle proper logout
+import authService from './auth';
 import { API_BASE_URL } from '../utils/config';
+
+// Fonction centralisée pour gérer l'expiration du token JWT
+// Cette fonction garantit que toutes les étapes de déconnexion sont effectuées dans le bon ordre
+export const handleTokenExpiration = () => {
+  console.log('Gestion centralisée de l\'expiration du token JWT');
+  
+  // 1. Déconnecter l'utilisateur (supprimer les données d'authentification)
+  authService.logout();
+  
+  // 2. Dispatch un événement pour que le contexte d'authentification puisse réagir
+  window.dispatchEvent(new CustomEvent('auth-token-expired', { 
+    detail: { message: 'Votre session a expiré. Veuillez vous reconnecter.' }
+  }));
+  
+  // 3. Rediriger vers la page de connexion si nous ne sommes pas déjà dessus
+  if (!window.location.pathname.includes('/login')) {
+    console.log('Redirection vers la page de connexion...');
+    window.location.href = '/login?expired=true';
+  }
+};
 
 const API_URL = API_BASE_URL;
 
@@ -24,6 +43,31 @@ apiClient.interceptors.request.use((config) => {
 }, (error) => {
   return Promise.reject(error);
 });
+
+// Handle response errors, including token expiration
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    // Token expired or authentication error
+    if (error.response && error.response.status === 401) {
+      console.error('Authentication error:', error.response.data);
+      
+      // Check if token has expired or is invalid
+      const isTokenExpired = 
+        (error.response.data.code === 'TOKEN_EXPIRED') ||
+        (error.response.data.message && 
+         (error.response.data.message.includes('expired') || 
+          error.response.data.message === 'Invalid token.'));
+          
+      if (isTokenExpired) {
+        console.log('Token has expired or is invalid. Handling token expiration...');
+        handleTokenExpiration();
+      }
+    }
+    
+    return Promise.reject(error);
+  }
+);
 
 // API Service for Categories
 export const categoryService = {

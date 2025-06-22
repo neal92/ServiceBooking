@@ -27,15 +27,17 @@ exports.authenticate = (req, res, next) => {
     console.log('User ID from token:', decoded.userId);
     console.log('User email from token:', decoded.email || 'not present');
     req.user = decoded; // Add user info to request
-    next();
-  } catch (error) {
+    next();  } catch (error) {
     console.error('Authentication error:', error.message);
     if (error.name === 'JsonWebTokenError') {
       console.error('Invalid token signature. Check JWT_SECRET configuration.');
+      res.status(401).json({ message: 'Invalid token.', code: 'INVALID_TOKEN' });
     } else if (error.name === 'TokenExpiredError') {
       console.error('Token has expired');
+      res.status(401).json({ message: 'Token has expired.', code: 'TOKEN_EXPIRED' });
+    } else {
+      res.status(401).json({ message: 'Authentication failed.', code: 'AUTH_FAILED' });
     }
-    res.status(401).json({ message: 'Invalid token.' });
   }
 };
 

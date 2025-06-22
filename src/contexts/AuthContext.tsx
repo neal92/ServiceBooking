@@ -31,8 +31,7 @@ interface AuthProviderProps {
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
-  // Check for stored user data on mount
+  const [error, setError] = useState<string | null>(null);  // Check for stored user data on mount
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
     if (storedUser) {
@@ -53,10 +52,33 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           console.error('Erreur lors du parsing des données utilisateur:', err);
         }
       }
+      
+      // Si le token a été supprimé, déconnecter l'utilisateur
+      if (event.key === 'token' && !event.newValue) {
+        setUser(null);
+        console.log('Token supprimé, utilisateur déconnecté');
+      }
+    };    // Gestionnaire pour l'événement d'expiration de token
+    const handleTokenExpired = (event: CustomEvent) => {
+      console.log('Événement d\'expiration de token détecté:', event.detail);
+      
+      // Mettre à jour l'état de l'utilisateur immédiatement
+      setUser(null);
+      
+      // Définir le message d'erreur qui sera affiché dans les composants utilisant useAuth()
+      setError(event.detail.message || 'Votre session a expiré. Veuillez vous reconnecter.');
+      
+      // Log de débogage pour confirmer la déconnexion
+      console.log('Utilisateur déconnecté suite à l\'expiration du token JWT');
     };
     
     window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
+    window.addEventListener('auth-token-expired', handleTokenExpired as EventListener);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('auth-token-expired', handleTokenExpired as EventListener);
+    };
   }, []);
 
   // Effect to log user data and check avatar on mount
@@ -235,11 +257,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setLoading(false);
     }
   };
-
   // Logout function
   const logout = () => {
+    console.log('Logout appelé depuis AuthContext');
+    
+    // Nettoyer les données d'authentification dans le service auth
     authService.logout();
+    
+    // Réinitialiser l'état du contexte
     setUser(null);
+    setError(null);
+    
+    console.log('Déconnexion effectuée dans AuthContext');
   };
 
   return (
