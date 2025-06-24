@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios from "axios";
 
 interface User {
   id: number;
@@ -18,7 +18,7 @@ interface RegisterData {
   password: string;
   pseudo?: string;
   phone?: string;
-  role?: 'user' | 'admin';
+  role?: "user" | "admin";
 }
 
 interface LoginCredentials {
@@ -48,252 +48,344 @@ interface UploadAvatarResponse {
   avatarUrl: string;
 }
 
-const API_URL = 'http://localhost:5000/api';
+interface PseudoCheckResponse {
+  available: boolean;
+  message: string;
+  suggestions?: string[];
+}
+
+const API_URL = "http://localhost:5000/api";
 
 const apiClient = axios.create({
   baseURL: API_URL,
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   },
 });
 
 // Add a request interceptor to include the token in requests
-apiClient.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
-  console.log('Interceptor - Token in localStorage:', token ? 'present' : 'not present');
-  
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-    console.log('Interceptor - Added Authorization header');
-    
-    // Décodez et affichez le contenu du token pour débogage (sans vérification de signature)
-    try {
-      const base64Url = token.split('.')[1];
-      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-      const jsonPayload = decodeURIComponent(atob(base64).split('').map(c => {
-        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-      }).join(''));
-      console.log('Interceptor - Token payload:', JSON.parse(jsonPayload));
-    } catch (e) {
-      console.error('Interceptor - Failed to decode token:', e);
-    }
-  }
-  return config;
-}, (error) => {
-  console.error('Interceptor - Request error:', error);
-  return Promise.reject(error);
-});
+apiClient.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem("token");
+    console.log(
+      "Interceptor - Token in localStorage:",
+      token ? "present" : "not present"
+    );
 
-const authService = {    register: async (userData: RegisterData): Promise<AuthResponse> => {
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+      console.log("Interceptor - Added Authorization header");
+
+      // Décodez et affichez le contenu du token pour débogage (sans vérification de signature)
+      try {
+        const base64Url = token.split(".")[1];
+        const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+        const jsonPayload = decodeURIComponent(
+          atob(base64)
+            .split("")
+            .map((c) => {
+              return "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2);
+            })
+            .join("")
+        );
+        console.log("Interceptor - Token payload:", JSON.parse(jsonPayload));
+      } catch (e) {
+        console.error("Interceptor - Failed to decode token:", e);
+      }
+    }
+    return config;
+  },
+  (error) => {
+    console.error("Interceptor - Request error:", error);
+    return Promise.reject(error);
+  }
+);
+
+const authService = {
+  register: async (userData: RegisterData): Promise<AuthResponse> => {
     try {
-      console.log('Sending registration request with data:', userData);
-      const response = await apiClient.post<AuthResponse>('/auth/register', userData);
-      console.log('Registration successful, received response:', response.data);
-      
+      console.log("Sending registration request with data:", userData);
+      const response = await apiClient.post<AuthResponse>(
+        "/auth/register",
+        userData
+      );
+      console.log("Registration successful, received response:", response.data);
+
       // Save token and user to local storage
       if (response.data.token) {
-        localStorage.setItem('token', response.data.token);
-        localStorage.setItem('user', JSON.stringify(response.data.user));
+        localStorage.setItem("token", response.data.token);
+        localStorage.setItem("user", JSON.stringify(response.data.user));
       }
-      
+
       return response.data;
     } catch (error: any) {
-      console.error('Registration error:', error);
-      console.error('Error details:', {
+      console.error("Registration error:", error);
+      console.error("Error details:", {
         message: error.message,
         status: error.response?.status,
         data: error.response?.data,
-        headers: error.response?.headers
+        headers: error.response?.headers,
       });
+
       // Extract the specific error message from the response if available
-      const errorMessage = error.response?.data?.message || "Échec de l'inscription. Veuillez réessayer.";
+      let errorMessage =
+        error.response?.data?.message ||
+        "Échec de l'inscription. Veuillez réessayer.";
+
+      // Spécifiquement pour les erreurs liées au pseudo
+      if (errorMessage.toLowerCase().includes("pseudo")) {
+        // Formatage spécifique pour l'erreur de pseudo déjà utilisé
+        errorMessage =
+          "Ce pseudo est déjà utilisé. Veuillez en choisir un autre.";
+      }
+
       throw new Error(errorMessage);
     }
   },
-  
+
   login: async (credentials: LoginCredentials): Promise<AuthResponse> => {
     try {
-      const response = await apiClient.post<AuthResponse>('/auth/login', credentials);
-      console.log('Login response:', {
-        token: response.data.token ? 'present' : 'not present',
-        user: response.data.user ? 'present' : 'not present'
+      const response = await apiClient.post<AuthResponse>(
+        "/auth/login",
+        credentials
+      );
+      console.log("Login response:", {
+        token: response.data.token ? "present" : "not present",
+        user: response.data.user ? "present" : "not present",
       });
-      
+
       // Save token and user to local storage
       if (response.data.token) {
-        localStorage.setItem('token', response.data.token);
-        localStorage.setItem('user', JSON.stringify(response.data.user));
-        console.log('Saved to localStorage - Token and user data');
+        localStorage.setItem("token", response.data.token);
+        localStorage.setItem("user", JSON.stringify(response.data.user));
+        console.log("Saved to localStorage - Token and user data");
       } else {
-        console.warn('No token received in login response');
+        console.warn("No token received in login response");
       }
-      
+
       return response.data;
     } catch (error: any) {
-      console.error('Login error:', error);
+      console.error("Login error:", error);
       const status = error.response?.status;
-      
+
       // Handle specific status codes
       if (status === 401) {
-        throw new Error('Identifiants invalides. Veuillez vérifier votre email et mot de passe.');
+        throw new Error(
+          "Identifiants invalides. Veuillez vérifier votre email et mot de passe."
+        );
       } else {
-        throw new Error(error.response?.data?.message || 'Erreur lors de la connexion. Veuillez réessayer.');
+        throw new Error(
+          error.response?.data?.message ||
+            "Erreur lors de la connexion. Veuillez réessayer."
+        );
       }
     }
   },
   logout: (): void => {
-    console.log('Logout appelé dans authService');
-    
+    console.log("Logout appelé dans authService");
+
     try {
       // Supprimer toutes les données d'authentification du localStorage
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+
       // Supprimer d'autres données potentielles liées à l'authentification
       // Ajouter ici si d'autres données sont stockées
-      
-      console.log('Déconnexion effectuée - Données d\'authentification supprimées');
+
+      console.log(
+        "Déconnexion effectuée - Données d'authentification supprimées"
+      );
     } catch (error) {
-      console.error('Erreur lors de la déconnexion:', error);
+      console.error("Erreur lors de la déconnexion:", error);
     }
   },
-  
+
   getCurrentUser: async (): Promise<User> => {
-    const response = await apiClient.get<User>('/auth/me');
+    const response = await apiClient.get<User>("/auth/me");
     return response.data;
   },
-  
-  updateProfile: async (userData: ProfileUpdateData): Promise<{ user: User }> => {
-    const response = await apiClient.put<{ user: User }>('/auth/profile', userData);
-    
+
+  updateProfile: async (
+    userData: ProfileUpdateData
+  ): Promise<{ user: User }> => {
+    const response = await apiClient.put<{ user: User }>(
+      "/auth/profile",
+      userData
+    );
+
     // Update stored user data
     if (response.data.user) {
-      localStorage.setItem('user', JSON.stringify(response.data.user));
+      localStorage.setItem("user", JSON.stringify(response.data.user));
     }
-    
+
     return response.data;
-  },  changePassword: async (passwordData: PasswordChangeData): Promise<{ message: string }> => {
-    console.log('Envoi requête changement mot de passe...');
-    
+  },
+  changePassword: async (
+    passwordData: PasswordChangeData
+  ): Promise<{ message: string }> => {
+    console.log("Envoi requête changement mot de passe...");
+
     // Récupérer le token d'authentification
-    const token = localStorage.getItem('token');
-    
+    const token = localStorage.getItem("token");
+
     if (!token) {
-      console.error('Aucun token d\'authentification trouvé');
-      throw new Error('Vous devez être connecté pour changer votre mot de passe');
+      console.error("Aucun token d'authentification trouvé");
+      throw new Error(
+        "Vous devez être connecté pour changer votre mot de passe"
+      );
     }
 
     try {
-      console.log('Données envoyées pour le changement de mot de passe:', {
-        currentPassword: passwordData.currentPassword ? '***' : 'non fourni',
-        newPassword: passwordData.newPassword ? '***' : 'non fourni'
+      console.log("Données envoyées pour le changement de mot de passe:", {
+        currentPassword: passwordData.currentPassword ? "***" : "non fourni",
+        newPassword: passwordData.newPassword ? "***" : "non fourni",
       });
-      
+
       // Créer une requête spécifique pour le changement de mot de passe
       const response = await axios({
-        method: 'put',
+        method: "put",
         url: `${API_URL}/auth/password`,
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
-        data: passwordData
+        data: passwordData,
       });
-      
-      console.log('Réponse changement mot de passe:', response.data);
-      return response.data;    
+
+      console.log("Réponse changement mot de passe:", response.data);
+      return response.data;
     } catch (err: any) {
-      console.error('Erreur changement mot de passe:', {
+      console.error("Erreur changement mot de passe:", {
         message: err.message,
         status: err.response?.status,
-        data: err.response?.data
+        data: err.response?.data,
       });
-      
+
       if (err.response?.status === 404) {
-        console.error('Endpoint introuvable. URL utilisée:', `${API_URL}/auth/password`);
+        console.error(
+          "Endpoint introuvable. URL utilisée:",
+          `${API_URL}/auth/password`
+        );
       }
-      
+
       // Simulation d'erreur pour tester si un mot de passe incorrect est bien détecté
-      if (!passwordData.currentPassword || passwordData.currentPassword === 'wrong') {
+      if (
+        !passwordData.currentPassword ||
+        passwordData.currentPassword === "wrong"
+      ) {
         console.warn("SIMULATION: Détection d'un mot de passe incorrect");
-        const error = new Error('Current password is incorrect');
-        error.name = 'IncorrectPasswordError';
+        const error = new Error("Current password is incorrect");
+        error.name = "IncorrectPasswordError";
         throw error;
       }
-      
+
       // Détecter toutes les variations possibles de l'erreur de mot de passe incorrect
-      if ((err.response?.status === 401 && 
-          (err.response?.data?.message === 'Current password is incorrect' || 
-           err.response?.data?.code === 'INVALID_CURRENT_PASSWORD')) || 
-          (err.response?.data?.message && 
-           err.response?.data?.message.toLowerCase().includes('password') && 
-           err.response?.data?.message.toLowerCase().includes('incorrect'))) {
+      if (
+        (err.response?.status === 401 &&
+          (err.response?.data?.message === "Current password is incorrect" ||
+            err.response?.data?.code === "INVALID_CURRENT_PASSWORD")) ||
+        (err.response?.data?.message &&
+          err.response?.data?.message.toLowerCase().includes("password") &&
+          err.response?.data?.message.toLowerCase().includes("incorrect"))
+      ) {
         // Créer une erreur personnalisée pour un mot de passe incorrect avec un type spécial
-        const error = new Error('Current password is incorrect');
-        error.name = 'IncorrectPasswordError'; // Ajout d'un nom spécifique à l'erreur
-        console.log('Erreur de mot de passe incorrect détectée dans le service:', error);
+        const error = new Error("Current password is incorrect");
+        error.name = "IncorrectPasswordError"; // Ajout d'un nom spécifique à l'erreur
+        console.log(
+          "Erreur de mot de passe incorrect détectée dans le service:",
+          error
+        );
         throw error;
       }
-      
+
       // Propager l'erreur du serveur si disponible, sinon utiliser un message par défaut
       throw err.response?.data || err;
     }
-  },  uploadAvatar: async (file: File): Promise<UploadAvatarResponse> => {
-    console.log('Début uploadAvatar avec fichier:', {
+  },
+  uploadAvatar: async (file: File): Promise<UploadAvatarResponse> => {
+    console.log("Début uploadAvatar avec fichier:", {
       name: file.name,
       type: file.type,
-      size: file.size
+      size: file.size,
     });
 
     const formData = new FormData();
-    formData.append('avatar', file);    // Si le nom du fichier commence par avatar et finit par .svg, c'est un avatar prédéfini
+    formData.append("avatar", file); // Si le nom du fichier commence par avatar et finit par .svg, c'est un avatar prédéfini
     const isPredefined = file.name.match(/^avatar\d+\.svg$/);
     if (isPredefined) {
-      console.log('Avatar prédéfini détecté:', file.name);
-      formData.append('isPredefined', 'true');
+      console.log("Avatar prédéfini détecté:", file.name);
+      formData.append("isPredefined", "true");
     } else {
-      console.log('Avatar personnalisé détecté:', file.name);
-      formData.append('isPredefined', 'false');
+      console.log("Avatar personnalisé détecté:", file.name);
+      formData.append("isPredefined", "false");
     }
 
     try {
       // Assurons-nous d'avoir un token d'authentification
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem("token");
       if (!token) {
-        throw new Error('Vous devez être connecté pour changer votre avatar');
+        throw new Error("Vous devez être connecté pour changer votre avatar");
       }
-      
-      console.log('Envoi de la requête POST /auth/avatar avec token d\'authentification');
-      const response = await apiClient.post<UploadAvatarResponse>('/auth/avatar', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
-      console.log('Réponse uploadAvatar reçue:', response.data);
+
+      console.log(
+        "Envoi de la requête POST /auth/avatar avec token d'authentification"
+      );
+      const response = await apiClient.post<UploadAvatarResponse>(
+        "/auth/avatar",
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+      console.log("Réponse uploadAvatar reçue:", response.data);
 
       // Update stored user data
-      const storedUser = localStorage.getItem('user');
+      const storedUser = localStorage.getItem("user");
       if (storedUser) {
-        console.log('Mise à jour des données utilisateur stockées');
+        console.log("Mise à jour des données utilisateur stockées");
         const userData = JSON.parse(storedUser);
         userData.avatar = response.data.avatarUrl;
-        localStorage.setItem('user', JSON.stringify(userData));
+        localStorage.setItem("user", JSON.stringify(userData));
       }
 
       return response.data;
     } catch (err) {
-      console.error('Erreur dans uploadAvatar:', err);
+      console.error("Erreur dans uploadAvatar:", err);
       throw err;
     }
   },
-
   isAuthenticated: (): boolean => {
-    return localStorage.getItem('token') !== null;
+    return localStorage.getItem("token") !== null;
   },
-  
+
   getToken: (): string | null => {
-    return localStorage.getItem('token');
-  }
+    return localStorage.getItem("token");
+  },
+  checkPseudoAvailability: async (
+    pseudo: string
+  ): Promise<PseudoCheckResponse> => {
+    try {
+      console.log(`Vérification de la disponibilité du pseudo: ${pseudo}`);
+      const response = await axios.get<PseudoCheckResponse>(
+        `${API_URL}/auth/check-pseudo`,
+        {
+          params: { pseudo },
+        }
+      );
+      console.log("Résultat de la vérification du pseudo:", response.data);
+      return response.data;
+    } catch (error: any) {
+      console.error("Erreur lors de la vérification du pseudo:", error);
+      // Décision consciente de propager l'erreur au lieu de la gérer ici
+      // Cela permettra au composant d'afficher un message d'erreur approprié
+      throw new Error(
+        error.response?.data?.message ||
+          "Erreur lors de la vérification du pseudo. Veuillez réessayer."
+      );
+    }
+  },
 };
 
 export default authService;

@@ -1,0 +1,125 @@
+/* Styles spécifiques pour le formulaire d'inscription */
+
+/* Réduction de la taille des champs */
+.register-form .field-input {
+  width: 90%;
+  max-width: 90%;
+  margin: 0 auto;
+  transition: border-color 0.3s ease;
+}
+
+/* Style pour les champs validés */
+.register-form .field-input.border-green-500 {
+  border-color: #10b981;
+  background-color: rgba(16, 185, 129, 0.05);
+}
+
+/* Adaptation pour mobile */
+@media (max-width: 640px) {
+  .register-form .field-input {
+    max-width: 92%;
+    width: 92%;
+  }
+}
+
+/* Adaptation pour les très petits écrans */
+@media (max-width: 375px) {
+  .register-form .field-input {
+    max-width: 95%;
+    width: 95%;
+    padding: 0.4rem 0.6rem;
+  }
+
+  .register-form .password-toggle-button {
+    right: 5%;
+  }
+}
+
+/* Amélioration de la position des boutons de mot de passe */
+.register-form .password-field-wrapper {
+  position: relative;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.register-form .password-toggle-button {
+  position: absolute;
+  right: 7%;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+/* Optimisation des messages d'erreur */
+.register-form .error-message {
+  width: 90%;
+  margin: 0.25rem auto 0;
+  font-size: 0.75rem;
+  display: flex;
+  align-items: center;
+  color: #ef4444;
+  background-color: rgba(239, 68, 68, 0.08);
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+}
+
+/* Styles pour les suggestions de pseudo */
+.register-form .suggestions-container {
+  width: 90%;
+  margin: 0.5rem auto;
+  animation: pulse-subtle 2s infinite ease-in-out;
+}
+
+@keyframes pulse-subtle {
+  0% {
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.2);
+  }
+  70% {
+    box-shadow: 0 0 0 6px rgba(59, 130, 246, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
+  }
+}
+
+.register-form .suggestions-container button {
+  transition: all 0.25s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.register-form .suggestions-container button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+  color: #2563eb; /* blue-600 */
+  font-weight: 500;
+}
+
+.register-form .suggestions-container button:active {
+  transform: scale(0.98);
+}
+
+@media (max-width: 640px) {
+  .register-form .error-message {
+    width: 92%;
+    padding: 0.2rem 0.4rem;
+  }
+}
+
+/* Optimisation de l'espacement pour les champs */
+.register-form .form-field {
+  margin-bottom: 0.5rem;
+}
+
+.register-form .form-field-container {
+  margin-bottom: 0.5rem;
+}
+
+/* Réduction de la taille de la police des labels */
+.register-form .field-label {
+  font-size: 0.813rem;
+  margin-bottom: 0.3rem;
+  width: 90%;
+  margin-left: auto;
+  margin-right: auto;
+}

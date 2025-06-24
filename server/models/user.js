@@ -46,7 +46,8 @@ class User {
       throw error;
     }
   }
-  // Create a new user  static async create(userData) {
+  // Create a new user
+  static async create(userData) {
     try {
       console.log(`Hashing password for user: ${userData.email}`);
       const salt = await bcrypt.genSalt(10);
@@ -94,7 +95,8 @@ class User {
       }
       throw error;
     }
-  }// Verify password
+  }
+  // Verify password
   static async verifyPassword(plainPassword, hashedPassword) {
     try {
       console.log('Verifying password');
