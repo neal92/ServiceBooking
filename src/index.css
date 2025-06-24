@@ -1,5 +1,6 @@
 /* Import des correctifs de profil - Doit être placé avant les autres règles CSS */
-@import './styles/profile-fix.css';
+@import "./styles/profile-fix.css";
+@import "./styles/form-styles.css";
 
 @tailwind base;
 @tailwind components;
@@ -12,19 +13,19 @@
     --bg-card: 255 255 255; /* bg-white */
     --border-color: 229 231 235; /* border-gray-200 */
   }
-  
+
   .dark {
     --bg-main: 17 24 39; /* bg-gray-900 */
     --text-main: 243 244 246; /* text-gray-100 */
     --bg-card: 31 41 55; /* bg-gray-800 */
     --border-color: 55 65 81; /* border-gray-700 */
   }
-  
+
   body {
     background-color: rgb(249, 250, 251);
     color: rgb(17, 24, 39);
   }
-  
+
   .dark body {
     background-color: rgb(17, 24, 39);
     color: rgb(243, 244, 246);
@@ -44,11 +45,24 @@
 }
 
 @layer utilities {
-  @keyframes fadeIn {
-    0% { opacity: 0; transform: scale(0.9); }
-    100% { opacity: 1; transform: scale(1); }
+  /* Supprimer les surlignages au toucher sur mobile */
+  button,
+  a,
+  [role="button"] {
+    -webkit-tap-highlight-color: transparent;
   }
-  
+
+  @keyframes fadeIn {
+    0% {
+      opacity: 0;
+      transform: scale(0.9);
+    }
+    100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
   /* Délais d'animation */
   .animation-delay-100 {
     animation-delay: 0.1s;
@@ -65,26 +79,36 @@
   .animation-delay-500 {
     animation-delay: 0.5s;
   }
-  
+
   @keyframes zoomIn {
-    0% { transform: scale(0.95); opacity: 0; }
-    100% { transform: scale(1); opacity: 1; }
+    0% {
+      transform: scale(0.95);
+      opacity: 0;
+    }
+    100% {
+      transform: scale(1);
+      opacity: 1;
+    }
   }
 
   @keyframes shimmer {
-    0% { background-position: -100% 0; }
-    100% { background-position: 200% 0; }
+    0% {
+      background-position: -100% 0;
+    }
+    100% {
+      background-position: 200% 0;
+    }
   }
-  
+
   /* Styles pour les pages de connexion et inscription */
   .auth-slider-transition {
     transition: opacity 1s ease, transform 1.2s ease;
   }
-  
+
   .auth-form-container {
     min-height: 95vh;
   }
-  
+
   .auth-fullscreen-page {
     min-height: 100vh;
     width: 100%;
@@ -93,17 +117,21 @@
     align-items: center;
     justify-content: center;
   }
-  
+
   /* Ajouter un filtre pour améliorer la lisibilité du texte sur les images */
   .auth-image-overlay {
-    background: linear-gradient(to top, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 0) 60%);
+    background: linear-gradient(
+      to top,
+      rgba(0, 0, 0, 0.7) 0%,
+      rgba(0, 0, 0, 0) 60%
+    );
   }
-  
+
   .modal-backdrop {
     backdrop-filter: blur(4px);
     -webkit-backdrop-filter: blur(4px);
   }
-  
+
   .z-60 {
     z-index: 60;
   }
@@ -119,38 +147,51 @@
   .animate-zoomIn {
     animation: zoomIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
   }
-  
+
   .animation-delay-200 {
     animation-delay: 0.2s;
   }
-  
+
   .auth-image-slider {
     height: 100%;
     min-height: 600px;
     position: relative;
   }
-  
+
   .auth-image-slide {
     min-height: 600px;
     background-size: cover !important;
     background-position: center !important;
     background-repeat: no-repeat !important;
   }
-  
+
   .auth-container {
     min-height: 600px;
     max-height: calc(100vh - 4rem);
-    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1),
+      0 10px 10px -5px rgba(0, 0, 0, 0.04);
   }
-  
+
   @keyframes slideInFromRight {
-    0% { opacity: 0; transform: translateX(30px); }
-    100% { opacity: 1; transform: translateX(0); }
+    0% {
+      opacity: 0;
+      transform: translateX(30px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateX(0);
+    }
   }
 
   @keyframes slideInFromBottom {
-    0% { opacity: 0; transform: translateY(30px); }
-    100% { opacity: 1; transform: translateY(0); }
+    0% {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 
   /* Ajout pour l'animation des étapes du formulaire */
@@ -183,5 +224,70 @@
       flex-direction: column !important;
       gap: 0.5rem !important;
     }
+  }
+}
+
+@layer components {
+  /* Styles des formulaires */
+  .field-label {
+    @apply block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center;
+  }
+
+  .field-input {
+    @apply w-full px-4 py-3 rounded-lg border border-gray-300 
+    bg-white text-gray-800 transition-all duration-300 ease-in-out
+    placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
+    /* Mode sombre */
+    dark:bg-gray-700 dark:border-gray-600 dark:text-white 
+    dark:placeholder-gray-400 dark:focus:ring-blue-400 dark:focus:border-blue-400
+    hover:border-gray-400 dark:hover:border-gray-500
+    shadow-sm hover:shadow;
+  }
+
+  /* Styles pour les champs validés */
+  .field-input:not(.field-error):valid {
+    @apply border-green-400 dark:border-green-600;
+  }
+
+  /* Animation pour la validation réussie */
+  @keyframes checkmarkAppear {
+    0% {
+      transform: scale(0);
+      opacity: 0;
+    }
+    50% {
+      transform: scale(1.2);
+      opacity: 1;
+    }
+    100% {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+
+  /* Style pour le focus plus visible */
+  .field-input:focus {
+    @apply ring-offset-2 dark:ring-offset-gray-800;
+  }
+
+  .field-error {
+    @apply border-red-400 bg-red-50 dark:bg-red-900/20 focus:ring-red-400 focus:border-red-400 
+    dark:border-red-500 dark:focus:ring-red-500 dark:focus:border-red-500;
+  }
+
+  .error-message {
+    @apply flex items-center text-sm font-medium text-red-600 dark:text-red-400 mt-2;
+  }
+  .form-field-container {
+    @apply relative w-full mb-6;
+  }
+
+  .form-field {
+    @apply w-full transition-all duration-300;
+  }
+
+  /* Ajouter une animation sur l'icône d'erreur */
+  .error-message svg {
+    @apply animate-pulse;
   }
 }

@@ -1,0 +1,61 @@
+/* Styles spécifiques pour les pages d'authentification */
+
+/* Styles pour le slider d'images */
+.auth-image-slider {
+  position: relative;
+  background-color: #f0f9ff; /* Fond bleu très clair par défaut */
+  overflow: hidden;
+}
+
+.auth-image-slide {
+  transition: opacity 1s ease-in-out;
+}
+
+/* Effet d'overlay pour améliorer la lisibilité du texte */
+.auth-image-overlay {
+  background: linear-gradient(
+    to top,
+    rgba(30, 64, 175, 0.7),
+    rgba(30, 64, 175, 0.1)
+  );
+}
+
+/* Ombre pour le texte sur les images */
+.text-shadow {
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+/* Amélioration du conteneur d'authentification */
+.auth-container {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+/* Animation pour les slides */
+@keyframes fadeSlide {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.auth-image-slide.opacity-100 {
+  animation: fadeSlide 0.8s ease-out;
+}
+
+/* Améliorations pour les écrans mobile */
+@media (max-width: 768px) {
+  .auth-container {
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  }
+}
+
+/* Styles spécifiques pour les très petits écrans */
+@media (max-width: 375px) {
+  .auth-fullscreen-page {
+    padding: 0.5rem;
+  }
+}

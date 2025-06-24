@@ -15,7 +15,7 @@ const Landing: React.FC = () => {
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme');
     const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-    
+
     if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
       setIsDarkMode(true);
       document.documentElement.classList.add('dark');
@@ -50,32 +50,31 @@ const Landing: React.FC = () => {
   const handleLoginClick = () => navigate('/login');
   const handleRegisterClick = () => setIsRegisterModalOpen(true);
   const handleTryClick = () => setIsRegisterModalOpen(true);
-  
+
   // Fonctions pour gérer la modale d'inscription
   const openRegisterModal = () => setIsRegisterModalOpen(true);
   const closeRegisterModal = () => setIsRegisterModalOpen(false);
-  
+
   // Fonction pour gérer la navigation vers la page d'inscription avec le type d'utilisateur
   const handleRegisterClient = () => navigate('/register', { state: { userType: 'client' } });
   const handleRegisterProfessional = () => navigate('/register', { state: { userType: 'professional' } });
-  
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-blue-50 dark:from-gray-900 dark:to-gray-800">
       {/* Modal d'inscription */}
-      <RegisterModal 
-        isOpen={isRegisterModalOpen} 
+      <RegisterModal
+        isOpen={isRegisterModalOpen}
         onClose={closeRegisterModal}
         onClient={handleRegisterClient}
         onProfessional={handleRegisterProfessional}
       />
-      
+
       {/* Navbar */}
-      <nav 
-        className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${
-          isScrolled 
-            ? 'bg-white/95 dark:bg-gray-900/95 shadow-md backdrop-blur-sm py-2' 
+      <nav
+        className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${isScrolled
+            ? 'bg-white/95 dark:bg-gray-900/95 shadow-md backdrop-blur-sm py-2'
             : 'bg-transparent py-4'
-        }`}
+          }`}
       >
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center">
@@ -90,7 +89,7 @@ const Landing: React.FC = () => {
 
             {/* Menu pour mobile */}
             <div className="md:hidden">
-              <button 
+              <button
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
                 className="text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 focus:outline-none"
               >
@@ -103,20 +102,20 @@ const Landing: React.FC = () => {
               <a href="#fonctionnalites" className="text-sm font-medium text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200">Fonctionnalités</a>
               <a href="#temoignages" className="text-sm font-medium text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200">Témoignages</a>
               <a href="#tarifs" className="text-sm font-medium text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200">Tarifs</a>
-              <button 
+              <button
                 onClick={toggleDarkMode}
                 className="text-sm p-2 rounded-full text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-200"
                 aria-label={isDarkMode ? "Passer au mode clair" : "Passer au mode sombre"}
               >
                 {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
               </button>
-              <button 
+              <button
                 onClick={handleLoginClick}
                 className="text-sm font-medium text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200"
               >
                 Connexion
               </button>
-              <button 
+              <button
                 onClick={handleRegisterClick}
                 className="px-4 py-2 rounded-md bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white text-sm font-medium transition duration-300 hover:shadow-lg"
               >
@@ -130,28 +129,28 @@ const Landing: React.FC = () => {
         {isMenuOpen && (
           <div className="md:hidden bg-white dark:bg-gray-800 shadow-xl animate-fadeIn">
             <div className="px-4 py-2 space-y-2">
-              <a 
-                href="#fonctionnalites" 
+              <a
+                href="#fonctionnalites"
                 className="block p-2 text-gray-700 dark:text-gray-200 hover:bg-blue-50 dark:hover:bg-gray-700 rounded-md"
                 onClick={() => setIsMenuOpen(false)}
               >
                 Fonctionnalités
               </a>
-              <a 
-                href="#temoignages" 
+              <a
+                href="#temoignages"
                 className="block p-2 text-gray-700 dark:text-gray-200 hover:bg-blue-50 dark:hover:bg-gray-700 rounded-md"
                 onClick={() => setIsMenuOpen(false)}
               >
                 Témoignages
               </a>
-              <a 
-                href="#tarifs" 
+              <a
+                href="#tarifs"
                 className="block p-2 text-gray-700 dark:text-gray-200 hover:bg-blue-50 dark:hover:bg-gray-700 rounded-md"
                 onClick={() => setIsMenuOpen(false)}
               >
                 Tarifs
               </a>
-              <button 
+              <button
                 onClick={() => {
                   toggleDarkMode();
                   setIsMenuOpen(false);
@@ -161,7 +160,7 @@ const Landing: React.FC = () => {
                 {isDarkMode ? <Sun size={18} className="mr-2" /> : <Moon size={18} className="mr-2" />}
                 {isDarkMode ? "Mode clair" : "Mode sombre"}
               </button>
-              <button 
+              <button
                 onClick={() => {
                   handleLoginClick();
                   setIsMenuOpen(false);
@@ -170,7 +169,7 @@ const Landing: React.FC = () => {
               >
                 Connexion
               </button>
-              <button 
+              <button
                 onClick={() => {
                   handleRegisterClick();
                   setIsMenuOpen(false);
@@ -190,7 +189,7 @@ const Landing: React.FC = () => {
           <div className="flex flex-col md:flex-row md:items-center">
             <div className="md:w-1/2 mb-10 md:mb-0">
               <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 dark:text-white leading-tight animate-fadeIn">
-                Simplifiez la gestion de vos <span className="text-blue-600 dark:text-blue-400">rendez-vous</span> professionnels
+                Simplifiez la gestion de vos <span className="text-blue-600 dark:text-blue-400">rendez-vous</span>
               </h1>
               <p className="mt-4 text-lg md:text-xl text-gray-600 dark:text-gray-300 animate-fadeIn animation-delay-200">
                 ServiceBooking est une solution complète qui permet aux professionnels de gérer facilement leurs rendez-vous, clients et services.
@@ -218,7 +217,7 @@ const Landing: React.FC = () => {
       <section className="py-8 bg-gray-50 dark:bg-gray-800/50">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <p className="text-center text-sm text-gray-500 dark:text-gray-400 mb-6">
-            Ils nous font confiance
+            Nous vous proposons un espace personalisable pour les professionelles en mettant en avant vos services
           </p>
           <div className="flex flex-wrap justify-center items-center gap-8 md:gap-12 opacity-70 grayscale">
             <div className="h-8 flex items-center">
@@ -272,10 +271,10 @@ const Landing: React.FC = () => {
                 <Users className="w-6 h-6 text-blue-600 dark:text-blue-400" />
               </div>
               <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">
-                Gestion des clients
+                Messagerie instantanée
               </h3>
               <p className="text-gray-600 dark:text-gray-300">
-                Centralisez les informations de vos clients, leur historique de rendez-vous et proposez une expérience personnalisée.
+                Centralisez les informations de vos clients avec un chat en ligne sécurisé. Communiquez facilement avec vos clients pour confirmer ou modifier les rendez-vous.
               </p>
             </div>
 
@@ -288,7 +287,7 @@ const Landing: React.FC = () => {
                 Réservation en ligne 24/7
               </h3>
               <p className="text-gray-600 dark:text-gray-300">
-                Permettez à vos clients de réserver à tout moment, même en dehors des heures d'ouverture, et réduisez les appels téléphoniques.
+                Permettez à vos clients de réserver à tout moment, même en dehors des heures d'ouverture, vous avez la possiblité de valider ou non afin de mieux gérer votre emploi du temps.
               </p>
             </div>
 
@@ -311,7 +310,7 @@ const Landing: React.FC = () => {
                 <UserCheck className="w-6 h-6 text-blue-600 dark:text-blue-400" />
               </div>
               <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">
-                Gestion des services
+                Gestion des de vos services
               </h3>
               <p className="text-gray-600 dark:text-gray-300">
                 Créez et personnalisez vos services avec les durées et les prix spécifiques pour une gestion optimale.
@@ -637,13 +636,13 @@ const Landing: React.FC = () => {
           </div>
         </div>
       </footer>
-    
+
       {/* Modale d'inscription */}
-      <RegisterModal 
-        isOpen={isRegisterModalOpen} 
-        onClose={closeRegisterModal} 
-        onClient={handleRegisterClient} 
-        onProfessional={handleRegisterProfessional} 
+      <RegisterModal
+        isOpen={isRegisterModalOpen}
+        onClose={closeRegisterModal}
+        onClient={handleRegisterClient}
+        onProfessional={handleRegisterProfessional}
       />
     </div>
   );

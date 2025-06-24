@@ -3,29 +3,30 @@ import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { Calendar, ArrowLeft } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import PageTransition from '../components/layout/PageTransition';
+import '../styles/form-styles.css';
+import '../styles/auth-styles.css';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [slideIndex, setSlideIndex] = useState(0);  const { login, user, loading, error } = useAuth();
+  const [slideIndex, setSlideIndex] = useState(0); const { login, user, loading, error } = useAuth();
   const [sessionExpired, setSessionExpired] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  
   // Images pour le slider (thème rendez-vous professionnels et entreprise)
   const slideImages = [
-    'https://images.unsplash.com/photo-1556761175-b413da4baf72?q=80&w=1200&auto=format&fit=crop&ixlib=rb-4.0.3', // Agenda et planification
-    'https://images.unsplash.com/photo-1576267423048-15c0040fec78?q=80&w=1200&auto=format&fit=crop&ixlib=rb-4.0.3', // Calendrier de bureau
-    'https://images.unsplash.com/photo-1600880292203-757bb62b4baf?q=80&w=1200&auto=format&fit=crop&ixlib=rb-4.0.3', // Réunion d'entreprise
+    '/images/slides/calendar-planning.svg', // Image de calendrier/planning locale
+    '/images/slides/team-meeting.svg',      // Image d'équipe locale  
+    '/images/slides/business-meeting.svg',  // Image de réunion professionnelle locale
   ];
-    // Préchargement des images et changement toutes les 5 secondes
+  // Préchargement des images et changement toutes les 5 secondes
   useEffect(() => {
     // Précharger les images
     slideImages.forEach(src => {
       const img = new Image();
       img.src = src;
     });
-    
+
     const interval = setInterval(() => {
       setSlideIndex((prevIndex) => (prevIndex + 1) % slideImages.length);
     }, 5000);
@@ -36,18 +37,18 @@ const Login = () => {
     // Récupérer le paramètre 'expired' de l'URL
     const params = new URLSearchParams(location.search);
     const expired = params.get('expired');
-    
+
     if (expired === 'true') {
       console.log('Détection du paramètre expired=true dans l\'URL');
-      
+
       // Afficher le message d'expiration de session
       setSessionExpired(true);
-      
+
       // Clean up URL parameter after setting the state
       // This prevents the message from showing again on refresh
       const cleanUrl = window.location.pathname;
       window.history.replaceState({}, document.title, cleanUrl);
-      
+
       // S'assurer que l'utilisateur est bien déconnecté
       localStorage.removeItem('token');
       localStorage.removeItem('user');
@@ -76,25 +77,25 @@ const Login = () => {
           {/* Partie gauche avec slider d'images */}
           <div className="hidden md:block md:w-1/2 relative auth-image-slider">
             {slideImages.map((image, index) => (
-              <div 
-                key={index} 
-                className={`absolute inset-0 transition-opacity duration-1000 ease-in-out auth-image-slide ${index === slideIndex ? 'opacity-100' : 'opacity-0'}`}
-                style={{
+              <div
+                key={index}
+                className={`absolute inset-0 transition-opacity duration-1000 ease-in-out auth-image-slide ${index === slideIndex ? 'opacity-100' : 'opacity-0'}`} style={{
                   backgroundImage: `url(${image})`,
-                  backgroundSize: 'cover',
+                  backgroundSize: 'contain',
                   backgroundPosition: 'center',
+                  backgroundRepeat: 'no-repeat',
+                  backgroundColor: '#f0f9ff', /* Bleu très clair */
                 }}
-              >
-                <div className="absolute inset-0 bg-blue-900 bg-opacity-30 auth-image-overlay flex items-end p-8">
+              >                <div className="absolute inset-0 auth-image-overlay flex items-end p-8">
                   <div className="text-white">
-                    <h3 className="text-2xl font-bold mb-2">Gérez vos rendez-vous efficacement</h3>
+                    <h3 className="text-2xl font-bold mb-2 text-shadow">Gérez vos rendez-vous efficacement</h3>
                     <p className="text-sm opacity-90">Connectez-vous pour accéder à votre espace professionnel</p>
                   </div>
                 </div>
               </div>
             ))}
           </div>
-          
+
           {/* Partie droite avec formulaire */}
           <div className="w-full md:w-1/2 bg-white dark:bg-gray-800 p-8 md:p-12">
             <div className="flex justify-center md:justify-start">
@@ -109,20 +110,20 @@ const Login = () => {
                 créez un nouveau compte
               </Link>
             </p>
-              <form className="mt-8 space-y-6" onSubmit={handleSubmit}>              {sessionExpired && (
-                <div className="bg-amber-50 border-l-4 border-amber-400 p-4 mb-4 animate-fadeIn">
-                  <div className="flex items-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-amber-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <div>
-                      <h4 className="font-medium text-amber-800">Session expirée</h4>
-                      <p className="text-sm text-amber-700">Votre session a expiré pour des raisons de sécurité. Veuillez vous reconnecter pour continuer.</p>
-                    </div>
+            <form className="mt-8 space-y-6" onSubmit={handleSubmit}>              {sessionExpired && (
+              <div className="bg-amber-50 border-l-4 border-amber-400 p-4 mb-4 animate-fadeIn">
+                <div className="flex items-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-amber-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <div>
+                    <h4 className="font-medium text-amber-800">Session expirée</h4>
+                    <p className="text-sm text-amber-700">Votre session a expiré pour des raisons de sécurité. Veuillez vous reconnecter pour continuer.</p>
                   </div>
                 </div>
-              )}
-              
+              </div>
+            )}
+
               {error && (
                 <div className="bg-red-50 border-l-4 border-red-400 p-4">
                   <div className="flex">
@@ -132,7 +133,7 @@ const Login = () => {
                   </div>
                 </div>
               )}
-              
+
               <div>
                 <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                   Adresse email
@@ -210,7 +211,7 @@ const Login = () => {
                   )}
                 </button>
               </div>
-              
+
               <div className="mt-6 text-center">
                 <p className="text-sm text-gray-600 dark:text-gray-400">
                   Pas encore de compte ?{' '}
