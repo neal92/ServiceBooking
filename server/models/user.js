@@ -46,18 +46,28 @@ class User {
       throw error;
     }
   }
-
-  // Create a new user
-  static async create(userData) {
+  // Create a new user  static async create(userData) {
     try {
       console.log(`Hashing password for user: ${userData.email}`);
       const salt = await bcrypt.genSalt(10);
       const hashedPassword = await bcrypt.hash(userData.password, salt);
 
-      console.log(`Inserting new user into database: ${userData.email}`);
+      // Utiliser le pseudo fourni ou en générer un basé sur le prénom
+      const pseudo = userData.pseudo || userData.firstName.toLowerCase().replace(/\s+/g, '_');
+      
+      console.log(`Inserting new user into database: ${userData.email}, pseudo: ${pseudo}, role: ${userData.role || 'user'}`);
+      
       const [result] = await db.query(
-        'INSERT INTO users (firstName, lastName, email, password, role) VALUES (?, ?, ?, ?, ?)',
-        [userData.firstName, userData.lastName, userData.email, hashedPassword, userData.role || 'user']
+        'INSERT INTO users (firstName, lastName, email, pseudo, phone, password, role) VALUES (?, ?, ?, ?, ?, ?, ?)',
+        [
+          userData.firstName, 
+          userData.lastName, 
+          userData.email, 
+          pseudo, 
+          userData.phone || null, 
+          hashedPassword, 
+          userData.role || 'user'
+        ]
       );
 
       console.log(`User created with ID: ${result.insertId}`);
@@ -65,15 +75,26 @@ class User {
     } catch (error) {
       console.error('Error creating user:', error);
       if (error.code === 'ER_DUP_ENTRY') {
-        console.error('Duplicate email entry found in database');
+        // Déterminer quel champ est en doublon pour donner un message précis
+        if (error.sqlMessage && error.sqlMessage.includes('email')) {
+          console.error('Duplicate email entry found in database');
+          throw new Error('Cette adresse email est déjà utilisée.');
+        } else if (error.sqlMessage && error.sqlMessage.includes('pseudo')) {
+          console.error('Duplicate pseudo found in database');
+          throw new Error('Ce pseudo est déjà utilisé.');
+        } else {
+          console.error('Duplicate entry found in database');
+          throw new Error('Un utilisateur avec ces informations existe déjà.');
+        }
       } else if (error.code === 'ER_NO_SUCH_TABLE') {
         console.error('Users table does not exist in database');
+        throw new Error('Erreur de configuration de la base de données.');
       } else if (error.sqlMessage) {
         console.error('SQL error message:', error.sqlMessage);
       }
       throw error;
     }
-  }  // Verify password
+  }// Verify password
   static async verifyPassword(plainPassword, hashedPassword) {
     try {
       console.log('Verifying password');

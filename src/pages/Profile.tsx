@@ -73,11 +73,17 @@ const Profile = () => {
     setSuccess('');
     setShowSuccessModal(false);
 
-    try {      await updateUser(userInfo);
-      // Fermer d'abord le mode édition
+    try {      await updateUser(userInfo);      // Fermer d'abord le mode édition
       setIsEditing(false);
-        // Puis afficher la notification de succès
+      
+      // Puis afficher la notification de succès
       showSuccess('Informations personnelles mises à jour avec succès');
+      
+      // Afficher la popup modale de succès
+      setShowSuccessModal(true);
+      setTimeout(() => {
+        setShowSuccessModal(false);
+      }, 3000);
     } catch (err: any) {
       setError(err.message || 'Erreur lors de la mise à jour des informations');
     }
@@ -188,30 +194,29 @@ const Profile = () => {
     <PageTransition type="slide">
       <div className="max-w-5xl mx-auto py-8 px-4 sm:px-6 lg:px-8 profile-container">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Mon Profil</h1>
-        
-        {/* Modal de succès */}
+          {/* Modal de succès */}
         {showSuccessModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-sm w-full mx-4">
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 animate-fadeIn">
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-sm w-full mx-4 shadow-lg animate-fadeInUp">
               <div className="flex items-center justify-center mb-4">
-                <div className="rounded-full bg-green-100 p-3">
-                  <svg className="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <div className="rounded-full bg-green-100 dark:bg-green-900/30 p-4">
+                  <svg className="h-8 w-8 text-green-600 dark:text-green-400 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
                 </div>
               </div>
-              <h3 className="text-lg font-medium text-center text-gray-900 dark:text-white mb-4">
-                Succès !
+              <h3 className="text-xl font-medium text-center text-gray-900 dark:text-white mb-4">
+                Modifications enregistrées !
               </h3>
               <p className="text-center text-gray-600 dark:text-gray-300 mb-6">
-                {success}
+                {showSuccessModal && successMessage ? successMessage : success || "Votre profil a été mis à jour avec succès."}
               </p>
               <div className="flex justify-center">
                 <button
                   onClick={() => setShowSuccessModal(false)}
-                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                  className="inline-flex items-center px-5 py-2.5 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all duration-200 transform hover:scale-105"
                 >
-                  OK
+                  Fermer
                 </button>
               </div>
             </div>
@@ -254,9 +259,13 @@ const Profile = () => {
                           email: user?.email,
                           avatar: uploadResponse.avatarUrl,
                           isPresetAvatar: true,
-                        });
-                  // Afficher la notification de succès
+                        });                        // Afficher la notification de succès
                         showSuccess('Avatar prédéfini mis à jour avec succès');
+                        // Afficher la popup modale de succès pour l'avatar
+                        setShowSuccessModal(true);
+                        setTimeout(() => {
+                          setShowSuccessModal(false);
+                        }, 3000);
                       } 
                       // Cas 2: Avatar personnalisé avec initiales (URL blob ou data URL)
                       else if (avatarUrl.startsWith('blob:') || avatarUrl.startsWith('data:')) {
@@ -289,9 +298,13 @@ const Profile = () => {
                           lastName: user?.lastName,
                           email: user?.email,
                           avatar: uploadResponse.avatarUrl,
-                          isPresetAvatar: false,
-                        });                        // Afficher la notification de succès
+                          isPresetAvatar: false,                        });                        // Afficher la notification de succès
                         showSuccess('Avatar personnalisé mis à jour avec succès');
+                        // Afficher la popup modale de succès pour l'avatar
+                        setShowSuccessModal(true);
+                        setTimeout(() => {
+                          setShowSuccessModal(false);
+                        }, 3000);
                       }
                     } catch (err: any) {
                       // Gestion de l'erreur de sélection d'avatar

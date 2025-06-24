@@ -6,10 +6,18 @@ const { authenticate } = require('../middleware/auth');
 
 // Register route
 router.post('/register', [
-  body('firstName').notEmpty().withMessage('First name is required'),
-  body('lastName').notEmpty().withMessage('Last name is required'),
-  body('email').isEmail().withMessage('Valid email is required'),
-  body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters long')
+  body('firstName').notEmpty().withMessage('Le prénom est requis'),
+  body('lastName').optional(), // Le nom de famille est optionnel maintenant
+  body('email').isEmail().withMessage('Une adresse email valide est requise'),
+  body('password').isLength({ min: 6 }).withMessage('Le mot de passe doit comporter au moins 6 caractères'),
+  body('pseudo').optional().custom((value) => {
+    if (value && value.trim().length < 3) {
+      throw new Error('Le pseudo doit contenir au moins 3 caractères');
+    }
+    return true;
+  }),
+  body('phone').optional().isMobilePhone(['fr-FR', 'any']).withMessage('Le numéro de téléphone doit être valide'),
+  body('role').optional().isIn(['user', 'admin']).withMessage('Rôle non valide')
 ], authController.register);
 
 // Login route

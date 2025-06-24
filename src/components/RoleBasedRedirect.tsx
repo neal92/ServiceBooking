@@ -13,12 +13,11 @@ const RoleBasedRedirect: React.FC = () => {
   if (!user) {
     return <Navigate to="/login" replace />;
   }
-
   if (user.role === 'admin') {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to="/app/dashboard" replace />;
   }
 
-  return <Navigate to="/home" replace />;
+  return <Navigate to="/app/home" replace />;
 };
 
 export default RoleBasedRedirect;

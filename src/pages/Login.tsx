@@ -1,16 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { Link, Navigate, useLocation } from 'react-router-dom';
-import { Calendar } from 'lucide-react';
+import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { Calendar, ArrowLeft } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import PageTransition from '../components/layout/PageTransition';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [slideIndex, setSlideIndex] = useState(0);
-  const { login, user, loading, error } = useAuth();
+  const [slideIndex, setSlideIndex] = useState(0);  const { login, user, loading, error } = useAuth();
   const [sessionExpired, setSessionExpired] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
   
   // Images pour le slider (thème rendez-vous professionnels et entreprise)
   const slideImages = [
@@ -59,15 +59,20 @@ const Login = () => {
     setSessionExpired(false);
     await login(email, password);
   };
-
   if (user) {
-    return <Navigate to="/" />;
+    return <Navigate to="/app" />;
   }
 
   return (
     <PageTransition type="slide" className="w-full h-screen">
       <div className="h-screen w-full bg-gray-100 dark:bg-gray-900 flex justify-center items-center auth-fullscreen-page">
         <div className="flex w-full max-w-6xl rounded-xl shadow-lg overflow-hidden h-auto bg-white dark:bg-gray-800 auth-container">
+          <div className="absolute top-4 left-4">
+            <Link to="/" className="flex items-center text-gray-700 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400 transition-colors">
+              <ArrowLeft size={18} className="mr-1" />
+              <span className="text-sm">Retour à l'accueil</span>
+            </Link>
+          </div>
           {/* Partie gauche avec slider d'images */}
           <div className="hidden md:block md:w-1/2 relative auth-image-slider">
             {slideImages.map((image, index) => (

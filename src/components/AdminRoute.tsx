@@ -16,10 +16,13 @@ const AdminRoute: React.FC<AdminRouteProps> = ({ children }) => {
   if (loading) {
     return <div className="loading">Chargement...</div>;
   }
+    // Redirige vers la page d'accueil ou la page utilisateur si l'utilisateur n'est pas connecté ou n'est pas admin
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
   
-  // Redirige vers le tableau de bord si l'utilisateur n'est pas connecté ou n'est pas admin
-  if (!user || user.role !== 'admin') {
-    return <Navigate to="/" replace />;
+  if (user.role !== 'admin') {
+    return <Navigate to="/app/home" replace />;
   }
   
   // Si l'utilisateur est un administrateur, affiche le contenu protégé

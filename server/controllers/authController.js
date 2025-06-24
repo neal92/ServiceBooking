@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken');
 const { validationResult } = require('express-validator');
 const path = require('path');
 const fs = require('fs');
+const db = require('../config/db');
 
 // Get JWT secret from environment variable or use a default (for development only)
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
@@ -17,10 +18,9 @@ exports.register = async (req, res) => {
     if (!errors.isEmpty()) {
       console.log('Validation errors during registration:', errors.array());
       return res.status(400).json({ errors: errors.array() });
-    }
-
-    const { firstName, lastName, email, password } = req.body;
-    console.log(`Registration attempt for email: ${email}`);
+    }    
+    const { firstName, lastName, email, password, pseudo, phone, role, userType } = req.body;
+    console.log(`Registration attempt for email: ${email}, userType: ${userType || 'non spécifié'}`);
 
     // Check if user already exists
     console.log('Checking if user already exists');
@@ -29,10 +29,50 @@ exports.register = async (req, res) => {
       console.log(`Registration failed: User already exists with email ${email}`);
       return res.status(400).json({ message: 'Cette adresse email est déjà utilisée.' });
     }
+    
+    // Déterminer le rôle en fonction du type d'utilisateur
+    const userRole = userType === 'professional' ? 'admin' : 'user';
+    
+    // Normaliser le pseudo (générer automatiquement si non fourni)
+    let userPseudo = pseudo || null;
+    if (!userPseudo) {
+      // Générer un pseudo basé sur le prénom
+      userPseudo = firstName.toLowerCase().replace(/\s+/g, '_');
+      let counter = 1;
+      let basePseudo = userPseudo;
+      
+      // Vérifier si le pseudo existe déjà et ajouter un numéro si nécessaire
+      while (true) {
+        const [rows] = await db.query('SELECT * FROM users WHERE pseudo = ?', [userPseudo]);
+        if (rows.length === 0) break;
+        userPseudo = `${basePseudo}${counter++}`;
+      }
+    } 
+    else {
+      // Convertir en minuscule si fourni
+      userPseudo = userPseudo.toLowerCase();
+      
+      // Check if pseudo already exists
+      const [rows] = await db.query('SELECT * FROM users WHERE pseudo = ?', [userPseudo]);
+      if (rows.length > 0) {
+        console.log(`Registration failed: Pseudo ${userPseudo} already exists`);
+        return res.status(400).json({ message: 'Ce pseudo est déjà utilisé.' });
+      }
+    }
+
+    console.log(`Using pseudo: ${userPseudo}`);
 
     // Create user
     console.log('Creating new user');
-    const { userId } = await User.create({ firstName, lastName, email, password });
+    const { userId } = await User.create({ 
+      firstName, 
+      lastName, 
+      email, 
+      password,
+      pseudo: userPseudo,
+      phone,
+      role: userRole
+    });
     console.log(`User created with ID: ${userId}`);
 
     // Generate JWT

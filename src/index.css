@@ -49,6 +49,23 @@
     100% { opacity: 1; transform: scale(1); }
   }
   
+  /* Délais d'animation */
+  .animation-delay-100 {
+    animation-delay: 0.1s;
+  }
+  .animation-delay-200 {
+    animation-delay: 0.2s;
+  }
+  .animation-delay-300 {
+    animation-delay: 0.3s;
+  }
+  .animation-delay-400 {
+    animation-delay: 0.4s;
+  }
+  .animation-delay-500 {
+    animation-delay: 0.5s;
+  }
+  
   @keyframes zoomIn {
     0% { transform: scale(0.95); opacity: 0; }
     100% { transform: scale(1); opacity: 1; }
@@ -134,6 +151,31 @@
   @keyframes slideInFromBottom {
     0% { opacity: 0; transform: translateY(30px); }
     100% { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Ajout pour l'animation des étapes du formulaire */
+  .form-step {
+    transition: all 0.3s ease-in-out;
+  }
+
+  .form-step-enter {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+
+  .form-step-enter-active {
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+  .form-step-exit {
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+  .form-step-exit-active {
+    opacity: 0;
+    transform: translateX(-20px);
   }
 
   @media (max-width: 640px) {

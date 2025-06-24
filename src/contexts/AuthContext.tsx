@@ -8,6 +8,8 @@ interface User {
   email: string;
   role: string;
   avatar?: string;
+  pseudo?: string;
+  phone?: string;
 }
 
 interface AuthContextType {
@@ -15,7 +17,15 @@ interface AuthContextType {
   loading: boolean;
   error: string | null;
   login: (email: string, password: string) => Promise<void>;
-  register: (firstName: string, lastName: string, email: string, password: string) => Promise<void>;
+  register: (userData: {
+    firstName: string; 
+    lastName?: string; 
+    email: string; 
+    password: string;
+    pseudo?: string;
+    phone?: string;
+    role?: 'user' | 'admin';
+  }) => Promise<void>;
   logout: () => void;
   updateUser: (data: { firstName?: string; lastName?: string; email?: string; avatar?: string; isPresetAvatar?: boolean }) => Promise<void>;
   changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
@@ -115,14 +125,21 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setLoading(false);
     }
   };
-
   // Register with API
-  const register = async (firstName: string, lastName: string, email: string, password: string) => {
+  const register = async (userData: {
+    firstName: string;
+    lastName?: string;
+    email: string;
+    password: string;
+    pseudo?: string;
+    phone?: string;
+    role?: 'user' | 'admin';
+  }) => {
     setLoading(true);
     setError(null);
     
     try {
-      const response = await authService.register({ firstName, lastName, email, password });
+      const response = await authService.register(userData);
       setUser(response.user);
     } catch (err: any) {
       setError(err.response?.data?.message || "Échec de l'inscription. Veuillez réessayer.");
@@ -130,7 +147,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  };  // Update user profile
+  };// Update user profile
   const updateUser = async (data: { firstName?: string; lastName?: string; email?: string; avatar?: string; isPresetAvatar?: boolean }) => {
     setLoading(true);
     setError(null);

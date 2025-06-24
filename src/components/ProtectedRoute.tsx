@@ -13,8 +13,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   if (loading) {
     return <div className="loading">Chargement...</div>;
   }
-  
-  if (!user) {
+    if (!user) {
     return <Navigate to="/login" replace />;
   }
   

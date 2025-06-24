@@ -15,15 +15,18 @@ import Appointments from './pages/Appointments';
 import Calendar from './pages/Calendar';
 import NotFound from './pages/NotFound';
 import Profile from './pages/Profile';
+import Landing from './pages/Landing';
 
 function App() {
   return (
     <Router>
       <AuthProvider>
         <Routes>
+          {/* Page d'accueil publique */}
+          <Route path="/" element={<Landing />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
-          <Route path="/" element={
+          <Route path="/app" element={
             <ProtectedRoute>
               <Layout />
             </ProtectedRoute>          }>

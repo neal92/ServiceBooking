@@ -7,13 +7,18 @@ interface User {
   email: string;
   role: string;
   avatar?: string;
+  pseudo?: string;
+  phone?: string;
 }
 
 interface RegisterData {
   firstName: string;
-  lastName: string;
+  lastName?: string;
   email: string;
   password: string;
+  pseudo?: string;
+  phone?: string;
+  role?: 'user' | 'admin';
 }
 
 interface LoginCredentials {
