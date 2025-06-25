@@ -319,19 +319,20 @@ const Register = () => {
         validatePassword(password) &&
         validateConfirmPassword(confirmPassword)
       ) {
-        setIsComplete(true);
-
-        // Construction des données utilisateur
+        setIsComplete(true);        // Construction des données utilisateur
         const userData: any = {
           firstName,
           lastName: lastName || firstName, // Le nom est optionnel, utiliser le prénom si non fourni
           email,
           password,
           pseudo: pseudo.toLowerCase().trim(), // Normaliser le pseudo avant envoi
-          role: isProfessional ? 'professional' : 'user'
-        };
+          role: isProfessional ? 'admin' : 'user',
+          userType: isProfessional ? 'professional' : 'client'
+          // Le champ téléphone n'est pas inclus car la table users n'a pas cette colonne
+        }; try {
+          // Log des données d'inscription pour le débogage
+          console.log("Données d'inscription envoyées:", JSON.stringify(userData, null, 2));
 
-        try {
           // Appel de la fonction d'inscription
           await register(userData);
           // Note: La redirection sera effectuée automatiquement par le contexte d'authentification

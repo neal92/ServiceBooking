@@ -14,12 +14,12 @@ const Calendar: React.FC = () => {
           <CalendarIcon className="h-6 w-6 text-blue-600 dark:text-blue-400" />
           <h1 className="text-2xl font-bold text-gray-800 dark:text-white">Calendrier</h1>
         </div>
-        
+
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-8 text-center">
           <div className="flex justify-center mb-6">
             <CalendarIcon className="h-20 w-20 text-blue-500/50 dark:text-blue-400/50" />
           </div>
-          
+
           <div className="text-gray-500 dark:text-gray-300 mb-8">
             <h2 className="text-xl font-semibold text-gray-700 dark:text-gray-200 mb-4">
               Page en cours de développement
@@ -31,7 +31,7 @@ const Calendar: React.FC = () => {
               Nous travaillons à vous offrir une expérience optimale pour la gestion de votre calendrier.
             </p>
           </div>
-          
+
           <div className="mt-8 bg-blue-50 dark:bg-blue-900/20 rounded-lg p-6 max-w-md mx-auto">
             <div className="flex items-center justify-center mb-4">
               <Clock className="h-5 w-5 text-blue-600 dark:text-blue-400 mr-2" />
@@ -40,8 +40,8 @@ const Calendar: React.FC = () => {
             <p className="text-blue-600 dark:text-blue-400 mb-6">
               Veuillez utiliser la page "Mes Rendez-vous" pour gérer vos réservations.
             </p>
-            <Link 
-              to="/appointments" 
+            <Link
+              to="/app/appointments"
               className="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md transition-colors"
             >
               Aller à Mes Rendez-vous

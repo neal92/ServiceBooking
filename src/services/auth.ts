@@ -8,7 +8,7 @@ interface User {
   role: string;
   avatar?: string;
   pseudo?: string;
-  phone?: string;
+  telephone?: string; // Renommé pour correspondre au backend
 }
 
 interface RegisterData {
@@ -17,8 +17,9 @@ interface RegisterData {
   email: string;
   password: string;
   pseudo?: string;
-  phone?: string;
+  // Le champ téléphone n'est pas inclus car la table users n'a pas cette colonne
   role?: "user" | "admin";
+  userType?: "client" | "professional";
 }
 
 interface LoginCredentials {

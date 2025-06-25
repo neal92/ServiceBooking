@@ -25,7 +25,7 @@ exports.register = async (req, res) => {
       email,
       password,
       pseudo,
-      phone,
+      telephone,
       role,
       userType,
     } = req.body;
@@ -89,7 +89,7 @@ exports.register = async (req, res) => {
       email,
       password,
       pseudo: userPseudo,
-      phone,
+      telephone,
       role: userRole,
     });
     console.log(`User created with ID: ${userId}`);

@@ -9,7 +9,8 @@ import { Appointment, Service, Category } from '../types';
 import { appointmentService, serviceService, categoryService } from '../services/api';
 import PageTransition from '../components/layout/PageTransition';
 
-const Dashboard = () => {  const { user } = useAuth();
+const Dashboard = () => {
+  const { user } = useAuth();
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [services, setServices] = useState<Service[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -29,7 +30,7 @@ const Dashboard = () => {  const { user } = useAuth();
         serviceService.getAll(),
         categoryService.getAll()
       ]);
-      
+
       setAppointments(appointmentsData);
       setServices(servicesData);
       setCategories(categoriesData);
@@ -69,7 +70,7 @@ const Dashboard = () => {  const { user } = useAuth();
         return a;
       }));
     } catch (err) {
-      console.error("Error updating appointment status:", err); 
+      console.error("Error updating appointment status:", err);
       setError('Une erreur est survenue lors de la mise à jour du statut');
       throw err; // Propager l'erreur pour que les composants enfants puissent la gérer
     }
@@ -88,21 +89,21 @@ const Dashboard = () => {  const { user } = useAuth();
 
   return (
     <PageTransition type="slide">      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Tableau de bord</h1>        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          Bienvenue, {displayName || user?.email || 'Utilisateur'}. Voici un aperçu de vos rendez-vous et prestations.
-        </p>
-        {error && (
-          <div className="mt-2 bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-700 text-red-700 dark:text-red-300 px-4 py-3 rounded relative">
-            {error}
-            <button 
-              className="absolute top-0 right-0 px-4 py-3" 
-              onClick={() => setError(null)}
-            >
-              <span className="text-xl">&times;</span>
-            </button>
-          </div>
-        )}
-      </div>
+      <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Tableau de bord</h1>        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+        Bienvenue, {displayName || user?.email || 'Utilisateur'}. Voici un aperçu de vos rendez-vous et prestations.
+      </p>
+      {error && (
+        <div className="mt-2 bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-700 text-red-700 dark:text-red-300 px-4 py-3 rounded relative">
+          {error}
+          <button
+            className="absolute top-0 right-0 px-4 py-3"
+            onClick={() => setError(null)}
+          >
+            <span className="text-xl">&times;</span>
+          </button>
+        </div>
+      )}
+    </div>
 
       {loading ? (
         <div className="text-center py-10">
@@ -130,8 +131,8 @@ const Dashboard = () => {  const { user } = useAuth();
                         return appointmentDate.toDateString() === today.toDateString() && a.status === 'confirmed';
                       }).length}
                     </dd>                    <div className="mt-4">
-                      <Link 
-                        to="/appointments?timeFilter=ongoing&statusFilter=confirmed" 
+                      <Link
+                        to="/appointments?timeFilter=ongoing&statusFilter=confirmed"
                         className="inline-flex items-center px-4 py-2 rounded-lg bg-white/20 text-white text-sm font-medium hover:bg-white/30 transition-colors duration-200 backdrop-blur-sm"
                       >
                         Voir
@@ -145,8 +146,8 @@ const Dashboard = () => {  const { user } = useAuth();
                     <dd className="mt-2 text-4xl font-bold text-white">
                       {appointments.filter(a => a.status === 'pending').length}
                     </dd>                    <div className="mt-4">
-                      <Link 
-                        to="/appointments?statusFilter=pending" 
+                      <Link
+                        to="/appointments?statusFilter=pending"
                         className="inline-flex items-center px-4 py-2 rounded-lg bg-white/20 text-white text-sm font-medium hover:bg-white/30 transition-colors duration-200 backdrop-blur-sm"
                       >
                         Voir
@@ -169,19 +170,19 @@ const Dashboard = () => {  const { user } = useAuth();
           {/* Upcoming appointments section */}
           <div className="bg-white dark:bg-gray-800 shadow-lg rounded-xl mb-8">
             <div className="px-6 py-5 border-b border-gray-200 dark:border-gray-700">                <div className="flex items-center justify-between">
-                  <h2 className="text-xl font-semibold text-gray-900 dark:text-white flex items-center">
-                    <Calendar className="w-6 h-6 mr-2 text-blue-600 dark:text-blue-400" />
-                    Prochains rendez-vous
-                  </h2>
-                </div>
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white flex items-center">
+                <Calendar className="w-6 h-6 mr-2 text-blue-600 dark:text-blue-400" />
+                Prochains rendez-vous
+              </h2>
+            </div>
             </div>
             <div className="py-4">
               <ul className="divide-y divide-gray-200 dark:divide-gray-700">
                 {upcomingAppointments.length > 0 ? (
                   upcomingAppointments.map((appointment) => (
                     <li key={appointment.id} className="px-6 py-4">
-                      <AppointmentCard 
-                        appointment={appointment} 
+                      <AppointmentCard
+                        appointment={appointment}
                         onDelete={() => handleDeleteAppointment(appointment.id)}
                         onStatusChange={(id, status) => handleStatusChange(parseInt(id), status)}
                       />
@@ -209,8 +210,8 @@ const Dashboard = () => {  const { user } = useAuth();
                   <dt className="text-sm text-gray-500 dark:text-gray-400 mb-4">
                     Prestations disponibles pour vos clients. Gérez vos services et leurs tarifs facilement.
                   </dt>                  <div className="mt-auto">
-                    <Link 
-                      to="/services" 
+                    <Link
+                      to="/app/services"
                       className="inline-flex items-center px-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors duration-200"
                     >
                       Voir
@@ -231,8 +232,8 @@ const Dashboard = () => {  const { user } = useAuth();
                   <dt className="text-sm text-gray-500 dark:text-gray-400 mb-4">
                     Organisez vos prestations par catégories pour une meilleure visibilité de vos services.
                   </dt>                  <div className="mt-auto">
-                    <Link 
-                      to="/categories" 
+                    <Link
+                      to="/app/categories"
                       className="inline-flex items-center px-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors duration-200"
                     >
                       Voir

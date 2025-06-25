@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useState } from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import { FileText, Tag, LayoutDashboard, X, User, Settings, LogOut, ClipboardList, Calendar } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { getFullMediaUrl } from '../../utils/config';
@@ -11,25 +11,25 @@ interface SidebarProps {
 }
 
 const Sidebar = ({ mobile, closeSidebar }: SidebarProps) => {
+  const navigate = useNavigate();
   const { user, logout } = useAuth();
   const [showUserMenu, setShowUserMenu] = useState(false);
-  
   // Navigation pour les administrateurs
   const adminNavigation = [
-    { name: 'Tableau de bord', href: '/dashboard', icon: LayoutDashboard },
-    { name: 'Mes Rendez-vous', href: '/appointments', icon: ClipboardList },
-    { name: 'Calendrier', href: '/calendar', icon: Calendar },
-    { name: 'Prestations', href: '/services', icon: FileText },
-    { name: 'Catégories', href: '/categories', icon: Tag },
+    { name: 'Tableau de bord', href: '/app/dashboard', icon: LayoutDashboard },
+    { name: 'Mes Rendez-vous', href: '/app/appointments', icon: ClipboardList },
+    { name: 'Calendrier', href: '/app/calendar', icon: Calendar },
+    { name: 'Prestations', href: '/app/services', icon: FileText },
+    { name: 'Catégories', href: '/app/categories', icon: Tag },
   ];
-  
+
   // Navigation pour les utilisateurs ordinaires
   const userNavigation = [
-    { name: 'Accueil', href: '/home', icon: LayoutDashboard },
-    { name: 'Mes Rendez-vous', href: '/appointments', icon: ClipboardList },
-    { name: 'Calendrier', href: '/calendar', icon: Calendar },
+    { name: 'Accueil', href: '/app/home', icon: LayoutDashboard },
+    { name: 'Mes Rendez-vous', href: '/app/appointments', icon: ClipboardList },
+    { name: 'Calendrier', href: '/app/calendar', icon: Calendar },
   ];
-  
+
   // Sélection des éléments de navigation en fonction du rôle de l'utilisateur
   const navigation = user?.role === 'admin' ? adminNavigation : userNavigation;
 
@@ -51,7 +51,7 @@ const Sidebar = ({ mobile, closeSidebar }: SidebarProps) => {
           <h1 className="ml-2 text-xl font-bold text-blue-600">RDV Manager</h1>
         </div>
       </div>
-      
+
       <div className="flex-1 flex flex-col overflow-y-auto">
         <nav className="flex-1 px-2 space-y-2 bg-white dark:bg-gray-800 mt-5">
           {navigation.map((item) => (
@@ -59,10 +59,9 @@ const Sidebar = ({ mobile, closeSidebar }: SidebarProps) => {
               key={item.name}
               to={item.href}
               className={({ isActive }) =>
-                `group flex items-center px-3 py-3 text-sm font-medium rounded-md ${
-                  isActive
-                    ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-300'
-                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white'
+                `group flex items-center px-3 py-3 text-sm font-medium rounded-md ${isActive
+                  ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-300'
+                  : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white'
                 }`
               }
               onClick={mobile ? closeSidebar : undefined}
@@ -76,18 +75,18 @@ const Sidebar = ({ mobile, closeSidebar }: SidebarProps) => {
           ))}
         </nav>
       </div>
-      
+
       {/* User information section at the bottom */}
       <div className="border-t border-gray-200 dark:border-gray-700 p-4 mt-auto">
-        <div 
+        <div
           className="flex items-center p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer"
           onClick={() => setShowUserMenu(!showUserMenu)}
         >
           {user?.avatar ? (
             <div className="h-10 w-10 rounded-full overflow-hidden mr-3">
-              <img 
+              <img
                 src={getFullMediaUrl(user.avatar)}
-                alt={`Avatar de ${user.firstName}`} 
+                alt={`Avatar de ${user.firstName}`}
                 className="w-full h-full object-cover"
                 onError={(e) => {
                   console.error('Erreur de chargement de l\'avatar dans la sidebar:', e);
@@ -115,16 +114,15 @@ const Sidebar = ({ mobile, closeSidebar }: SidebarProps) => {
             <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{user?.email}</p>
           </div>
         </div>
-        
+
         {showUserMenu && (
           <div className="mt-3 space-y-1">
             <NavLink
-              to="/profile"
+              to="/app/profile"
               className={({ isActive }) =>
-                `flex items-center px-3 py-2 text-sm font-medium rounded-md ${
-                  isActive
-                    ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-300'
-                    : 'text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700'
+                `flex items-center px-3 py-2 text-sm font-medium rounded-md ${isActive
+                  ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-300'
+                  : 'text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700'
                 }`
               }
               onClick={mobile ? closeSidebar : undefined}
@@ -135,9 +133,11 @@ const Sidebar = ({ mobile, closeSidebar }: SidebarProps) => {
             <a href="#" className="flex items-center px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700">
               <Settings className="mr-3 h-5 w-5 text-gray-500 dark:text-gray-400" />
               Paramètres
-            </a>
-            <button 
-              onClick={logout}
+            </a>            <button
+              onClick={() => {
+                logout();
+                navigate('/login'); // Redirection vers la page de connexion après déconnexion
+              }}
               className="w-full flex items-center px-3 py-2 text-sm font-bold text-red-700 dark:text-red-500 rounded-md hover:bg-red-50 dark:hover:bg-red-900/30"
             >
               <LogOut className="mr-3 h-5 w-5 text-red-600 dark:text-red-500" />

@@ -22,6 +22,7 @@ CREATE TABLE IF NOT EXISTS categories (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
     description TEXT,
+    color VARCHAR(20),
     createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
