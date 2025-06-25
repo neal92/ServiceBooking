@@ -50,6 +50,7 @@ CREATE TABLE IF NOT EXISTS appointments (
     status ENUM('pending', 'confirmed', 'cancelled', 'completed') DEFAULT 'pending',
     notes TEXT,
     createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    createdBy VARCHAR(25),
     FOREIGN KEY (serviceId) REFERENCES services(id) ON DELETE SET NULL
 );
 

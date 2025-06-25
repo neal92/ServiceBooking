@@ -55,6 +55,11 @@ interface PseudoCheckResponse {
   suggestions?: string[];
 }
 
+interface EmailCheckResponse {
+  available: boolean;
+  message: string;
+}
+
 const API_URL = "http://localhost:5000/api";
 
 const apiClient = axios.create({
@@ -138,6 +143,14 @@ const authService = {
         // Formatage spécifique pour l'erreur de pseudo déjà utilisé
         errorMessage =
           "Ce pseudo est déjà utilisé. Veuillez en choisir un autre.";
+      }
+      // Spécifiquement pour les erreurs liées à l'email
+      else if (
+        errorMessage.toLowerCase().includes("email") ||
+        (errorMessage.toLowerCase().includes("adresse") &&
+          errorMessage.toLowerCase().includes("déjà"))
+      ) {
+        errorMessage = "Cette adresse email est déjà utilisée.";
       }
 
       throw new Error(errorMessage);
@@ -384,6 +397,28 @@ const authService = {
       throw new Error(
         error.response?.data?.message ||
           "Erreur lors de la vérification du pseudo. Veuillez réessayer."
+      );
+    }
+  },
+
+  checkEmailAvailability: async (
+    email: string
+  ): Promise<EmailCheckResponse> => {
+    try {
+      console.log(`Vérification de la disponibilité de l'email: ${email}`);
+      const response = await axios.get<EmailCheckResponse>(
+        `${API_URL}/auth/check-email`,
+        {
+          params: { email },
+        }
+      );
+      console.log("Résultat de la vérification de l'email:", response.data);
+      return response.data;
+    } catch (error: any) {
+      console.error("Erreur lors de la vérification de l'email:", error);
+      throw new Error(
+        error.response?.data?.message ||
+          "Erreur lors de la vérification de l'email. Veuillez réessayer."
       );
     }
   },

@@ -34,12 +34,14 @@ const Register = () => {
   const [lastNameError, setLastNameError] = useState('');
   const [pseudoError, setPseudoError] = useState('');
   const [isComplete, setIsComplete] = useState(false);
-
   // Gestion des suggestions de pseudo
   const [pseudoSuggestions, setPseudoSuggestions] = useState<string[]>([]);
   const [checkingPseudo, setCheckingPseudo] = useState(false);
   const [pseudoAlreadyExists, setPseudoAlreadyExists] = useState(false);
   const [pseudoValid, setPseudoValid] = useState(false);
+
+  // État pour gérer la vérification d'email
+  const [checkingEmail, setCheckingEmail] = useState(false);
   // Référence non utilisée car la validation du pseudo se fait désormais uniquement au clic
 
   // Référence pour l'animation des dots
@@ -168,15 +170,37 @@ const Register = () => {
       setPseudoError('Erreur lors de la vérification du pseudo. Veuillez réessayer.');
       return false;
     }
-  };
-
-  const validateEmail = (value: string) => {
+  }; const validateEmail = async (value: string) => {
+    if (!value) {
+      setEmailError('L\'adresse email est obligatoire');
+      return false;
+    }
     if (!EMAIL_REGEX.test(value)) {
       setEmailError('Veuillez entrer une adresse email valide');
       return false;
     }
-    setEmailError('');
-    return true;
+
+    try {
+      // Vérification de la disponibilité via l'API
+      setCheckingEmail(true);
+      const authService = await import('../services/auth').then(m => m.default);
+      const result = await authService.checkEmailAvailability(value);
+      setCheckingEmail(false);
+
+      if (!result.available) {
+        setEmailError('Cette adresse email est déjà utilisée');
+        return false;
+      }
+
+      setEmailError('');
+      return true;
+    } catch (error) {
+      console.error("Erreur lors de la vérification de l'email:", error);
+      setCheckingEmail(false);
+      // En cas d'erreur avec l'API, on accepte l'email - la validation finale se fera côté serveur
+      setEmailError('');
+      return true;
+    }
   };
 
   const validatePassword = (value: string) => {
@@ -205,8 +229,8 @@ const Register = () => {
   const goToNextStep = async () => {
     let isValid = false;
 
-    // Ne pas procéder si on est en train de vérifier le pseudo
-    if (checkingPseudo) {
+    // Ne pas procéder si on est en train de vérifier le pseudo ou l'email
+    if (checkingPseudo || checkingEmail || loading) {
       return;
     }
 
@@ -226,9 +250,10 @@ const Register = () => {
           console.log("Vérification de la disponibilité du pseudo après clic sur continuer");
           isValid = await validatePseudo(pseudo);
           setCheckingPseudo(false);
-          break;
-        case 3:
-          isValid = validateEmail(email);
+          break; case 3:
+          // Vérification de l'email (asynchrone)
+          console.log("Vérification de la disponibilité de l'email après clic sur continuer");
+          isValid = await validateEmail(email);
           break;
         case 4:
           isValid = validatePassword(password) && validateConfirmPassword(confirmPassword);
@@ -315,7 +340,7 @@ const Register = () => {
         validateFirstName(firstName) &&
         validateLastName(lastName) &&
         isValidPseudo && // Cette condition est redondante mais conservée pour clarté
-        validateEmail(email) &&
+        await validateEmail(email) &&
         validatePassword(password) &&
         validateConfirmPassword(confirmPassword)
       ) {
@@ -340,12 +365,22 @@ const Register = () => {
           console.error("Erreur retournée par l'API:", registerError);
 
           // Détecter spécifiquement l'erreur de pseudo déjà utilisé
-          if (registerError.message && registerError.message.includes('pseudo')) {
+          if (registerError.message && registerError.message.toLowerCase().includes('pseudo')) {
             setPseudoError(registerError.message);
             setPseudoAlreadyExists(true);
             // Retourner à l'étape du pseudo
             setDirection(-1);
             setCurrentStep(2);
+          }
+          // Détecter l'erreur d'email déjà utilisé
+          else if (registerError.message &&
+            (registerError.message.toLowerCase().includes('email') ||
+              registerError.message.toLowerCase().includes('adresse')) &&
+            registerError.message.toLowerCase().includes('déjà utilisée')) {
+            setEmailError("Cette adresse email est déjà utilisée.");
+            // Retourner à l'étape de l'email
+            setDirection(-1);
+            setCurrentStep(3);
           }
 
           setIsComplete(false);
@@ -356,12 +391,11 @@ const Register = () => {
       setIsComplete(false);
     }
   };
-
   // Gérer l'appui sur la touche "Enter" pour avancer
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
       e.preventDefault();
-      if (!checkingPseudo) {
+      if (!checkingPseudo && !checkingEmail && !loading) {
         goToNextStep();
       }
     }
@@ -518,7 +552,7 @@ const Register = () => {
                   <AlertCircle className="w-3 h-3 xs:w-4 xs:h-4 min-w-[12px] mr-1" />
                   <span className="error-text">{pseudoError}</span>
                 </motion.div>
-              )}            {/* Suggestions de pseudo */}
+              )}              {/* Suggestions de pseudo */}
               {pseudoAlreadyExists && pseudoSuggestions.length > 0 && (
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}
@@ -529,7 +563,7 @@ const Register = () => {
                     <span className="font-medium">Ce pseudo est déjà utilisé.</span>{' '}
                     Essayez une de ces alternatives :
                   </p>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-1.5 xs:gap-2 justify-center">
                     {pseudoSuggestions.map((suggestion, index) => (
                       <motion.button
                         key={index}
@@ -550,7 +584,7 @@ const Register = () => {
                           // Valider immédiatement le nouveau pseudo choisi
                           await validatePseudo(suggestion);
                         }}
-                        className="text-xs bg-white dark:bg-gray-800 border border-blue-300 dark:border-gray-600 hover:border-blue-400 dark:hover:border-blue-500 text-blue-600 dark:text-blue-400 rounded-full px-3 py-1 transition-all"
+                        className="text-[0.65rem] xs:text-xs whitespace-nowrap bg-white dark:bg-gray-800 border border-blue-300 dark:border-gray-600 hover:border-blue-400 dark:hover:border-blue-500 text-blue-600 dark:text-blue-400 rounded-full px-2 xs:px-3 py-1 transition-all"
                       >
                         {suggestion}
                       </motion.button>
@@ -570,24 +604,35 @@ const Register = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-            >
-              <label htmlFor="email" className="field-label">
+            >              <label htmlFor="email" className="field-label">
                 <Mail className="h-5 w-5 mr-2 text-blue-500" />
                 Votre adresse email
-              </label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                autoComplete="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                onBlur={(e) => validateEmail(e.target.value)}
-                onKeyPress={handleKeyPress}
-                placeholder="jean.dupont@exemple.com"
-                className={`field-input ${emailError ? 'field-error' : ''}`}
-                autoFocus
-              />              {emailError && (
+              </label>              <div className="relative w-full flex justify-center">
+                <input
+                  id="email"
+                  name="email"
+                  type="email"
+                  autoComplete="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  onBlur={(e) => validateEmail(e.target.value)}
+                  onKeyPress={handleKeyPress}
+                  placeholder="jean.dupont@exemple.com"
+                  className={`field-input w-[90%] ${emailError ? 'field-error' : ''} ${checkingEmail ? 'pr-8' : ''}`}
+                  style={{ width: "90%", maxWidth: "90%" }}
+                  autoFocus
+                  disabled={checkingEmail}
+                />
+                {checkingEmail && (
+                  <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
+                    <svg className="animate-spin h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                    </svg>
+                  </div>
+                )}
+              </div>
+              {emailError && (
                 <motion.div
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -815,10 +860,8 @@ const Register = () => {
                   {renderCurrentField()}
                 </motion.div>
               </AnimatePresence>          </div>
-          </div>
-
-          {/* Messages d'erreur */}
-          {error && (
+          </div>          {/* Messages d'erreur globaux */}
+          {error && !emailError && !pseudoError && !passwordError && !firstNameError && !lastNameError && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -852,25 +895,39 @@ const Register = () => {
             >
               <ChevronLeft className="w-2.5 h-2.5 sm:w-3.5 sm:h-3.5 mr-0.5 sm:mr-1" />
               Retour
-            </motion.button>
-
-            <motion.button
+            </motion.button>            <motion.button
               type="button"
               onClick={goToNextStep}
-              disabled={loading}
+              disabled={loading || checkingEmail || checkingPseudo}
               className={`inline-flex items-center px-2.5 xs:px-3.5 sm:px-4 md:px-5 py-1 xs:py-1.5 sm:py-2 md:py-2.5 border border-transparent text-[10px] xs:text-xs sm:text-sm font-medium rounded-md shadow-sm text-white ${isProfessional
                 ? 'bg-blue-700 hover:bg-blue-800 dark:bg-blue-600 dark:hover:bg-blue-700'
                 : 'bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600'
                 } focus:outline-none focus:ring-1 focus:ring-offset-1 focus:ring-blue-500 disabled:opacity-50 transition-all`}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-            >{loading ? (
+            >            {loading ? (
               <span className="flex items-center">
                 <svg className="animate-spin -ml-1 mr-2 sm:mr-3 h-4 w-4 sm:h-5 sm:w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
                 </svg>
                 <span className="text-xs sm:text-sm">Inscription en cours...</span>
+              </span>
+            ) : checkingEmail ? (
+              <span className="flex items-center">
+                <svg className="animate-spin -ml-1 mr-2 sm:mr-3 h-4 w-4 sm:h-5 sm:w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                </svg>
+                <span className="text-xs sm:text-sm">Vérification de l'email...</span>
+              </span>
+            ) : checkingPseudo ? (
+              <span className="flex items-center">
+                <svg className="animate-spin -ml-1 mr-2 sm:mr-3 h-4 w-4 sm:h-5 sm:w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                </svg>
+                <span className="text-xs sm:text-sm">Vérification du pseudo...</span>
               </span>
             ) : isComplete ? (<motion.span
               className="flex items-center"

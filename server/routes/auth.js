@@ -90,4 +90,8 @@ router.post("/avatar", authenticate, authController.uploadAvatar);
 // Vérifier la disponibilité du pseudo (route publique)
 router.get("/check-pseudo", pseudoController.checkPseudoAvailability);
 
+// Vérifier la disponibilité de l'email (route publique)
+const emailController = require("../controllers/emailController");
+router.get("/check-email", emailController.checkEmailAvailability);
+
 module.exports = router;
