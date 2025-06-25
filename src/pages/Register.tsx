@@ -737,18 +737,19 @@ const Register = () => {
   if (user) {
     return <Navigate to="/app" />;
   }
-
   return (
     <PageTransition type="slide" className="w-full h-screen">    <div className="min-h-screen w-full bg-gray-100 dark:bg-gray-900 flex justify-center items-center py-1 xs:py-2 px-1 sm:px-4 md:py-8 auth-fullscreen-page">        <div className="absolute top-1 xs:top-2 left-1 xs:left-2 sm:top-4 sm:left-4 z-10">
-      <Link to="/" className="flex items-center text-gray-700 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400 transition-colors">
+      <Link
+        to="/"
+        className="flex items-center px-2 py-1 sm:px-3 sm:py-1.5 rounded-md bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm hover:bg-white dark:hover:bg-gray-700 text-gray-700 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400 shadow-sm transition-all duration-200"
+      >
         <ArrowLeft size={14} className="mr-1 xs:mr-1.5" />
-        <span className="text-[10px] xs:text-xs sm:text-sm">Retour</span>
+        <span className="text-[10px] xs:text-xs sm:text-sm font-medium">Retour à l'accueil</span>
       </Link>
     </div>
 
-      <div className="flex w-full max-w-5xl rounded-lg sm:rounded-xl shadow-lg overflow-hidden h-auto md:h-[520px] bg-white dark:bg-gray-800 auth-container scale-[0.85] xs:scale-90 sm:scale-100">
-        {/* Partie gauche avec slider d'images */}
-        <div className="hidden md:block md:w-1/2 relative auth-image-slider">
+      <div className="flex w-full max-w-5xl rounded-lg sm:rounded-xl shadow-lg overflow-hidden h-auto md:h-[520px] bg-white dark:bg-gray-800 auth-container scale-[0.85] xs:scale-90 sm:scale-100">        {/* Partie gauche avec slider d'images - visible même sur mobile en version réduite */}
+        <div className="w-0 xs:w-1/4 sm:w-1/3 md:w-1/2 relative auth-image-slider">
           {slideImages.map((image, index) => (<div
             key={index}
             className={`absolute inset-0 transition-opacity duration-1000 ease-in-out auth-image-slide ${index === slideIndex ? 'opacity-100' : 'opacity-0'}`}
@@ -759,7 +760,8 @@ const Register = () => {
               backgroundRepeat: 'no-repeat',
               backgroundColor: '#f0f9ff', /* Bleu très clair */
             }}
-          >              <div className="absolute inset-0 auth-image-overlay flex items-end p-8">
+          >
+            <div className="absolute inset-0 auth-image-overlay flex items-end p-8">
               <div className="text-white">
                 <h3 className="text-2xl font-bold mb-2 text-shadow">ServiceBooking {isProfessional ? 'Pro' : ''}</h3>
                 <p className="text-sm opacity-90 text-shadow">
@@ -769,9 +771,12 @@ const Register = () => {
                 </p>
               </div>
             </div>
+
           </div>
           ))}
-        </div>          {/* Partie droite avec formulaire */}        <div className="w-full md:w-1/2 bg-white dark:bg-gray-800 p-3 sm:p-5 md:p-6 lg:p-8 flex flex-col justify-between register-form">
+        </div>          
+        {/* Partie droite avec formulaire */}        
+        <div className="w-full xs:w-3/4 sm:w-2/3 md:w-1/2 bg-white dark:bg-gray-800 p-3 sm:p-5 md:p-6 lg:p-8 flex flex-col justify-between register-form">
           <div>
             {/* En-tête */}
             <div className="flex items-center mb-3 sm:mb-6">

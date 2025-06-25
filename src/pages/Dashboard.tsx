@@ -129,10 +129,8 @@ const Dashboard = () => {
                         const appointmentDate = new Date(a.date);
                         const today = new Date();
                         return appointmentDate.toDateString() === today.toDateString() && a.status === 'confirmed';
-                      }).length}
-                    </dd>                    <div className="mt-4">
-                      <Link
-                        to="/appointments?timeFilter=ongoing&statusFilter=confirmed"
+                      }).length}                    </dd>                    <div className="mt-4">                      <Link
+                        to="/app/appointments?statusFilter=confirmed&timeFilter=ongoing"
                         className="inline-flex items-center px-4 py-2 rounded-lg bg-white/20 text-white text-sm font-medium hover:bg-white/30 transition-colors duration-200 backdrop-blur-sm"
                       >
                         Voir
@@ -145,13 +143,12 @@ const Dashboard = () => {
                     <dt className="text-sm font-medium text-amber-50 truncate">En attente</dt>
                     <dd className="mt-2 text-4xl font-bold text-white">
                       {appointments.filter(a => a.status === 'pending').length}
-                    </dd>                    <div className="mt-4">
-                      <Link
-                        to="/appointments?statusFilter=pending"
-                        className="inline-flex items-center px-4 py-2 rounded-lg bg-white/20 text-white text-sm font-medium hover:bg-white/30 transition-colors duration-200 backdrop-blur-sm"
-                      >
-                        Voir
-                      </Link>
+                    </dd>                    <div className="mt-4">                      <Link
+                      to="/app/appointments?statusFilter=pending"
+                      className="inline-flex items-center px-4 py-2 rounded-lg bg-white/20 text-white text-sm font-medium hover:bg-white/30 transition-colors duration-200 backdrop-blur-sm"
+                    >
+                      Voir
+                    </Link>
                     </div>
                   </div>
                 </div>{/* Taux de complétion */}

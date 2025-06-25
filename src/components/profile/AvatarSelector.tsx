@@ -55,10 +55,17 @@ const AvatarSelector = ({ currentAvatar, onAvatarSelect, userFirstName = '' }: A
     } catch (err) {
       console.error('Erreur lors de la sélection de l\'avatar:', err);
     }
-  };  const generateInitialAvatar = async () => {
+  }; const generateInitialAvatar = async () => {
+    // Extraire le code couleur sans le # pour l'insérer dans le nom du fichier
+    const colorCode = bgColor.replace('#', '');
+
     // Création du contenu SVG avec les initiales et la couleur choisie
+    // Ajout de métadonnées sur la couleur pour faciliter la récupération ultérieure
     const svgContent = `
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="200" height="200">
+  <metadata>
+    <color>${bgColor}</color>
+  </metadata>
   <circle cx="50" cy="50" r="50" fill="${bgColor}" />
   <text x="50" y="50" dy="0.35em" font-family="Arial, sans-serif" font-size="${initials.length > 1 ? '35' : '40'}" font-weight="bold" text-anchor="middle" fill="white">
     ${initials.toUpperCase()}
@@ -69,16 +76,17 @@ const AvatarSelector = ({ currentAvatar, onAvatarSelect, userFirstName = '' }: A
       // Création d'une data URL en base64 pour le SVG
       const base64Content = btoa(svgContent);
       const dataUrl = `data:image/svg+xml;base64,${base64Content}`;
-      
-      console.log('Avatar avec initiales créé:', { 
+
+      console.log('Avatar avec initiales créé:', {
         initiales: initials,
         couleur: bgColor,
+        colorCode: colorCode,
         taille: base64Content.length
       });
-      
+
       // Appel de la fonction d'upload avec la data URL
       await onAvatarSelect(dataUrl);
-      
+
       // Fermeture des sélecteurs après réussite
       setShowInitialsCreator(false);
       setShowAvatarSelector(false);
@@ -109,15 +117,14 @@ const AvatarSelector = ({ currentAvatar, onAvatarSelect, userFirstName = '' }: A
             <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
               <Camera className="w-8 h-8 text-white" />
             </div>
-          </>
-        ) : (
-          <div className="w-full h-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+          </>) : (
+          <div className="w-full h-full bg-blue-500 flex items-center justify-center" style={{ backgroundColor: bgColor || '#3b82f6' }}>
             {userFirstName ? (
-              <span className="text-4xl font-bold text-gray-500 dark:text-gray-400">
+              <span className="text-4xl font-bold text-white">
                 {userFirstName.charAt(0).toUpperCase()}
               </span>
             ) : (
-              <User className="w-12 h-12 text-gray-400 dark:text-gray-500" />
+              <User className="w-12 h-12 text-white" />
             )}
           </div>
         )}
@@ -133,21 +140,24 @@ const AvatarSelector = ({ currentAvatar, onAvatarSelect, userFirstName = '' }: A
               </button>
             </div>
 
-            <div className="space-y-4">
-              <div className="flex space-x-2 border-b border-gray-200 dark:border-gray-700 pb-2">
-                <button
-                  className={`px-3 py-2 ${!showInitialsCreator ? 'font-medium text-blue-600 border-b-2 border-blue-500' : 'text-gray-500'}`}
-                  onClick={() => setShowInitialsCreator(false)}
-                >
-                  Avatars prédéfinis
-                </button>
-                <button
-                  className={`px-3 py-2 ${showInitialsCreator ? 'font-medium text-blue-600 border-b-2 border-blue-500' : 'text-gray-500'}`}
-                  onClick={() => setShowInitialsCreator(true)}
-                >
-                  Créer avec initiales
-                </button>
-              </div>
+            <div className="space-y-4">              <div className="flex space-x-2 border-b border-gray-200 dark:border-gray-700 pb-2">
+              <button
+                className={`px-3 py-2 ${!showInitialsCreator
+                  ? 'font-medium text-blue-600 dark:text-blue-400 border-b-2 border-blue-500 dark:border-blue-400'
+                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'}`}
+                onClick={() => setShowInitialsCreator(false)}
+              >
+                Avatars prédéfinis
+              </button>
+              <button
+                className={`px-3 py-2 ${showInitialsCreator
+                  ? 'font-medium text-blue-600 dark:text-blue-400 border-b-2 border-blue-500 dark:border-blue-400'
+                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'}`}
+                onClick={() => setShowInitialsCreator(true)}
+              >
+                Créer avec initiales
+              </button>
+            </div>
 
               {!showInitialsCreator ? (
                 <div className="grid grid-cols-4 gap-3">
@@ -167,50 +177,44 @@ const AvatarSelector = ({ currentAvatar, onAvatarSelect, userFirstName = '' }: A
                 </div>
               ) : (
                 <div className="space-y-4">
-                  <div>
-                    <label htmlFor="initials" className="block text-sm font-medium mb-1">Initiales</label>
+                  <div>                    <label htmlFor="initials" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Initiales</label>
                     <input
                       type="text"
                       id="initials"
                       value={initials}
                       onChange={(e) => setInitials(e.target.value.substring(0, 2))}
                       maxLength={2}
-                      className="w-full px-3 py-2 border rounded"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-gray-900 dark:text-white bg-white dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       placeholder="Ex: AB"
                     />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Couleur de fond</label>
+                  </div>                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Couleur de fond</label>
                     <div className="grid grid-cols-4 gap-2">
                       {avatarColors.map((color, index) => (
                         <button
                           key={index}
                           type="button"
                           onClick={() => setBgColor(color)}
-                          className={`w-8 h-8 rounded-full ${bgColor === color ? 'ring-2 ring-offset-2' : ''}`}
+                          className={`w-8 h-8 rounded-full ${bgColor === color ? 'ring-2 ring-offset-2 ring-blue-500 dark:ring-blue-400' : ''}`}
                           style={{ backgroundColor: color }}
+                          aria-label={`Couleur ${index + 1}`}
                         />
                       ))}
                     </div>
-                  </div>
-
-                  <div className="flex justify-center my-4">
-                    <div className="w-20 h-20 rounded-full" style={{ backgroundColor: bgColor }}>
+                  </div>                  <div className="flex justify-center my-4">
+                    <div className="w-20 h-20 rounded-full shadow-md" style={{ backgroundColor: bgColor }}>
                       <div className="flex items-center justify-center h-full">
                         <span className="text-2xl font-bold text-white">
                           {initials.toUpperCase() || '?'}
                         </span>
                       </div>
                     </div>
-                  </div>
-
-                  <div className="flex justify-end">
+                  </div>                  <div className="flex justify-end">
                     <button
                       type="button"
                       onClick={generateInitialAvatar}
                       disabled={!initials}
-                      className={`px-4 py-2 bg-blue-600 text-white rounded ${!initials ? 'opacity-50' : 'hover:bg-blue-700'}`}
+                      className={`px-4 py-2 bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white rounded-md shadow-sm transition-colors ${!initials ? 'opacity-50 cursor-not-allowed' : ''}`}
                     >
                       Créer
                     </button>
