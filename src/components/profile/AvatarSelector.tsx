@@ -15,13 +15,60 @@ const AvatarSelector = ({ currentAvatar, onAvatarSelect, userFirstName = '' }: A
   const [showInitialsCreator, setShowInitialsCreator] = useState(false);
   const [initials, setInitials] = useState(userFirstName ? userFirstName.charAt(0).toUpperCase() : '');
   const [bgColor, setBgColor] = useState('#3b82f6');
+  const [extractedInitials, setExtractedInitials] = useState<string | null>(null);
+  const [extractedColor, setExtractedColor] = useState<string | null>(null);
+  // Fonction pour extraire les métadonnées d'un SVG
+  const extractSvgMetadata = async (svgUrl: string): Promise<{ color?: string, initials?: string }> => {
+    try {
+      // Préfixer l'URL si nécessaire
+      let fullUrl = svgUrl;
+      if (svgUrl.startsWith('/avatars/') || svgUrl.startsWith('/uploads/')) {
+        fullUrl = getFullMediaUrl(svgUrl);
+      }
+
+      console.log('Extraction des métadonnées SVG depuis:', fullUrl);
+
+      // Récupérer le contenu SVG
+      const response = await fetch(fullUrl);
+      const svgContent = await response.text();      // Extraire la couleur des métadonnées
+      const colorMatch = svgContent.match(/<metadata>\s*<color>(.*?)<\/color>\s*<\/metadata>/);
+      const color = colorMatch ? colorMatch[1] : undefined;
+
+      // Extraire les initiales du texte SVG
+      const initialsMatch = svgContent.match(/<text.*?>([^<]+)<\/text>/s);
+      const initials = initialsMatch ? initialsMatch[1].trim() : undefined;
+
+      console.log('Métadonnées extraites:', { color, initials });
+      return { color, initials };
+    } catch (err) {
+      console.error('Erreur lors de l\'extraction des métadonnées SVG:', err);
+      return {};
+    }
+  };
 
   useEffect(() => {
     if (currentAvatar) {
       isAvatarAccessible(currentAvatar)
-        .then(isValid => {
+        .then(async (isValid) => {
           setIsCurrentAvatarValid(isValid);
-          if (!isValid) console.warn(`L'avatar ${currentAvatar} n'est pas accessible`);
+          if (!isValid) {
+            console.warn(`L'avatar ${currentAvatar} n'est pas accessible`);
+          } else if (currentAvatar.startsWith('/uploads/') && currentAvatar.endsWith('.svg')) {
+            // Si c'est un avatar SVG personnalisé, extraire les métadonnées
+            try {
+              const metadata = await extractSvgMetadata(currentAvatar);
+              if (metadata.color) {
+                setExtractedColor(metadata.color);
+                setBgColor(metadata.color); // Préremplir le sélecteur avec la couleur extraite
+              }
+              if (metadata.initials) {
+                setExtractedInitials(metadata.initials);
+                setInitials(metadata.initials); // Préremplir le champ d'initiales
+              }
+            } catch (error) {
+              console.error('Erreur lors de l\'extraction des métadonnées SVG:', error);
+            }
+          }
         })
         .catch(() => {
           setIsCurrentAvatarValid(false);
@@ -117,9 +164,13 @@ const AvatarSelector = ({ currentAvatar, onAvatarSelect, userFirstName = '' }: A
             <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
               <Camera className="w-8 h-8 text-white" />
             </div>
-          </>) : (
-          <div className="w-full h-full bg-blue-500 flex items-center justify-center" style={{ backgroundColor: bgColor || '#3b82f6' }}>
-            {userFirstName ? (
+          </>) : (<div className="w-full h-full flex items-center justify-center"
+            style={{ backgroundColor: extractedColor || bgColor || '#3b82f6' }}>
+            {extractedInitials ? (
+              <span className="text-4xl font-bold text-white">
+                {extractedInitials}
+              </span>
+            ) : userFirstName ? (
               <span className="text-4xl font-bold text-white">
                 {userFirstName.charAt(0).toUpperCase()}
               </span>

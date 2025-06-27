@@ -1,0 +1,64 @@
+/* Styles pour le slider d'images */
+
+.auth-image-slide {
+  opacity: 0;
+  transition: opacity 1.2s ease-in-out;
+  will-change: opacity;
+}
+
+.auth-image-slide.active {
+  opacity: 1;
+}
+
+/* Ajout pour les images chargées */
+.auth-image-slide.loaded {
+  transition: opacity 0.8s ease-in-out;
+}
+
+.auth-image-slide.active.loaded {
+  opacity: 1;
+}
+
+.auth-image-slider .slide-dots {
+  position: absolute;
+  bottom: 16px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+
+.auth-image-slider .slide-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.auth-image-slider .slide-dot.active {
+  width: 16px;
+  border-radius: 4px;
+  background-color: white;
+}
+
+/* Animation de fade-in pour le chargement progressif */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.auth-image-slider {
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+/* Style pour l'image en cours de chargement */
+.auth-image-slide.loading {
+  background-color: rgba(0, 0, 0, 0.1);
+}

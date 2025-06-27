@@ -1,0 +1,44 @@
+/* Optimisations pour le chargement des images en arrière-plan */
+.preload-bg-image {
+  transition: opacity 300ms ease-in-out;
+  opacity: 0;
+  background-color: rgba(30, 58, 138, 0.4); /* Fond bleu en attendant l'image */
+  background-size: cover !important;
+  background-position: center !important;
+  background-repeat: no-repeat !important;
+}
+
+.preload-bg-image.loaded {
+  opacity: 1;
+}
+
+/* Amélioration de performance pour les transitions */
+.bg-image-container {
+  will-change: opacity;
+  transform: translateZ(0); /* Active l'accélération GPU */
+  backface-visibility: hidden;
+}
+
+/* Spinner de chargement */
+.spinner {
+  width: 2rem;
+  height: 2rem;
+  border: 0.25rem solid rgba(59, 130, 246, 0.3);
+  border-top-color: rgba(59, 130, 246, 1);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  z-index: 20;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Styles pour les images de secours (SVG) */
+.fallback-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}

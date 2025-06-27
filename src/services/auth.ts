@@ -9,6 +9,8 @@ interface User {
   avatar?: string;
   pseudo?: string;
   telephone?: string; // Renommé pour correspondre au backend
+  avatarColor?: string;
+  avatarInitials?: string;
 }
 
 interface RegisterData {
@@ -38,6 +40,8 @@ interface ProfileUpdateData {
   email?: string;
   avatar?: string;
   isPresetAvatar?: boolean;
+  avatarColor?: string;
+  avatarInitials?: string;
 }
 
 interface PasswordChangeData {
@@ -218,7 +222,7 @@ const authService = {
     const response = await apiClient.get<User>("/auth/me");
     return response.data;
   },
-
+  
   updateProfile: async (
     userData: ProfileUpdateData
   ): Promise<{ user: User }> => {
@@ -229,7 +233,24 @@ const authService = {
 
     // Update stored user data
     if (response.data.user) {
-      localStorage.setItem("user", JSON.stringify(response.data.user));
+      // Ajouter les métadonnées d'avatar à l'objet utilisateur si elles sont présentes
+      const updatedUser = {
+        ...response.data.user,
+      };
+
+      // Conserver les données de couleur et d'initiales si elles ont été fournies
+      if (userData.avatarColor) {
+        updatedUser.avatarColor = userData.avatarColor;
+      }
+      if (userData.avatarInitials) {
+        updatedUser.avatarInitials = userData.avatarInitials;
+      }
+
+      // Stocker l'utilisateur mis à jour
+      localStorage.setItem("user", JSON.stringify(updatedUser));
+
+      // Mettre à jour la réponse
+      response.data.user = updatedUser;
     }
 
     return response.data;

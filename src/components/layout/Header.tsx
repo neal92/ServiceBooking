@@ -4,15 +4,16 @@ import { Menu, Bell, Sun, Moon, LogOut } from 'lucide-react';
 import { getFullMediaUrl } from '../../utils/config';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTheme } from '../../contexts/ThemeContext';
 
 interface HeaderProps {
   openSidebar: () => void;
 }
 
 const Header = ({ openSidebar }: HeaderProps) => {
-  const [darkMode, setDarkMode] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const { user, logout } = useAuth();
+  const { darkMode, toggleDarkMode } = useTheme();
   const navigate = useNavigate();
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -29,29 +30,6 @@ const Header = ({ openSidebar }: HeaderProps) => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, []);
-
-  // Effect to check initial theme preference
-  useEffect(() => {
-    const isDark = localStorage.getItem('darkMode') === 'true';
-    setDarkMode(isDark);
-    if (isDark) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, []);
-
-  // Toggle theme function
-  const toggleTheme = () => {
-    setDarkMode(!darkMode);
-    if (!darkMode) {
-      document.documentElement.classList.add('dark');
-      localStorage.setItem('darkMode', 'true');
-    } else {
-      document.documentElement.classList.remove('dark');
-      localStorage.setItem('darkMode', 'false');
-    }
-  };
 
   return (
     <header className="sticky top-0 z-10 flex-shrink-0 flex h-16 bg-white dark:bg-gray-800 shadow">
@@ -71,7 +49,7 @@ const Header = ({ openSidebar }: HeaderProps) => {
           {/* Theme toggle button */}
           <button
             type="button"
-            onClick={toggleTheme}
+            onClick={toggleDarkMode}
             className="bg-white dark:bg-gray-700 p-1 sm:p-1.5 rounded-full text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
             aria-label="Changer le thème"
           >
@@ -101,9 +79,9 @@ const Header = ({ openSidebar }: HeaderProps) => {
               <span className="sr-only">Open user menu</span>
               {user?.avatar ? (
                 <div className="h-8 w-8 rounded-full overflow-hidden">
-                  <img 
+                  <img
                     src={getFullMediaUrl(user.avatar)}
-                    alt={`Avatar de ${user.firstName}`} 
+                    alt={`Avatar de ${user.firstName}`}
                     className="w-full h-full object-cover"
                     onError={(e) => {
                       console.error('Erreur de chargement de l\'avatar dans le header:', e);

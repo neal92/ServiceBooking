@@ -23,7 +23,8 @@ CREATE TABLE IF NOT EXISTS categories (
     name VARCHAR(100) NOT NULL,
     description TEXT,
     color VARCHAR(20),
-    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    image VARCHAR(255),
 );
 
 -- Create services table
@@ -33,6 +34,7 @@ CREATE TABLE IF NOT EXISTS services (
     description TEXT,
     price DECIMAL(10, 2) NOT NULL,
     duration INT NOT NULL COMMENT 'Duration in minutes',
+    image VARCHAR(255),
     categoryId INT,
     createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (categoryId) REFERENCES categories(id) ON DELETE SET NULL
@@ -43,7 +45,6 @@ CREATE TABLE IF NOT EXISTS appointments (
     id INT AUTO_INCREMENT PRIMARY KEY,
     clientName VARCHAR(100) NOT NULL,
     clientEmail VARCHAR(100) NOT NULL,
-    clientPhone VARCHAR(20),
     serviceId INT,
     date DATE NOT NULL,
     time TIME NOT NULL,

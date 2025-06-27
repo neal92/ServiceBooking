@@ -2,11 +2,14 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link, Navigate, useLocation } from 'react-router-dom';
 import { Calendar, AlertCircle, ArrowLeft, Briefcase, User, ChevronRight, ChevronLeft, Mail, Lock, AtSign, Eye, EyeOff, Check } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { getFullMediaUrl } from '../utils/config';
 import PageTransition from '../components/layout/PageTransition';
 import { motion, AnimatePresence } from 'framer-motion';
 import '../styles/form-styles.css';
 import '../styles/auth-styles.css';
 import '../styles/register-form.css';
+import '../styles/register-images.css';
+import '../styles/image-preload.css';
 
 const Register = () => {
   // Récupérer le type d'utilisateur depuis la navigation
@@ -22,11 +25,9 @@ const Register = () => {
   const [pseudo, setPseudo] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-
   // États pour la gestion des étapes du formulaire
   const [currentStep, setCurrentStep] = useState(0);
   const [direction, setDirection] = useState(0); // -1: gauche, 1: droite, 0: initial
-  const [slideIndex, setSlideIndex] = useState(0);
   // Messages d'erreur
   const [passwordError, setPasswordError] = useState('');
   const [emailError, setEmailError] = useState('');
@@ -61,26 +62,28 @@ const Register = () => {
   const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   const PASSWORD_REGEX = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6,}$/; // Au moins 6 caractères, avec 1 lettre et 1 chiffre
   const NAME_REGEX = /^[A-Za-zÀ-ÖØ-öø-ÿ\s']{2,}$/; // Au moins 2 caractères, lettres et espaces
-  const PSEUDO_REGEX = /^[a-z0-9_]{3,20}$/; // Lettres minuscules, chiffres, underscore, 3-20 caractères    // Images pour le slider (thème rendez-vous professionnels et entreprise)
-  const slideImages = [
-    '/images/slides/team-meeting.svg',      // Image d'équipe locale
-    '/images/slides/business-meeting.svg',  // Image de réunion professionnelle locale
-    '/images/slides/calendar-planning.svg', // Image de calendrier/planning locale
-  ];
+  const PSEUDO_REGEX = /^[a-z0-9_]{3,20}$/; // Lettres minuscules, chiffres, underscore, 3-20 caractères  // Fonction simplifiée pour construire les URLs d'image correctement
+  const getImageUrl = (path: string) => {
+    // Utiliser directement getFullMediaUrl pour construire l'URL
+    return getFullMediaUrl(path);
+  };
 
-  // Préchargement des images et changement toutes les 7 secondes
-  useEffect(() => {
-    // Précharger les images
-    slideImages.forEach(src => {
-      const img = new Image();
-      img.src = src;
-    });
+  // Utiliser l'image correcte selon le type de compte
+  const professionalImage = getImageUrl('/images/slides/professional.jpg');
+  const clientImage = getImageUrl('/images/slides/client.jpg');
 
-    const interval = setInterval(() => {
-      setSlideIndex((prevIndex) => (prevIndex + 1) % slideImages.length);
-    }, 7000);
-    return () => clearInterval(interval);
-  }, []);  // Variants pour les animations
+  // Fallback images en cas d'erreur
+  const professionalFallback = getImageUrl('/images/slides/business-meeting.svg');
+  const clientFallback = getImageUrl('/images/slides/calendar-planning.svg');
+
+  // URL finale de l'image d'arrière-plan
+  const backgroundImage = isProfessional ? professionalImage : clientImage;
+
+  // Log pour déboguer l'URL de l'image
+  console.log('Register page - Background image URL:', backgroundImage);
+  console.log('Register page - User type:', isProfessional ? 'professional' : 'client');
+
+  // Variants pour les animations
   const slideVariants = {
     enter: (direction: number) => ({
       x: direction > 0 ? window.innerWidth < 640 ? 300 : 800 : window.innerWidth < 640 ? -300 : -800,
@@ -746,22 +749,48 @@ const Register = () => {
         <ArrowLeft size={14} className="mr-1 xs:mr-1.5" />
         <span className="text-[10px] xs:text-xs sm:text-sm font-medium">Retour à l'accueil</span>
       </Link>
-    </div>
-
-      <div className="flex w-full max-w-5xl rounded-lg sm:rounded-xl shadow-lg overflow-hidden h-auto md:h-[520px] bg-white dark:bg-gray-800 auth-container scale-[0.85] xs:scale-90 sm:scale-100">        {/* Partie gauche avec slider d'images - visible même sur mobile en version réduite */}
-        <div className="w-0 xs:w-1/4 sm:w-1/3 md:w-1/2 relative auth-image-slider">
-          {slideImages.map((image, index) => (<div
-            key={index}
-            className={`absolute inset-0 transition-opacity duration-1000 ease-in-out auth-image-slide ${index === slideIndex ? 'opacity-100' : 'opacity-0'}`}
+    </div>      <div className="flex w-full max-w-5xl rounded-lg sm:rounded-xl shadow-lg overflow-hidden h-auto md:h-[520px] bg-white dark:bg-gray-800 auth-container scale-[0.85] xs:scale-90 sm:scale-100">
+        {/* Partie gauche avec image fixe */}        <div className="w-0 xs:w-1/4 sm:w-1/3 md:w-1/2 relative auth-image-slider">
+          {/* Div principal avec image de fond */}
+          <div
+            className="absolute inset-0 auth-image-slide"
             style={{
-              backgroundImage: `url(${image})`,
-              backgroundSize: 'contain',
+              backgroundImage: `url(${backgroundImage})`,
+              backgroundSize: 'cover',
               backgroundPosition: 'center',
               backgroundRepeat: 'no-repeat',
-              backgroundColor: '#f0f9ff', /* Bleu très clair */
             }}
           >
-            <div className="absolute inset-0 auth-image-overlay flex items-end p-8">
+            {/* Image fallback SVG visible en cas d'erreur */}
+            <img
+              src={backgroundImage}
+              alt="Background"
+              className="fallback-image"
+              onLoad={(e) => {
+                console.log("Image chargée avec succès:", backgroundImage);
+                (e.target as HTMLElement).className = "fallback-image";  // Garder cachée si le fond fonctionne
+              }}
+              onError={(e) => {
+                console.error("Erreur de chargement d'image:", backgroundImage);
+                // Afficher l'image de secours
+                const fallbackSrc = isProfessional
+                  ? getFullMediaUrl('/images/slides/business-meeting.svg')
+                  : getFullMediaUrl('/images/slides/calendar-planning.svg');
+                console.log("Utilisation de l'image de secours:", fallbackSrc);
+                (e.target as HTMLImageElement).src = fallbackSrc;
+                (e.target as HTMLElement).className = "fallback-image show"; // Rendre visible
+
+                // Désactiver aussi l'image de fond qui a échoué
+                const parent = (e.target as HTMLElement).parentElement;
+                if (parent) {
+                  parent.style.backgroundImage = 'none';
+                  parent.style.backgroundColor = '#1e3a8a'; // Bleu foncé
+                }
+              }}
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
+            <div className="absolute inset-0 bg-blue-600/0 hover:bg-blue-600/20 transition-colors duration-300"></div>
+            <div className="absolute inset-0 flex items-end p-8">
               <div className="text-white">
                 <h3 className="text-2xl font-bold mb-2 text-shadow">ServiceBooking {isProfessional ? 'Pro' : ''}</h3>
                 <p className="text-sm opacity-90 text-shadow">
@@ -773,9 +802,8 @@ const Register = () => {
             </div>
 
           </div>
-          ))}
-        </div>          
-        {/* Partie droite avec formulaire */}        
+        </div>
+        {/* Partie droite avec formulaire */}
         <div className="w-full xs:w-3/4 sm:w-2/3 md:w-1/2 bg-white dark:bg-gray-800 p-3 sm:p-5 md:p-6 lg:p-8 flex flex-col justify-between register-form">
           <div>
             {/* En-tête */}
@@ -956,14 +984,16 @@ const Register = () => {
               </span>
             )}
             </motion.button>
-          </motion.div>          {/* Lien de connexion */}
-          <div className="mt-2 xs:mt-3 sm:mt-6 text-center">
-            <p className="text-[11px] xs:text-xs sm:text-sm text-gray-600 dark:text-gray-400">
-              Déjà un compte ?{' '}
-              <Link to="/login" className="font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300 hover:underline">
-                Connectez-vous
-              </Link>
-            </p>
+          </motion.div>          {/* Séparateur et lien de connexion */}
+          <div className="mt-8 pt-4 border-t border-gray-200 dark:border-gray-700">
+            <div className="text-center">
+              <p className="text-[11px] xs:text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+                Déjà un compte ?{' '}
+                <Link to="/login" className="font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300 hover:underline">
+                  Connectez-vous
+                </Link>
+              </p>
+            </div>
           </div>
         </div>
       </div>

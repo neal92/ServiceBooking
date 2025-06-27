@@ -48,6 +48,29 @@ router.post(
 // Get current user (protected route)
 router.get("/me", authenticate, authController.getCurrentUser);
 
+// Update user profile (protected route)
+router.put("/profile", 
+  authenticate, 
+  [
+    body("firstName").optional().notEmpty().withMessage("Le prénom ne peut pas être vide"),
+    body("lastName").optional(),
+    body("email").optional().isEmail().withMessage("Une adresse email valide est requise"),
+    body("phone").optional().isMobilePhone(["fr-FR", "any"]).withMessage("Le numéro de téléphone doit être valide"),
+    body("pseudo").optional().isLength({ min: 3 }).withMessage("Le pseudo doit contenir au moins 3 caractères"),
+  ],
+  authController.updateProfile
+);
+
+// Change password (protected route)
+router.post("/change-password", 
+  authenticate,
+  [
+    body("currentPassword").notEmpty().withMessage("Le mot de passe actuel est requis"),
+    body("newPassword").isLength({ min: 6 }).withMessage("Le nouveau mot de passe doit comporter au moins 6 caractères"),
+  ],
+  authController.changePassword
+);
+
 // Update profile (protected route)
 router.put(
   "/profile",

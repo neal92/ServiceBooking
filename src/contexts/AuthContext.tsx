@@ -10,6 +10,8 @@ interface User {
   avatar?: string;
   pseudo?: string;
   phone?: string;
+  avatarColor?: string;
+  avatarInitials?: string;
 }
 
 interface AuthContextType {
@@ -27,7 +29,7 @@ interface AuthContextType {
     role?: 'user' | 'admin';
   }) => Promise<void>;
   logout: () => void;
-  updateUser: (data: { firstName?: string; lastName?: string; email?: string; avatar?: string; isPresetAvatar?: boolean }) => Promise<void>;
+  updateUser: (data: { firstName?: string; lastName?: string; email?: string; avatar?: string; isPresetAvatar?: boolean; avatarColor?: string; avatarInitials?: string }) => Promise<void>;
   changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
   uploadAvatar: (file: File) => Promise<void>;
 }
@@ -90,6 +92,31 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       window.removeEventListener('auth-token-expired', handleTokenExpired as EventListener);
     };
   }, []);
+  // Fonction pour extraire les métadonnées d'un avatar SVG
+  const extractSvgMetadata = async (svgUrl: string): Promise<{ color?: string, initials?: string }> => {
+    try {
+      // Préfixer l'URL si nécessaire
+      let fullUrl = svgUrl;
+      if (svgUrl.startsWith('/avatars/') || svgUrl.startsWith('/uploads/')) {
+        fullUrl = `http://localhost:5000${svgUrl}`;
+      }
+
+      // Récupérer le contenu SVG
+      const response = await fetch(fullUrl);
+      const svgContent = await response.text();      // Extraire la couleur des métadonnées
+      const colorMatch = svgContent.match(/<metadata>\s*<color>(.*?)<\/color>\s*<\/metadata>/);
+      const color = colorMatch ? colorMatch[1] : undefined;
+
+      // Extraire les initiales du texte SVG
+      const initialsMatch = svgContent.match(/<text.*?>([^<]+)<\/text>/s);
+      const initials = initialsMatch ? initialsMatch[1].trim() : undefined;
+
+      return { color, initials };
+    } catch (err) {
+      console.error('Erreur lors de l\'extraction des métadonnées SVG:', err);
+      return {};
+    }
+  };
 
   // Effect to log user data and check avatar on mount
   useEffect(() => {
@@ -98,7 +125,32 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       // Tester si l'avatar est accessible
       const img = new Image();
-      img.onload = () => console.log('Avatar chargé avec succès!');
+      img.onload = () => {
+        console.log('Avatar chargé avec succès!');
+
+        // Si c'est un avatar personnalisé (SVG dans uploads), extraire les métadonnées
+        if (user.avatar?.startsWith('/uploads/') && user.avatar?.endsWith('.svg')) {
+          extractSvgMetadata(user.avatar).then(metadata => {
+            if (metadata.color || metadata.initials) {
+              setUser(prevUser => {
+                if (!prevUser) return prevUser;
+
+                const updatedUser = {
+                  ...prevUser,
+                  avatarColor: metadata.color,
+                  avatarInitials: metadata.initials
+                };
+
+                // Mettre à jour également dans le localStorage
+                localStorage.setItem('user', JSON.stringify(updatedUser));
+
+                console.log('Métadonnées extraites et appliquées:', metadata);
+                return updatedUser;
+              });
+            }
+          });
+        }
+      };
       img.onerror = (err) => console.error('Erreur de chargement de l\'avatar:', err);
 
       // Préfixer l'URL si nécessaire
@@ -151,13 +203,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setLoading(false);
     }
   };// Update user profile
-  const updateUser = async (data: { firstName?: string; lastName?: string; email?: string; avatar?: string; isPresetAvatar?: boolean }) => {
+  const updateUser = async (data: { firstName?: string; lastName?: string; email?: string; avatar?: string; isPresetAvatar?: boolean; avatarColor?: string; avatarInitials?: string }) => {
     setLoading(true);
     setError(null);
 
     console.log('Mise à jour du profil avec les données:', {
       ...data,
-      avatar: data.avatar ? 'présent' : 'absent'
+      avatar: data.avatar ? 'présent' : 'absent',
+      avatarColor: data.avatarColor,
+      avatarInitials: data.avatarInitials
     });
 
     try {
@@ -167,16 +221,23 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         avatar: response.user.avatar ? 'présent' : 'absent'
       });
 
+      // Créer un utilisateur mis à jour avec les métadonnées d'avatar si présentes
+      const updatedUser = {
+        ...response.user,
+        avatarColor: data.avatarColor || user?.avatarColor,
+        avatarInitials: data.avatarInitials || user?.avatarInitials
+      };
+
       // Mettre à jour l'état utilisateur
-      setUser(response.user);
+      setUser(updatedUser);
 
       // Mettre à jour l'utilisateur dans le localStorage et déclencher un événement
-      localStorage.setItem('user', JSON.stringify(response.user));
+      localStorage.setItem('user', JSON.stringify(updatedUser));
 
       // Créer et dispatcher un événement de stockage pour informer les autres composants
       const event = new StorageEvent('storage', {
         key: 'user',
-        newValue: JSON.stringify(response.user)
+        newValue: JSON.stringify(updatedUser)
       });
       window.dispatchEvent(event);
 

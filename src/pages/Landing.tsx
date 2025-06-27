@@ -3,40 +3,15 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Calendar, Clock, Users, Shield, Check, Menu, X, Star, UserCheck, PhoneCall, Moon, Sun } from 'lucide-react';
 import RegisterModal from '../components/auth/RegisterModal';
+import { useTheme } from '../contexts/ThemeContext';
 
 const Landing: React.FC = () => {
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  const { darkMode, toggleDarkMode } = useTheme();
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
-
-  // Initialisation du thème en fonction des préférences de l'utilisateur
-  useEffect(() => {
-    const savedTheme = localStorage.getItem('theme');
-    const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-
-    if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
-      setIsDarkMode(true);
-      document.documentElement.classList.add('dark');
-    } else {
-      setIsDarkMode(false);
-      document.documentElement.classList.remove('dark');
-    }
-  }, []);
-
-  // Fonction pour basculer entre les thèmes
-  const toggleDarkMode = () => {
-    if (isDarkMode) {
-      document.documentElement.classList.remove('dark');
-      localStorage.setItem('theme', 'light');
-      setIsDarkMode(false);
-    } else {
-      document.documentElement.classList.add('dark');
-      localStorage.setItem('theme', 'dark');
-      setIsDarkMode(true);
-    }
-  };
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   // Gérer le scroll pour changer l'apparence de la navbar
   useEffect(() => {
@@ -46,10 +21,11 @@ const Landing: React.FC = () => {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
   // Fonctions de redirection
   const handleLoginClick = () => navigate('/login');
   const handleRegisterClick = () => setIsRegisterModalOpen(true);
-  const handleTryClick = () => setIsRegisterModalOpen(true);
+  const handleTryClick = () => setIsDropdownOpen(!isDropdownOpen);
 
   // Fonctions pour gérer la modale d'inscription
   const openRegisterModal = () => setIsRegisterModalOpen(true);
@@ -72,8 +48,8 @@ const Landing: React.FC = () => {
       {/* Navbar */}
       <nav
         className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${isScrolled
-            ? 'bg-white/95 dark:bg-gray-900/95 shadow-md backdrop-blur-sm py-2'
-            : 'bg-transparent py-4'
+          ? 'bg-white/95 dark:bg-gray-900/95 shadow-md backdrop-blur-sm py-2'
+          : 'bg-transparent py-4'
           }`}
       >
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -101,26 +77,53 @@ const Landing: React.FC = () => {
             <div className="hidden md:flex items-center space-x-8">
               <a href="#fonctionnalites" className="text-sm font-medium text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200">Fonctionnalités</a>
               <a href="#temoignages" className="text-sm font-medium text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200">Témoignages</a>
-              <a href="#tarifs" className="text-sm font-medium text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200">Tarifs</a>
-              <button
+              <a href="#tarifs" className="text-sm font-medium text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200">Tarifs</a>              <button
                 onClick={toggleDarkMode}
                 className="text-sm p-2 rounded-full text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-200"
-                aria-label={isDarkMode ? "Passer au mode clair" : "Passer au mode sombre"}
+                aria-label={darkMode ? "Passer au mode clair" : "Passer au mode sombre"}
               >
-                {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
-              </button>
-              <button
-                onClick={handleLoginClick}
-                className="text-sm font-medium text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200"
-              >
-                Connexion
-              </button>
-              <button
-                onClick={handleRegisterClick}
-                className="px-4 py-2 rounded-md bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white text-sm font-medium transition duration-300 hover:shadow-lg"
-              >
-                Inscription
-              </button>
+                {darkMode ? <Sun size={18} /> : <Moon size={18} />}
+              </button>              <div className="relative">
+                <button
+                  onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                  onBlur={() => setTimeout(() => setIsDropdownOpen(false), 200)}
+                  className="flex items-center space-x-1 px-4 py-2 rounded-md bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white text-sm font-medium transition duration-300 hover:shadow-lg"
+                >
+                  <span>Essayer</span>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className={`h-4 w-4 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`}
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+
+                {isDropdownOpen && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg py-1 z-10 ring-1 ring-black ring-opacity-5 transition-all duration-300 ease-in-out animate-fadeIn">
+                    <button
+                      onClick={() => {
+                        handleLoginClick();
+                        setIsDropdownOpen(false);
+                      }}
+                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-blue-50 dark:hover:bg-gray-700"
+                    >
+                      Connexion
+                    </button>
+                    <button
+                      onClick={() => {
+                        handleRegisterClick();
+                        setIsDropdownOpen(false);
+                      }}
+                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-blue-50 dark:hover:bg-gray-700"
+                    >
+                      Inscription
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -149,35 +152,60 @@ const Landing: React.FC = () => {
                 onClick={() => setIsMenuOpen(false)}
               >
                 Tarifs
-              </a>
-              <button
+              </a>              <button
                 onClick={() => {
                   toggleDarkMode();
                   setIsMenuOpen(false);
                 }}
                 className="flex items-center w-full text-left p-2 text-gray-700 dark:text-gray-200 hover:bg-blue-50 dark:hover:bg-gray-700 rounded-md"
               >
-                {isDarkMode ? <Sun size={18} className="mr-2" /> : <Moon size={18} className="mr-2" />}
-                {isDarkMode ? "Mode clair" : "Mode sombre"}
-              </button>
-              <button
-                onClick={() => {
-                  handleLoginClick();
-                  setIsMenuOpen(false);
-                }}
-                className="block w-full text-left p-2 text-gray-700 dark:text-gray-200 hover:bg-blue-50 dark:hover:bg-gray-700 rounded-md"
-              >
-                Connexion
-              </button>
-              <button
-                onClick={() => {
-                  handleRegisterClick();
-                  setIsMenuOpen(false);
-                }}
-                className="block w-full mt-2 px-4 py-2 rounded-md bg-gradient-to-r from-blue-600 to-blue-700 text-white text-sm font-medium"
-              >
-                Inscription
-              </button>
+                {darkMode ? <Sun size={18} className="mr-2" /> : <Moon size={18} className="mr-2" />}
+                {darkMode ? "Mode clair" : "Mode sombre"}
+              </button>              <div className="mt-2">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsDropdownOpen(!isDropdownOpen);
+                  }}
+                  className="flex items-center w-full justify-between p-2 text-gray-700 dark:text-gray-200 hover:bg-blue-50 dark:hover:bg-gray-700 rounded-md bg-gradient-to-r from-blue-600 to-blue-700 text-white"
+                >
+                  <span>Essayer</span>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className={`h-4 w-4 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`}
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+
+                {isDropdownOpen && (
+                  <div className="mt-1 bg-white dark:bg-gray-700 rounded-md shadow-inner overflow-hidden animate-fadeIn">
+                    <button
+                      onClick={() => {
+                        handleLoginClick();
+                        setIsMenuOpen(false);
+                        setIsDropdownOpen(false);
+                      }}
+                      className="block w-full text-left p-2 pl-4 text-gray-700 dark:text-gray-200 hover:bg-blue-50 dark:hover:bg-gray-600"
+                    >
+                      Connexion
+                    </button>
+                    <button
+                      onClick={() => {
+                        handleRegisterClick();
+                        setIsMenuOpen(false);
+                        setIsDropdownOpen(false);
+                      }}
+                      className="block w-full text-left p-2 pl-4 text-gray-700 dark:text-gray-200 hover:bg-blue-50 dark:hover:bg-gray-600"
+                    >
+                      Inscription
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         )}
@@ -194,13 +222,12 @@ const Landing: React.FC = () => {
               <p className="mt-4 text-lg md:text-xl text-gray-600 dark:text-gray-300 animate-fadeIn animation-delay-200">
                 ServiceBooking est une solution complète qui permet aux professionnels de gérer facilement leurs rendez-vous, clients et services.
               </p>
-              <div className="mt-8 flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4 animate-fadeIn animation-delay-300">
-                <button
-                  onClick={handleTryClick}
-                  className="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg text-white font-medium shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                >
-                  Essayer gratuitement
-                </button>
+              <div className="mt-8 flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4 animate-fadeIn animation-delay-300">                <button
+                onClick={() => setIsRegisterModalOpen(true)}
+                className="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg text-white font-medium shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              >
+                Essayer gratuitement
+              </button>
                 <button
                   onClick={handleLoginClick}
                   className="px-6 py-3 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-800 dark:text-white font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-500 focus:ring-offset-2"
@@ -455,9 +482,8 @@ const Landing: React.FC = () => {
                     <Check className="h-5 w-5 text-green-500 mr-2 flex-shrink-0" />
                     <span className="text-gray-600 dark:text-gray-300">Base de donnée clients</span>
                   </li>
-                </ul>
-                <button
-                  onClick={handleTryClick}
+                </ul>                <button
+                  onClick={() => setIsRegisterModalOpen(true)}
                   className="w-full py-3 px-4 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-800 dark:text-white font-medium rounded-lg transition-colors"
                 >
                   Essayer gratuitement
@@ -555,9 +581,8 @@ const Landing: React.FC = () => {
           </h2>
           <p className="text-xl text-blue-100 mb-8 max-w-3xl mx-auto">
             Rejoignez des milliers de professionnels qui utilisent ServiceBooking chaque jour pour simplifier leur vie et développer leur activité.
-          </p>
-          <button
-            onClick={handleTryClick}
+          </p>          <button
+            onClick={() => setIsRegisterModalOpen(true)}
             className="px-8 py-3 bg-white text-blue-600 font-medium text-lg rounded-lg shadow-lg hover:bg-blue-50 transition-all transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-blue-600"
           >
             Commencer maintenant
