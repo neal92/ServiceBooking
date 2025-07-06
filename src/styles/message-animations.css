@@ -1,0 +1,212 @@
+/* Animations et styles pour les messages d'erreur et de succès 
+   Pour améliorer l'accessibilité et la visibilité des alertes */
+
+/* Animation de pulsation subtile pour les notifications */
+@keyframes pulse-subtle {
+  0% {
+    box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.2);
+  }
+  70% {
+    box-shadow: 0 0 0 5px rgba(251, 191, 36, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(251, 191, 36, 0);
+  }
+}
+
+/* Animation de vibration améliorée pour les erreurs graves */
+@keyframes vibrate {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  10%,
+  30%,
+  50%,
+  70%,
+  90% {
+    transform: translateX(-2px);
+  }
+  20%,
+  40%,
+  60%,
+  80% {
+    transform: translateX(2px);
+  }
+}
+
+/* Animation de lueur de bordure */
+@keyframes border-glow {
+  0% {
+    box-shadow: 0 0 2px rgba(239, 68, 68, 0.15);
+  }
+  50% {
+    box-shadow: 0 0 6px rgba(239, 68, 68, 0.3);
+  }
+  100% {
+    box-shadow: 0 0 2px rgba(239, 68, 68, 0.15);
+  }
+}
+
+/* Animation de lueur de bordure pour les succès */
+@keyframes border-glow-success {
+  0% {
+    box-shadow: 0 0 2px rgba(16, 185, 129, 0.15);
+  }
+  50% {
+    box-shadow: 0 0 6px rgba(16, 185, 129, 0.3);
+  }
+  100% {
+    box-shadow: 0 0 2px rgba(16, 185, 129, 0.15);
+  }
+}
+
+/* Classes personnalisées pour les messages d'erreur et de succès */
+.login-error-message {
+  position: relative;
+  overflow: hidden;
+  animation: vibrate 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97) 0.2s both,
+    border-glow 2s infinite;
+  border: 1px solid #dc2626 !important; /* red-600 */
+  box-shadow: 0 0 5px rgba(239, 68, 68, 0.2);
+  transition: all 0.3s ease;
+  font-weight: 400;
+  font-size: 0.75rem !important; /* 12px */
+  line-height: 1.25 !important;
+  background-color: rgba(
+    254,
+    242,
+    242,
+    0.85
+  ) !important; /* red-50 avec opacité */
+}
+
+/* Mode sombre pour le message d'erreur de login */
+.dark .login-error-message {
+  background-color: rgba(
+    127,
+    29,
+    29,
+    0.3
+  ) !important; /* red-900 avec opacité réduite */
+  color: #fca5a5 !important; /* red-300 */
+  border: 1px solid #ef4444 !important; /* red-500 */
+}
+
+/* Effet de surbrillance d'un côté à l'autre pour les erreurs */
+.login-error-message::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(239, 68, 68, 0.1),
+    transparent
+  );
+  animation: slide 2s infinite;
+}
+
+/* Animation pour l'effet de surbrillance */
+@keyframes slide {
+  0% {
+    left: -100%;
+  }
+  50%,
+  100% {
+    left: 100%;
+  }
+}
+
+/* Style pour l'alerte de session expirée */
+.login-session-expired {
+  animation: pulse-subtle 2s infinite;
+  transition: all 0.3s ease;
+}
+
+/* Alerte d'expiration avec effet de clignement */
+@keyframes highlight-blink {
+  0%,
+  100% {
+    background-color: rgba(251, 191, 36, 0.1);
+  }
+  50% {
+    background-color: rgba(251, 191, 36, 0.3);
+  }
+}
+
+.login-session-expired::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(251, 191, 36, 0.1);
+  animation: highlight-blink 2.5s infinite;
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* Animation de rebond améliorée pour les éléments qui apparaissent */
+@keyframes bounce-in-enhanced {
+  0% {
+    opacity: 0;
+    transform: scale(0.8) translateY(-10px);
+  }
+  40% {
+    opacity: 1;
+    transform: scale(1.05) translateY(5px);
+  }
+  60% {
+    transform: scale(0.98) translateY(-3px);
+  }
+  80% {
+    transform: scale(1.01) translateY(2px);
+  }
+  100% {
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Style pour les messages d'alerte */
+.alert-message {
+  animation: bounce-in-enhanced 0.5s ease-out forwards;
+  transform-origin: center bottom;
+}
+
+/* Pour les messages avec nécessité d'attention immédiate */
+.critical-alert {
+  animation: vibrate 0.8s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+  transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
+
+/* Utilisation améliorée du contraste pour l'accessibilité - version plus discrète */
+.high-contrast-error {
+  color: #be123c !important; /* rose-700 */
+  background-color: rgba(
+    255,
+    228,
+    230,
+    0.8
+  ) !important; /* rose-100 avec opacité */
+  border-color: #fb7185 !important; /* rose-400 */
+  font-size: 0.75rem !important; /* 12px */
+}
+
+.high-contrast-success {
+  color: #047857 !important; /* emerald-700 */
+  background-color: rgba(
+    209,
+    250,
+    229,
+    0.8
+  ) !important; /* emerald-100 avec opacité */
+  border-color: #34d399 !important; /* emerald-400 */
+  font-size: 0.75rem !important; /* 12px */
+}

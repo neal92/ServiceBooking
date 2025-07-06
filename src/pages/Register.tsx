@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Link, Navigate, useLocation } from 'react-router-dom';
-import { Calendar, AlertCircle, ArrowLeft, Briefcase, User, ChevronRight, ChevronLeft, Mail, Lock, AtSign, Eye, EyeOff, Check } from 'lucide-react';
+import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { Calendar, AlertCircle, ArrowLeft, Briefcase, User, ChevronRight, ChevronLeft, Mail, Lock, AtSign, Eye, EyeOff, Check, AlertTriangle, UserCheck } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { getFullMediaUrl } from '../utils/config';
 import PageTransition from '../components/layout/PageTransition';
@@ -14,6 +14,7 @@ import '../styles/image-preload.css';
 const Register = () => {
   // Récupérer le type d'utilisateur depuis la navigation
   const location = useLocation();
+  const navigate = useNavigate();
   const userType = location.state?.userType || 'client';
   const isProfessional = userType === 'professional';
 
@@ -48,7 +49,7 @@ const Register = () => {
   // Référence pour l'animation des dots
   const progressDotRefs = useRef<(HTMLDivElement | null)[]>([]);
 
-  const { register, user, loading, error } = useAuth();
+  const { register, user, loading, error, setError } = useAuth();
   // Configuration des étapes du formulaire
   const steps = [
     { title: "Prénom", description: "Comment souhaitez-vous être appelé ?" },
@@ -57,6 +58,11 @@ const Register = () => {
     { title: "Email", description: "Votre adresse email" },
     { title: "Mot de passe", description: "Créez un mot de passe sécurisé" }
   ];
+
+  // Log pour vérifier que les étapes sont bien définies
+  console.log("Configuration des étapes:", steps);
+  console.log(`Nombre d'étapes: ${steps.length}, Étape finale (index): ${steps.length - 1}`);
+
 
   // Regex validations
   const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -78,6 +84,27 @@ const Register = () => {
 
   // URL finale de l'image d'arrière-plan
   const backgroundImage = isProfessional ? professionalImage : clientImage;
+  const fallbackImage = isProfessional ? professionalFallback : clientFallback;
+
+  // État pour suivre si l'image principale a été chargée ou non
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const [imageFailed, setImageFailed] = useState(false);
+
+  // Précharger les images pour améliorer l'expérience utilisateur
+  useEffect(() => {
+    const preloadImages = () => {
+      const imagesToPreload = [professionalImage, clientImage, professionalFallback, clientFallback];
+
+      imagesToPreload.forEach(src => {
+        const img = new Image();
+        img.src = src;
+        img.onload = () => console.log(`Image préchargée: ${src}`);
+        img.onerror = () => console.error(`Échec préchargement: ${src}`);
+      });
+    };
+
+    preloadImages();
+  }, []);
 
   // Log pour déboguer l'URL de l'image
   console.log('Register page - Background image URL:', backgroundImage);
@@ -209,22 +236,37 @@ const Register = () => {
   const validatePassword = (value: string) => {
     if (!PASSWORD_REGEX.test(value)) {
       setPasswordError('Le mot de passe doit contenir au moins 6 caractères, avec au moins une lettre et un chiffre');
+      setIsComplete(false);
       return false;
     }
     if (confirmPassword && value !== confirmPassword) {
       setPasswordError('Les mots de passe ne correspondent pas');
+      setIsComplete(false);
       return false;
     }
     setPasswordError('');
+
+    // Si on est à la dernière étape et que le confirm password est déjà valide, on peut activer le bouton
+    if (currentStep === steps.length - 1 && confirmPassword && confirmPassword === value) {
+      setIsComplete(true);
+    }
+
     return true;
   };
 
   const validateConfirmPassword = (value: string) => {
     if (value !== password) {
       setPasswordError('Les mots de passe ne correspondent pas');
+      setIsComplete(false);
       return false;
     }
     setPasswordError('');
+
+    // Si on est à la dernière étape et que le password est valide, on peut activer le bouton
+    if (currentStep === steps.length - 1 && PASSWORD_REGEX.test(password)) {
+      setIsComplete(true);
+    }
+
     return true;
   };
 
@@ -236,6 +278,10 @@ const Register = () => {
     if (checkingPseudo || checkingEmail || loading) {
       return;
     }
+
+    // Afficher l'étape actuelle pour le débogage
+    console.log(`Tentative de passage à l'étape suivante. Étape actuelle: ${currentStep}, Total étapes: ${steps.length}`);
+    console.log(`Passage de l'étape ${currentStep} à l'étape ${currentStep + 1}`);
 
     try {
       // Valider l'étape actuelle avant de continuer
@@ -253,13 +299,18 @@ const Register = () => {
           console.log("Vérification de la disponibilité du pseudo après clic sur continuer");
           isValid = await validatePseudo(pseudo);
           setCheckingPseudo(false);
-          break; case 3:
+          break;
+        case 3:
           // Vérification de l'email (asynchrone)
           console.log("Vérification de la disponibilité de l'email après clic sur continuer");
           isValid = await validateEmail(email);
           break;
         case 4:
+          console.log("Validation des mots de passe");
           isValid = validatePassword(password) && validateConfirmPassword(confirmPassword);
+          if (isValid) {
+            console.log("Mots de passe valides");
+          }
           break;
         default:
           isValid = true;
@@ -272,11 +323,28 @@ const Register = () => {
 
     if (!isValid) return;
 
+    console.log(`Étape actuelle: ${currentStep}, Nombre total d'étapes: ${steps.length}`);
+
     if (currentStep < steps.length - 1) {
       setDirection(1);
-      setCurrentStep(c => c + 1);
+      // Étape spécifique pour le passage de l'étape 4 à l'étape de confirmation (5)
+      if (currentStep === 4) {
+        console.log("⚠️ Passage spécifique de l'étape 4 à l'étape de confirmation (5)");
+      }
+
+      setCurrentStep(c => {
+        const nextStep = c + 1;
+        console.log(`Passage à l'étape: ${nextStep} (depuis ${c})`);
+        return nextStep;
+      });
+
+      // Vérification immédiate après la mise à jour de l'état
+      setTimeout(() => {
+        console.log(`Vérification après setCurrentStep: étape actuelle = ${currentStep}, devrait être passé à ${currentStep + 1}`);
+      }, 100);
     } else {
       // On est à la dernière étape, on peut soumettre le formulaire
+      console.log("Dernière étape atteinte, soumission du formulaire");
       handleSubmit();
     }
   };
@@ -325,17 +393,45 @@ const Register = () => {
     }
   }, [currentStep]);
 
+  // Effet pour mettre à jour l'état isComplete lorsque nous sommes à la dernière étape
+  useEffect(() => {
+    console.log(`Effect pour isComplete déclenché: étape ${currentStep}/${steps.length - 1}`);
+
+    // Pour l'étape des mots de passe (maintenant dernière étape)
+    if (currentStep === steps.length - 1) {
+      console.log("Étape des mots de passe (dernière étape)");
+      // Vérifier si les mots de passe sont valides
+      const passwordsValid = password && confirmPassword && password === confirmPassword && PASSWORD_REGEX.test(password);
+      setIsComplete(passwordsValid);
+      console.log(`Les mots de passe sont ${passwordsValid ? 'valides' : 'invalides'}, isComplete: ${passwordsValid}`);
+
+      // Si les mots de passe sont valides, mettre en évidence le bouton de création de compte
+      if (passwordsValid) {
+        // Attendre un court instant pour l'animation
+        setTimeout(() => {
+          // Faire défiler la page vers le bouton de création de compte
+          const createAccountButton = document.getElementById('create-account-button');
+          if (createAccountButton) {
+            createAccountButton.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        }, 300);
+      }
+    }
+  }, [currentStep, password, confirmPassword, PASSWORD_REGEX]);
+
   // Fonction pour soumettre le formulaire
   const handleSubmit = async () => {
-    try {
-      // Réinitialiser l'état de complétion
-      setIsComplete(false);
+    console.log("Fonction handleSubmit appelée - Étape actuelle:", currentStep);
 
-      // Validation finale avant soumission - vérification OBLIGATOIRE du pseudo
+    try {
+      // Ne pas réinitialiser l'état de complétion pour permettre le clic du bouton
+      // À l'étape finale, on effectue une dernière validation de tous les champs
+      console.log("Validation finale du pseudo avant soumission");
       const isValidPseudo = await validatePseudo(pseudo);
 
       if (!isValidPseudo) {
         console.log("Soumission bloquée: pseudo déjà utilisé ou invalide");
+        setError("Le pseudo choisi n'est pas valide ou est déjà utilisé.");
         return; // Bloquer la soumission si le pseudo n'est pas valide
       }
 
@@ -347,7 +443,8 @@ const Register = () => {
         validatePassword(password) &&
         validateConfirmPassword(confirmPassword)
       ) {
-        setIsComplete(true);        // Construction des données utilisateur
+
+        // Construction des données utilisateur
         const userData: any = {
           firstName,
           lastName: lastName || firstName, // Le nom est optionnel, utiliser le prénom si non fourni
@@ -357,13 +454,40 @@ const Register = () => {
           role: isProfessional ? 'admin' : 'user',
           userType: isProfessional ? 'professional' : 'client'
           // Le champ téléphone n'est pas inclus car la table users n'a pas cette colonne
-        }; try {
+        };
+
+        try {
+          // Afficher un message de chargement
+          setError("Création de votre compte en cours...");
+
           // Log des données d'inscription pour le débogage
-          console.log("Données d'inscription envoyées:", JSON.stringify(userData, null, 2));
+          console.log("Données d'inscription envoyées:", JSON.stringify({ ...userData, password: "***" }, null, 2));
 
           // Appel de la fonction d'inscription
-          await register(userData);
-          // Note: La redirection sera effectuée automatiquement par le contexte d'authentification
+          const response = await register(userData);
+
+          // Vérifier que l'inscription a bien fonctionné
+          if (response && response.user && response.token) {
+            console.log("Inscription réussie avec les données utilisateur:", {
+              id: response.user.id,
+              email: response.user.email,
+              firstName: response.user.firstName,
+              role: response.user.role
+            });
+
+            // Afficher un message de succès pour informer l'utilisateur
+            setError("Compte créé avec succès! Redirection...");
+
+            // La redirection sera effectuée automatiquement par le composant qui vérifie l'état user,
+            // mais on peut ajouter une redirection explicite après un court délai pour être sûr
+            setTimeout(() => {
+              console.log("Redirection après inscription réussie...");
+              navigate('/app');
+            }, 1500);
+          } else {
+            console.error("Réponse d'inscription incomplète:", response);
+            throw new Error("Réponse du serveur incomplète");
+          }
         } catch (registerError: any) {
           console.error("Erreur retournée par l'API:", registerError);
 
@@ -384,14 +508,36 @@ const Register = () => {
             // Retourner à l'étape de l'email
             setDirection(-1);
             setCurrentStep(3);
+          } else {
+            // Afficher l'erreur générale
+            setError(`Erreur lors de l'inscription: ${registerError.message}`);
           }
 
           setIsComplete(false);
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Erreur lors de l'inscription:", error);
+      setError(`Une erreur inattendue s'est produite: ${error.message}`);
       setIsComplete(false);
+
+      // Vérifier si l'utilisateur a quand même été créé en vérifiant le localStorage
+      const storedToken = localStorage.getItem("token");
+      const storedUser = localStorage.getItem("user");
+
+      if (storedToken && storedUser) {
+        console.log("Malgré l'erreur, un token et un utilisateur sont présents dans localStorage");
+
+        try {
+          // Tenter une redirection après un court délai
+          setTimeout(() => {
+            console.log("Tentative de redirection après délai...");
+            navigate('/app');
+          }, 2000);
+        } catch (navError) {
+          console.error("Erreur lors de la tentative de redirection:", navError);
+        }
+      }
     }
   };
   // Gérer l'appui sur la touche "Enter" pour avancer
@@ -406,6 +552,10 @@ const Register = () => {
 
   // Rendu du champ en fonction de l'étape actuelle
   const renderCurrentField = () => {
+    console.log(`Rendu du champ pour l'étape: ${currentStep}/${steps.length - 1}`);
+    console.log(`Étape de confirmation attendue: ${steps.length - 1}`);
+    console.log(`Détail des étapes: ${JSON.stringify(steps)}`);
+
     switch (currentStep) {
       case 0:
         return (
@@ -435,11 +585,11 @@ const Register = () => {
                 <motion.div
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="error-message"
+                  className="error-message high-contrast-error"
                   transition={{ type: "spring", stiffness: 500, damping: 20 }}
                 >
                   <AlertCircle className="w-3 h-3 xs:w-4 xs:h-4 min-w-[12px] mr-1" />
-                  <span className="error-text">{firstNameError}</span>
+                  <span className="error-text text-xs">{firstNameError}</span>
                 </motion.div>
               )}
             </motion.div>
@@ -476,11 +626,11 @@ const Register = () => {
                 <motion.div
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="error-message"
+                  className="error-message high-contrast-error"
                   transition={{ type: "spring", stiffness: 500, damping: 20 }}
                 >
                   <AlertCircle className="w-3 h-3 xs:w-4 xs:h-4 min-w-[12px] mr-1" />
-                  <span className="error-text">{lastNameError}</span>
+                  <span className="error-text text-xs">{lastNameError}</span>
                 </motion.div>
               )}
             </motion.div>
@@ -549,11 +699,11 @@ const Register = () => {
                 <motion.div
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="error-message"
+                  className="error-message high-contrast-error"
                   transition={{ type: "spring", stiffness: 500, damping: 20 }}
                 >
                   <AlertCircle className="w-3 h-3 xs:w-4 xs:h-4 min-w-[12px] mr-1" />
-                  <span className="error-text">{pseudoError}</span>
+                  <span className="error-text text-xs">{pseudoError}</span>
                 </motion.div>
               )}              {/* Suggestions de pseudo */}
               {pseudoAlreadyExists && pseudoSuggestions.length > 0 && (
@@ -639,11 +789,11 @@ const Register = () => {
                 <motion.div
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="error-message"
+                  className="error-message high-contrast-error"
                   transition={{ type: "spring", stiffness: 500, damping: 20 }}
                 >
                   <AlertCircle className="w-3 h-3 xs:w-4 xs:h-4 min-w-[12px] mr-1" />
-                  <span className="error-text">{emailError}</span>
+                  <span className="error-text text-xs">{emailError}</span>
                 </motion.div>
               )}
             </motion.div>
@@ -674,7 +824,12 @@ const Register = () => {
                   }}
                   onBlur={(e) => validatePassword(e.target.value)}
                   placeholder="••••••••"
-                  className={`field-input pr-7 xs:pr-8 sm:pr-10 ${passwordError ? 'field-error' : ''}`}
+                  className={`field-input pr-7 xs:pr-8 sm:pr-10 ${passwordError
+                    ? 'field-error'
+                    : (!passwordError && password && confirmPassword && password === confirmPassword)
+                      ? 'border-green-500 bg-green-50/30 dark:bg-green-900/10'
+                      : ''
+                    }`}
                   autoFocus
                 />
                 <button
@@ -705,7 +860,12 @@ const Register = () => {
                   onBlur={(e) => validateConfirmPassword(e.target.value)}
                   onKeyPress={handleKeyPress}
                   placeholder="••••••••"
-                  className={`field-input pr-8 xs:pr-10 sm:pr-12 ${passwordError ? 'field-error' : ''}`}
+                  className={`field-input pr-8 xs:pr-10 sm:pr-12 ${passwordError
+                    ? 'field-error'
+                    : (!passwordError && password && confirmPassword && password === confirmPassword)
+                      ? 'border-green-500 bg-green-50/30 dark:bg-green-900/10'
+                      : ''
+                    }`}
                 />
                 <button
                   type="button"
@@ -716,15 +876,33 @@ const Register = () => {
                 >
                   {showConfirmPassword ? <EyeOff className="h-3 w-3 xs:h-4 xs:w-4 sm:h-5 sm:w-5" /> : <Eye className="h-3 w-3 xs:h-4 xs:w-4 sm:h-5 sm:w-5" />}
                 </button>
-              </div>{passwordError && (
+              </div>              {/* Message d'erreur pour les mots de passe - version plus compacte */}
+              {passwordError && (
                 <motion.div
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="error-message"
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="error-message high-contrast-error my-1 py-1 critical-alert"
                   transition={{ type: "spring", stiffness: 500, damping: 20 }}
                 >
-                  <AlertCircle className="w-3 h-3 xs:w-4 xs:h-4 min-w-[12px] mr-1" />
-                  <span className="error-text">{passwordError}</span>
+                  <div className="flex items-center">
+                    <AlertCircle className="w-3 h-3 xs:w-4 xs:h-4 text-red-700 mr-1.5 flex-shrink-0" />
+                    <p className="text-xs error-text">{passwordError}</p>
+                  </div>
+                </motion.div>
+              )}
+
+              {/* Message de succès pour les mots de passe - version plus compacte */}
+              {currentStep === steps.length - 1 && !passwordError && password && confirmPassword && password === confirmPassword && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="success-message high-contrast-success my-1 py-1 alert-message"
+                  transition={{ type: "spring", stiffness: 500, damping: 20 }}
+                >
+                  <div className="flex items-center">
+                    <Check className="w-3 h-3 xs:w-4 xs:h-4 text-green-700 mr-1.5 flex-shrink-0" />
+                    <p className="text-xs">Parfait! Les mots de passe correspondent. <strong>Cliquez sur "Créer mon compte"</strong> ci-dessous.</p>
+                  </div>
                 </motion.div>
               )}
             </motion.div>
@@ -732,12 +910,41 @@ const Register = () => {
         );
 
       default:
-        return null;
+        console.error(`⚠️ Cas non géré dans renderCurrentField: ${currentStep}`);
+        // Renvoyer un message d'erreur visible pour l'utilisateur au lieu de null
+        return (
+          <div className="form-field-container">
+            <div className="bg-red-50 dark:bg-red-900/30 border-l-4 border-red-600 p-4 text-red-700 dark:text-red-400">
+              <p className="text-sm">Une erreur s'est produite lors de l'affichage du formulaire. Veuillez actualiser la page ou contacter le support.</p>
+            </div>
+          </div>
+        );
     }
+
+    // Log après le rendu pour vérification
+    console.log(`Rendu terminé pour l'étape ${currentStep}. Contenu généré: ${currentStep < steps.length ? "Oui" : "Non - Erreur"}`);
   };
+
+  // Effet pour vérifier si l'utilisateur est connecté
+  useEffect(() => {
+    if (user) {
+      console.log("Register: Détection de l'utilisateur connecté, redirection vers /app", user);
+    }
+  }, [user]);
 
   // Redirection si l'utilisateur est déjà connecté
   if (user) {
+    console.log("Register: Redirection automatique vers /app car l'utilisateur est connecté", {
+      id: user.id,
+      email: user.email,
+      firstName: user.firstName,
+      role: user.role
+    });
+
+    // Vérifier que le token est également présent
+    const token = localStorage.getItem('token');
+    console.log("Token dans localStorage:", token ? "présent" : "absent");
+
     return <Navigate to="/app" />;
   }
   return (
@@ -753,41 +960,61 @@ const Register = () => {
         {/* Partie gauche avec image fixe */}        <div className="w-0 xs:w-1/4 sm:w-1/3 md:w-1/2 relative auth-image-slider">
           {/* Div principal avec image de fond */}
           <div
-            className="absolute inset-0 auth-image-slide"
+            className={`absolute inset-0 auth-image-slide ${imageLoaded ? 'loaded' : ''}`}
             style={{
-              backgroundImage: `url(${backgroundImage})`,
+              backgroundImage: imageFailed ? 'none' : `url(${backgroundImage})`,
               backgroundSize: 'cover',
               backgroundPosition: 'center',
               backgroundRepeat: 'no-repeat',
+              backgroundColor: imageFailed ? '#1e3a8a' : 'transparent',
+              transition: 'background-color 0.5s ease'
             }}
           >
-            {/* Image fallback SVG visible en cas d'erreur */}
-            <img
+            {/* Image fallback SVG visible en cas d'erreur */}            <img
               src={backgroundImage}
-              alt="Background"
-              className="fallback-image"
-              onLoad={(e) => {
+              alt={isProfessional ? "Image professionnel" : "Image client"}
+              className={`fallback-image ${imageFailed ? 'show' : ''}`}
+              onLoad={() => {
                 console.log("Image chargée avec succès:", backgroundImage);
-                (e.target as HTMLElement).className = "fallback-image";  // Garder cachée si le fond fonctionne
+                setImageLoaded(true);
+                setImageFailed(false);
               }}
               onError={(e) => {
                 console.error("Erreur de chargement d'image:", backgroundImage);
-                // Afficher l'image de secours
-                const fallbackSrc = isProfessional
-                  ? getFullMediaUrl('/images/slides/business-meeting.svg')
-                  : getFullMediaUrl('/images/slides/calendar-planning.svg');
-                console.log("Utilisation de l'image de secours:", fallbackSrc);
-                (e.target as HTMLImageElement).src = fallbackSrc;
-                (e.target as HTMLElement).className = "fallback-image show"; // Rendre visible
+                setImageFailed(true);
 
-                // Désactiver aussi l'image de fond qui a échoué
-                const parent = (e.target as HTMLElement).parentElement;
-                if (parent) {
-                  parent.style.backgroundImage = 'none';
-                  parent.style.backgroundColor = '#1e3a8a'; // Bleu foncé
-                }
+                // Afficher l'image de secours
+                console.log("Utilisation de l'image de secours:", fallbackImage);
+                (e.target as HTMLImageElement).src = fallbackImage;
+
+                // Loguer l'URL complète pour débogage
+                const img = new Image();
+                img.src = backgroundImage;
+                console.log("URL complète ayant échoué:", img.src);
+
+                // Vérifier si l'image existe avec un fetch
+                fetch(backgroundImage)
+                  .then(response => {
+                    if (!response.ok) {
+                      console.error(`L'image n'est pas accessible: ${response.status} ${response.statusText}`);
+                    } else {
+                      console.log("L'image est accessible via fetch mais n'a pas pu être chargée comme background");
+                    }
+                  })
+                  .catch(error => console.error("Erreur fetch image:", error));
               }}
             />
+
+            {/* Message d'erreur de connexion au serveur */}
+            {imageFailed && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center z-10 bg-blue-900/90 text-white p-4 text-center">
+                <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="mb-3">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                </svg>
+                <h3 className="text-sm font-semibold mb-1">Problème de connexion au serveur</h3>
+                <p className="text-xs opacity-85">Impossible de charger les images. Veuillez vérifier votre connexion ou réessayer ultérieurement.</p>
+              </div>
+            )}
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
             <div className="absolute inset-0 bg-blue-600/0 hover:bg-blue-600/20 transition-colors duration-300"></div>
             <div className="absolute inset-0 flex items-end p-8">
@@ -878,21 +1105,106 @@ const Register = () => {
             </div>
 
             {/* Champ du formulaire */}
-            <div className="relative overflow-hidden min-h-[100px] xs:min-h-[120px] sm:min-h-[150px] md:min-h-[180px]">
+            <div className="relative overflow-hidden min-h-[120px] xs:min-h-[140px] sm:min-h-[180px] md:min-h-[210px]">
               <AnimatePresence initial={false} custom={direction} mode="wait">
-                <motion.div
-                  key={currentStep}
-                  custom={direction}
-                  variants={slideVariants}
-                  initial="enter"
-                  animate="center"
-                  exit="exit"
-                  className="absolute w-full"
-                  style={{ willChange: 'transform, opacity' }}
-                >
-                  {renderCurrentField()}
-                </motion.div>
-              </AnimatePresence>          </div>
+                {(() => {
+                  // Logs pour le débogage avant le rendu
+                  console.log(`Rendu de l'animation pour l'étape ${currentStep}/${steps.length - 1}`);
+                  return (
+                    <motion.div
+                      key={currentStep}
+                      custom={direction}
+                      variants={slideVariants}
+                      initial="enter"
+                      animate="center"
+                      exit="exit"
+                      className="absolute w-full"
+                      style={{ willChange: 'transform, opacity' }}
+                    >
+                      {(() => {
+                        console.log(`Étape actuelle dans le rendu AnimatePresence: ${currentStep}`);
+                        const renderedContent = renderCurrentField();
+                        console.log(`Contenu rendu disponible: ${renderedContent ? 'Oui' : 'Non'}`);
+                        return renderedContent;
+                      })()}
+                    </motion.div>
+                  );
+                })()}
+              </AnimatePresence>
+            </div>
+          </div>          {/* Boutons de navigation entre étapes du formulaire */}
+          <div className="flex justify-between mt-4 xs:mt-5">
+            {currentStep > 0 ? (
+              <button
+                type="button"
+                onClick={goToPrevStep}
+                className="flex items-center justify-center px-2 py-1 text-[10px] xs:text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+              >
+                <ChevronLeft className="w-3 h-3 xs:w-3.5 xs:h-3.5 mr-1" />
+                Précédent
+              </button>
+            ) : (<div>{/* Espace vide pour maintenir la flexbox alignée */}</div>
+            )}
+
+            {currentStep < steps.length - 1 ? (
+              <button
+                type="button"
+                onClick={() => {
+                  console.log(`Clic sur le bouton - Étape actuelle: ${currentStep}, Étape de confirmation: ${steps.length - 1}`);
+                  console.log(`isComplete: ${isComplete}, Bouton cliqué: "Suivant"`);
+                  goToNextStep();
+                }}
+                disabled={checkingPseudo || checkingEmail || loading}
+                className="flex items-center justify-center px-2 py-1 text-[10px] xs:text-xs sm:text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700 disabled:opacity-50 rounded-md shadow-sm transition-colors"
+                title="Passer à l'étape suivante"
+              >
+                Suivant
+                <ChevronRight className="w-3 h-3 xs:w-3.5 xs:h-3.5 ml-1" />
+              </button>
+            ) : (
+              <button
+                type="button"
+                id="create-account-button"
+                onClick={handleSubmit}
+                disabled={loading || !isComplete}
+                className={`flex items-center justify-center px-4 py-3 text-sm sm:text-base font-medium text-white 
+                  ${!isComplete
+                    ? 'bg-gray-400 cursor-not-allowed'
+                    : 'bg-green-600 hover:bg-green-700 dark:bg-green-600 dark:hover:bg-green-700 shadow-lg ring-4 ring-green-300 dark:ring-green-800/30 transform hover:scale-[1.03] animate-pulse cursor-pointer'
+                  } disabled:opacity-50 rounded-md shadow-sm transition-all duration-300`}
+                title={isComplete ? "Cliquez pour créer votre compte" : "Veuillez remplir correctement tous les champs du mot de passe"}
+                ref={el => {
+                  // Auto-focus sur le bouton à l'étape finale
+                  console.log(`Référence au bouton final, étape actuelle: ${currentStep}, dernière étape: ${steps.length - 1}`);
+                  if (el && !loading && currentStep === steps.length - 1) {
+                    console.log("Mise au focus du bouton de création de compte");
+                    setTimeout(() => el.focus(), 500);
+                  }
+                }}
+              >
+                {loading ? (
+                  <span className="flex items-center">
+                    <svg className="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                    </svg>
+                    Création...
+                  </span>
+                ) : (
+                  <span className="flex items-center">
+                    <span className={`${isComplete ? 'bg-white/20 rounded-full p-1 mr-2' : 'mr-1'}`}>
+                      <Check className={`${isComplete ? 'w-5 h-5' : 'w-4 h-4 ml-1'}`} />
+                    </span>
+                    Créer mon compte
+                  </span>
+                )}
+                {isComplete && !loading && (
+                  <span className="absolute inset-0 rounded-md overflow-hidden">
+                    <span className="absolute inset-0 bg-gradient-to-r from-green-400/20 to-green-600/20 animate-shine"></span>
+                  </span>
+                )}
+              </button>
+            )}
           </div>          {/* Messages d'erreur globaux */}
           {error && !emailError && !pseudoError && !passwordError && !firstNameError && !lastNameError && (
             <motion.div
@@ -910,81 +1222,7 @@ const Register = () => {
             </motion.div>
           )}
 
-          {/* Boutons de navigation */}
-          <motion.div
-            className="mt-2 xs:mt-3 sm:mt-6 md:mt-8 flex justify-between"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-          >
-            <motion.button
-              type="button"
-              onClick={goToPrevStep}
-              disabled={currentStep === 0}
-              className={`${currentStep === 0 ? 'invisible' : ''
-                } inline-flex items-center px-2 xs:px-2.5 sm:px-3 md:px-4 py-1 xs:py-1.5 md:py-2 text-[10px] xs:text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm hover:bg-gray-200 dark:hover:bg-gray-600 focus:outline-none focus:ring-1 focus:ring-offset-1 focus:ring-blue-500 transition-all`}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              <ChevronLeft className="w-2.5 h-2.5 sm:w-3.5 sm:h-3.5 mr-0.5 sm:mr-1" />
-              Retour
-            </motion.button>            <motion.button
-              type="button"
-              onClick={goToNextStep}
-              disabled={loading || checkingEmail || checkingPseudo}
-              className={`inline-flex items-center px-2.5 xs:px-3.5 sm:px-4 md:px-5 py-1 xs:py-1.5 sm:py-2 md:py-2.5 border border-transparent text-[10px] xs:text-xs sm:text-sm font-medium rounded-md shadow-sm text-white ${isProfessional
-                ? 'bg-blue-700 hover:bg-blue-800 dark:bg-blue-600 dark:hover:bg-blue-700'
-                : 'bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600'
-                } focus:outline-none focus:ring-1 focus:ring-offset-1 focus:ring-blue-500 disabled:opacity-50 transition-all`}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-            >            {loading ? (
-              <span className="flex items-center">
-                <svg className="animate-spin -ml-1 mr-2 sm:mr-3 h-4 w-4 sm:h-5 sm:w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-                </svg>
-                <span className="text-xs sm:text-sm">Inscription en cours...</span>
-              </span>
-            ) : checkingEmail ? (
-              <span className="flex items-center">
-                <svg className="animate-spin -ml-1 mr-2 sm:mr-3 h-4 w-4 sm:h-5 sm:w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-                </svg>
-                <span className="text-xs sm:text-sm">Vérification de l'email...</span>
-              </span>
-            ) : checkingPseudo ? (
-              <span className="flex items-center">
-                <svg className="animate-spin -ml-1 mr-2 sm:mr-3 h-4 w-4 sm:h-5 sm:w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-                </svg>
-                <span className="text-xs sm:text-sm">Vérification du pseudo...</span>
-              </span>
-            ) : isComplete ? (<motion.span
-              className="flex items-center"
-              initial={{ scale: 0.9 }}
-              animate={{ scale: 1.1 }}
-              transition={{ type: "spring", stiffness: 400, damping: 10 }}
-            >
-              <svg className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-              <span className="text-xs sm:text-sm">Compte créé !</span>
-            </motion.span>) : currentStep === steps.length - 1 ? (
-              <span className="flex items-center text-xs sm:text-sm">
-                <span className="whitespace-nowrap">
-                  Créer {window.innerWidth < 360 ? '' : 'mon compte'} {isProfessional && window.innerWidth >= 360 ? 'pro' : ''}
-                </span>
-              </span>
-            ) : (
-              <span className="flex items-center text-xs sm:text-sm">
-                Continuer <ChevronRight className="ml-0.5 sm:ml-1 w-2.5 h-2.5 sm:w-3.5 sm:h-3.5" />
-              </span>
-            )}
-            </motion.button>
-          </motion.div>          {/* Séparateur et lien de connexion */}
+          {/* Séparateur et lien de connexion */}
           <div className="mt-8 pt-4 border-t border-gray-200 dark:border-gray-700">
             <div className="text-center">
               <p className="text-[11px] xs:text-xs sm:text-sm text-gray-600 dark:text-gray-400">

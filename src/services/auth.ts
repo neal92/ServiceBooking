@@ -121,10 +121,63 @@ const authService = {
       );
       console.log("Registration successful, received response:", response.data);
 
+      // Vérifier que les données utilisateur sont complètes
+      if (
+        !response.data.user ||
+        !response.data.user.id ||
+        !response.data.user.email
+      ) {
+        console.error(
+          "Informations utilisateur incomplètes dans la réponse d'inscription",
+          response.data.user
+        );
+        throw new Error(
+          "Informations utilisateur incomplètes. Veuillez réessayer."
+        );
+      }
+
+      // Vérifier et compléter les champs manquants avec les données d'inscription
+      const userWithDefaults = {
+        ...response.data.user,
+        firstName: response.data.user.firstName || userData.firstName || "",
+        lastName: response.data.user.lastName || userData.lastName || "",
+        pseudo: response.data.user.pseudo || userData.pseudo || "",
+        role: response.data.user.role || userData.role || "user",
+      };
+
       // Save token and user to local storage
       if (response.data.token) {
         localStorage.setItem("token", response.data.token);
-        localStorage.setItem("user", JSON.stringify(response.data.user));
+        localStorage.setItem("user", JSON.stringify(userWithDefaults));
+        console.log(
+          "Saved to localStorage - Token and user data with defaults"
+        );
+
+        // Vérifier que les données ont bien été enregistrées
+        const storedToken = localStorage.getItem("token");
+        const storedUser = localStorage.getItem("user");
+
+        if (!storedToken || !storedUser) {
+          console.error("Erreur: Données non enregistrées dans localStorage");
+          throw new Error(
+            "Échec de l'enregistrement des données utilisateur. Veuillez réessayer."
+          );
+        }
+
+        console.log(
+          "Vérification réussie - Données correctement stockées dans localStorage"
+        );
+
+        // Mettre à jour la réponse avec les données complétées
+        response.data.user = userWithDefaults;
+      } else {
+        console.error(
+          "Pas de token reçu dans la réponse d'inscription",
+          response.data
+        );
+        throw new Error(
+          "Authentification incomplète. Veuillez vous connecter manuellement."
+        );
       }
 
       return response.data;
@@ -137,10 +190,18 @@ const authService = {
         headers: error.response?.headers,
       });
 
+      // Vérifier si la réponse contient des données JSON
+      const errorData = error.response?.data;
+      console.log("Error response data:", errorData);
+
       // Extract the specific error message from the response if available
       let errorMessage =
-        error.response?.data?.message ||
+        errorData?.message ||
+        error.message ||
         "Échec de l'inscription. Veuillez réessayer.";
+
+      // Log détaillé pour déboguer
+      console.log(`Erreur d'inscription détectée: "${errorMessage}"`);
 
       // Spécifiquement pour les erreurs liées au pseudo
       if (errorMessage.toLowerCase().includes("pseudo")) {
@@ -157,6 +218,19 @@ const authService = {
         errorMessage = "Cette adresse email est déjà utilisée.";
       }
 
+      // Si la réponse contient des erreurs de validation
+      if (
+        errorData?.errors &&
+        Array.isArray(errorData.errors) &&
+        errorData.errors.length > 0
+      ) {
+        const validationErrors = errorData.errors
+          .map((err: any) => err.msg || err.message)
+          .join(", ");
+        errorMessage = `Validation échouée: ${validationErrors}`;
+      }
+
+      console.log(`Message d'erreur final: "${errorMessage}"`);
       throw new Error(errorMessage);
     }
   },
@@ -172,11 +246,39 @@ const authService = {
         user: response.data.user ? "present" : "not present",
       });
 
+      // Vérifier que les données utilisateur sont complètes
+      if (
+        !response.data.user ||
+        !response.data.user.id ||
+        !response.data.user.email
+      ) {
+        console.error(
+          "Informations utilisateur incomplètes dans la réponse de login",
+          response.data.user
+        );
+        throw new Error(
+          "Informations utilisateur incomplètes. Veuillez réessayer."
+        );
+      }
+
+      // Vérifier et compléter les champs manquants
+      const userWithDefaults = {
+        ...response.data.user,
+        firstName: response.data.user.firstName || "",
+        lastName: response.data.user.lastName || "",
+        role: response.data.user.role || "user",
+      };
+
       // Save token and user to local storage
       if (response.data.token) {
         localStorage.setItem("token", response.data.token);
-        localStorage.setItem("user", JSON.stringify(response.data.user));
-        console.log("Saved to localStorage - Token and user data");
+        localStorage.setItem("user", JSON.stringify(userWithDefaults));
+        console.log(
+          "Saved to localStorage - Token and user data with defaults"
+        );
+
+        // Mettre à jour la réponse avec les données complétées
+        response.data.user = userWithDefaults;
       } else {
         console.warn("No token received in login response");
       }
@@ -222,7 +324,7 @@ const authService = {
     const response = await apiClient.get<User>("/auth/me");
     return response.data;
   },
-  
+
   updateProfile: async (
     userData: ProfileUpdateData
   ): Promise<{ user: User }> => {

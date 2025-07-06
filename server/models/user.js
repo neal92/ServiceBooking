@@ -1,6 +1,10 @@
 const db = require("../config/db");
 const bcrypt = require("bcrypt");
 
+console.log(
+  "User model loaded - Version with findByPseudo method (reinforced)"
+);
+
 class User {
   // Find user by email
   static async findByEmail(email) {
@@ -25,7 +29,34 @@ class User {
       }
       throw error;
     }
-  } // Find user by ID
+  }
+
+  // Find user by pseudo - Method reinforced to ensure availability
+  static async findByPseudo(pseudo) {
+    try {
+      console.log(`Looking up user by pseudo: ${pseudo} (reinforced method)`);
+      const [rows] = await db.query("SELECT * FROM users WHERE pseudo = ?", [
+        pseudo,
+      ]);
+      if (rows.length > 0) {
+        console.log(`User found with pseudo: ${pseudo}`);
+        return rows[0];
+      } else {
+        console.log(`No user found with pseudo: ${pseudo}`);
+        return null;
+      }
+    } catch (error) {
+      console.error("Error finding user by pseudo:", error);
+      if (error.code === "ER_NO_SUCH_TABLE") {
+        console.error("Users table does not exist in database");
+      } else if (error.sqlMessage) {
+        console.error("SQL error message:", error.sqlMessage);
+      }
+      throw error;
+    }
+  }
+
+  // Find user by ID
   static async findById(id, includePassword = false) {
     try {
       console.log(
@@ -87,7 +118,27 @@ class User {
       );
 
       console.log(`User created with ID: ${result.insertId}`);
-      return { userId: result.insertId };
+
+      // Récupérer l'utilisateur complet après création pour le retourner
+      const [userRows] = await db.query("SELECT * FROM users WHERE id = ?", [
+        result.insertId,
+      ]);
+      if (userRows.length > 0) {
+        // Exclure le mot de passe hashé
+        const user = userRows[0];
+        delete user.password;
+        console.log("Returning complete user object after creation");
+        return user;
+      }
+
+      return {
+        id: result.insertId,
+        firstName: userData.firstName,
+        lastName: userData.lastName,
+        email: userData.email,
+        pseudo: pseudo,
+        role: userData.role || "user",
+      };
     } catch (error) {
       console.error("Error creating user:", error);
       if (error.code === "ER_DUP_ENTRY") {
@@ -225,5 +276,33 @@ class User {
     }
   }
 }
+
+// Réexporter explicitement la méthode findByPseudo pour éviter les problèmes
+User.findByPseudo =
+  User.findByPseudo ||
+  async function (pseudo) {
+    console.log(`Fallback findByPseudo called with pseudo: ${pseudo}`);
+    try {
+      const [rows] = await db.query("SELECT * FROM users WHERE pseudo = ?", [
+        pseudo,
+      ]);
+      return rows.length > 0 ? rows[0] : null;
+    } catch (error) {
+      console.error("Error in fallback findByPseudo:", error);
+      throw error;
+    }
+  };
+
+// Vérifier que toutes les méthodes essentielles sont bien définies avant d'exporter
+console.log("Checking User model methods before export:");
+console.log(
+  "- findByEmail:",
+  typeof User.findByEmail === "function" ? "OK" : "MISSING"
+);
+console.log(
+  "- findByPseudo:",
+  typeof User.findByPseudo === "function" ? "OK" : "MISSING"
+);
+console.log("- create:", typeof User.create === "function" ? "OK" : "MISSING");
 
 module.exports = User;

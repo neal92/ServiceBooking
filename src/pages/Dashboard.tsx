@@ -88,10 +88,9 @@ const Dashboard = () => {
   };
 
   return (
-    <PageTransition type="slide">      <div className="mb-8">
-      <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Tableau de bord</h1>        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-        Bienvenue, {displayName || user?.email || 'Utilisateur'}. Voici un aperçu de vos rendez-vous et prestations.
-      </p>
+    <PageTransition type="slide">      <div className="mb-8">        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Tableau de bord</h1>        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+      Bienvenue, {user?.firstName ? `${user.firstName} ${user.lastName || ''}` : (user?.email || 'Utilisateur')}. Voici un aperçu de vos rendez-vous et prestations.
+    </p>
       {error && (
         <div className="mt-2 bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-700 text-red-700 dark:text-red-300 px-4 py-3 rounded relative">
           {error}
@@ -175,7 +174,14 @@ const Dashboard = () => {
             </div>
             <div className="py-4">
               <ul className="divide-y divide-gray-200 dark:divide-gray-700">
-                {upcomingAppointments.length > 0 ? (
+                {loading ? (
+                  <li className="px-6 py-6 flex justify-center">
+                    <div className="animate-pulse flex items-center space-x-2">
+                      <div className="h-5 w-5 bg-gray-300 dark:bg-gray-600 rounded-full"></div>
+                      <div className="h-4 w-32 bg-gray-300 dark:bg-gray-600 rounded"></div>
+                    </div>
+                  </li>
+                ) : upcomingAppointments.length > 0 ? (
                   upcomingAppointments.map((appointment) => (
                     <li key={appointment.id} className="px-6 py-4">
                       <AppointmentCard
@@ -186,8 +192,14 @@ const Dashboard = () => {
                     </li>
                   ))
                 ) : (
-                  <li className="px-6 py-6">
-                    <p className="text-sm text-gray-500 dark:text-gray-400 text-center">Aucun rendez-vous à venir</p>
+                  <li className="px-6 py-8">
+                    <div className="text-center">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 mx-auto text-gray-400 dark:text-gray-500 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                      <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Pas de prochain rendez-vous</p>
+                      <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">Vous n'avez aucun rendez-vous planifié pour le moment</p>
+                    </div>
                   </li>
                 )}
               </ul>

@@ -9,7 +9,7 @@ import { SuccessToast, ErrorToast } from '../components/layout';
 import '../styles/profile-fix.css';
 
 const Profile = () => {
-  const { user, updateUser, changePassword } = useAuth();
+  const { user, updateUser, changePassword, refreshUserData } = useAuth();
 
   const [isEditing, setIsEditing] = useState(false);
   const [isEditingPassword, setIsEditingPassword] = useState(false);
@@ -19,6 +19,22 @@ const Profile = () => {
     lastName: user?.lastName || '',
     email: user?.email || '',
   });
+
+  // Effet pour mettre à jour l'état local lorsque les données utilisateur changent
+  React.useEffect(() => {
+    if (user) {
+      console.log("Profile: Mise à jour de l'état local avec les nouvelles données utilisateur", {
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email
+      });
+      setUserInfo({
+        firstName: user.firstName || '',
+        lastName: user.lastName || '',
+        email: user.email || '',
+      });
+    }
+  }, [user]);
   const [password, setPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -191,9 +207,48 @@ const Profile = () => {
     }
   };
 
+  // Utilisation de la fonction refreshUserData du contexte
+  const handleRefreshUserData = async () => {
+    try {
+      setError('');
+      await refreshUserData();
+    } catch (error: any) {
+      console.error("Erreur lors du rafraîchissement des données:", error);
+      setError("Impossible de récupérer vos informations. Veuillez rafraîchir la page.");
+    }
+  };
+
+  // Effet pour récupérer les données utilisateur si elles ne sont pas disponibles
+  React.useEffect(() => {
+    if (!user || !user.firstName) {
+      console.log("Données utilisateur manquantes, tentative de récupération");
+      refreshUserData();
+    }
+  }, [refreshUserData]);
+
   return (
     <PageTransition type="slide">
       <div className="max-w-5xl mx-auto py-8 px-4 sm:px-6 lg:px-8 profile-container">
+        {!user && (
+          <div className="bg-yellow-50 dark:bg-yellow-900/30 border-l-4 border-yellow-500 dark:border-yellow-600 p-4 mb-6 text-yellow-700 dark:text-yellow-400">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <svg className="h-5 w-5 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <p className="text-sm">Chargement de vos informations en cours...</p>
+                <button
+                  onClick={handleRefreshUserData}
+                  className="mt-2 px-3 py-1 text-xs font-medium rounded-md bg-yellow-100 dark:bg-yellow-800 text-yellow-800 dark:text-yellow-200 hover:bg-yellow-200 dark:hover:bg-yellow-700"
+                >
+                  Rafraîchir
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Mon Profil</h1>
         {/* Modal de succès */}
         {showSuccessModal && (

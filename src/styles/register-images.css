@@ -11,9 +11,13 @@
 
 /* Amélioration de l'affichage des images */
 .auth-image-slide {
-  transition: opacity 0.5s ease;
+  transition: opacity 0.5s ease, background-color 0.5s ease;
   background-position: center !important;
   background-size: cover !important;
+}
+
+.auth-image-slide.loaded {
+  opacity: 1;
 }
 
 /* Fallback pour les navigateurs qui ne supportent pas certaines fonctionnalités CSS */
@@ -26,7 +30,8 @@
 }
 
 /* Style pour l'image explicite (non hidden) qui s'affiche en cas d'erreur du background */
-.auth-image-slider .fallback-image {
+.auth-image-slider .fallback-image,
+.fallback-image {
   position: absolute;
   top: 0;
   left: 0;
@@ -38,7 +43,8 @@
   z-index: 1;
 }
 
-.auth-image-slider .fallback-image.show {
+.auth-image-slider .fallback-image.show,
+.fallback-image.show {
   opacity: 1;
 }
 
@@ -49,7 +55,11 @@
   left: 0;
   width: 100%;
   height: 100%;
-  background: linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(0,0,0,0.7));
+  background: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.3),
+    rgba(0, 0, 0, 0.7)
+  );
   z-index: 2;
 }
 

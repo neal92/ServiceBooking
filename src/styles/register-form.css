@@ -50,17 +50,197 @@
   transform: translateY(-50%);
 }
 
-/* Optimisation des messages d'erreur */
+/* Optimisation des messages d'erreur avec accessibilité améliorée */
 .register-form .error-message {
-  width: 90%;
-  margin: 0.25rem auto 0;
-  font-size: 0.75rem;
+  width: 92%;
+  margin: 0.3rem auto 0.3rem;
+  font-size: 0.75rem; /* Taille réduite */
   display: flex;
   align-items: center;
-  color: #ef4444;
-  background-color: rgba(239, 68, 68, 0.08);
-  padding: 0.25rem 0.5rem;
-  border-radius: 0.25rem;
+  color: #b91c1c; /* red-700 pour un contraste fort */
+  background-color: rgba(254, 226, 226, 0.85);
+  padding: 0.25rem 0.5rem; /* Padding réduit */
+  border-radius: 0.25rem; /* Coins plus petits */
+  border: 1px solid rgba(220, 38, 38, 0.5); /* Bordure plus fine */
+  box-shadow: 0 1px 4px rgba(239, 68, 68, 0.2); /* Ombre plus légère */
+  animation: shake 0.5s ease-in-out, pulse-error 2s infinite ease-in-out 0.5s;
+  font-weight: 500; /* Moins gras */
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden; /* Pour l'effet de surbrillance */
+}
+
+/* Effet de surbrillance */
+.register-form .error-message::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(239, 68, 68, 0.1) 0%,
+    transparent 50%,
+    rgba(239, 68, 68, 0.1) 100%
+  );
+  animation: shimmer 2s infinite;
+  pointer-events: none;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -100% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-5px);
+  }
+  50% {
+    transform: translateX(5px);
+  }
+  75% {
+    transform: translateX(-3px);
+  }
+}
+
+@keyframes pulse-error {
+  0% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+  }
+}
+
+/* Style pour les messages de succès avec accessibilité améliorée */
+.register-form .success-message {
+  width: 92%;
+  margin: 0.3rem auto 0.3rem;
+  font-size: 0.75rem; /* Taille réduite */
+  display: flex;
+  align-items: center;
+  color: #065f46; /* green-800 pour un contraste fort */
+  background-color: rgba(209, 250, 229, 0.85);
+  padding: 0.25rem 0.5rem; /* Padding réduit */
+  border-radius: 0.25rem; /* Coins plus petits */
+  border: 1px solid rgba(16, 185, 129, 0.5); /* Bordure plus fine */
+  box-shadow: 0 1px 4px rgba(16, 185, 129, 0.2); /* Ombre plus légère */
+  animation: bounce-in 0.5s ease-out,
+    pulse-success 2.5s infinite ease-in-out 0.5s;
+  font-weight: 500; /* Moins gras */
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden; /* Pour l'effet de surbrillance */
+}
+
+/* Effet de surbrillance */
+.register-form .success-message::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(16, 185, 129, 0.1) 0%,
+    transparent 50%,
+    rgba(16, 185, 129, 0.1) 100%
+  );
+  animation: shimmer-success 2s infinite;
+  pointer-events: none;
+}
+
+@keyframes shimmer-success {
+  0% {
+    background-position: -100% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes bounce-in {
+  0% {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  70% {
+    transform: scale(0.95);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes pulse-success {
+  0% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(16, 185, 129, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+  }
+}
+
+/* Animation brillante pour le bouton */
+@keyframes shine {
+  0% {
+    background-position: -200% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
+}
+
+.animate-shine {
+  background-size: 200% 100%;
+  animation: shine 2s linear infinite;
+}
+
+@keyframes pulse-success {
+  0% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 6px rgba(16, 185, 129, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+  }
+}
+
+/* Style explicite pour le bouton "Créer mon compte" */
+#create-account-button {
+  transition: all 0.3s ease;
+}
+
+#create-account-button:disabled {
+  cursor: not-allowed !important;
+  opacity: 0.6;
+}
+
+#create-account-button:not(:disabled) {
+  cursor: pointer !important;
 }
 
 /* Styles pour les suggestions de pseudo */

@@ -1,8 +1,8 @@
-const { validationResult } = require('express-validator');
-const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
-const db = require('../config/db');
-const User = require('../models/user');
+const { validationResult } = require("express-validator");
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
+const db = require("../config/db");
+const User = require("../models/user");
 
 /**
  * Controller pour gérer l'inscription des utilisateurs
@@ -15,19 +15,46 @@ exports.register = async (req, res) => {
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { firstName, lastName, email, password, pseudo, role = 'user', phone } = req.body;
+    const {
+      firstName,
+      lastName,
+      email,
+      password,
+      pseudo,
+      role = "user",
+      phone,
+    } = req.body;
+
+    // Log pour débogage
+    console.log("Données d'inscription reçues:", {
+      firstName,
+      lastName,
+      email,
+      pseudoProvided: !!pseudo,
+      role,
+      phone: !!phone,
+    });
 
     // Vérifier si l'utilisateur existe déjà
     const existingUser = await User.findByEmail(email);
     if (existingUser) {
-      return res.status(400).json({ message: 'Cet email est déjà utilisé.' });
+      return res.status(400).json({ message: "Cet email est déjà utilisé." });
     }
 
     // Vérifier si le pseudo est unique (si fourni)
     if (pseudo) {
-      const existingPseudo = await User.findByPseudo(pseudo);
-      if (existingPseudo) {
-        return res.status(400).json({ message: 'Ce pseudo est déjà utilisé.' });
+      try {
+        const existingPseudo = await User.findByPseudo(pseudo);
+        if (existingPseudo) {
+          return res
+            .status(400)
+            .json({ message: "Ce pseudo est déjà utilisé." });
+        }
+      } catch (err) {
+        console.error("Erreur lors de la vérification du pseudo:", err);
+        return res
+          .status(500)
+          .json({ message: "Erreur lors de la vérification du pseudo." });
       }
     }
 
@@ -37,7 +64,7 @@ exports.register = async (req, res) => {
     // Créer l'utilisateur
     const newUser = await User.create({
       firstName,
-      lastName: lastName || '',
+      lastName: lastName || "",
       email,
       password: hashedPassword,
       pseudo: pseudo || null,
@@ -45,31 +72,55 @@ exports.register = async (req, res) => {
       phone: phone || null,
     });
 
+    console.log("Utilisateur créé avec succès:", {
+      id: newUser.id,
+      email: newUser.email,
+      role: newUser.role,
+    });
+
+    // Vérifier si l'utilisateur a été correctement créé
+    if (!newUser || !newUser.id) {
+      console.error("Erreur: Utilisateur créé sans ID");
+      return res
+        .status(500)
+        .json({ message: "Erreur lors de la création de l'utilisateur." });
+    }
+
     // Générer un token JWT
     const token = jwt.sign(
       { id: newUser.id, email: newUser.email, role: newUser.role },
       process.env.JWT_SECRET,
-      { expiresIn: '24h' }
+      { expiresIn: "24h" }
     );
+
+    // S'assurer que toutes les données nécessaires sont présentes
+    const userResponse = {
+      id: newUser.id,
+      firstName: newUser.firstName || firstName,
+      lastName: newUser.lastName || lastName || "",
+      email: newUser.email || email,
+      pseudo: newUser.pseudo || pseudo || "",
+      role: newUser.role || role,
+      phone: newUser.phone || phone || "",
+      avatar: newUser.avatar || null,
+    };
+
+    console.log("Réponse d'inscription:", {
+      userIncluded: !!userResponse,
+      tokenIncluded: !!token,
+    });
 
     // Répondre avec les infos de l'utilisateur et le token
     res.status(201).json({
-      message: 'Utilisateur enregistré avec succès.',
-      user: {
-        id: newUser.id,
-        firstName: newUser.firstName,
-        lastName: newUser.lastName,
-        email: newUser.email,
-        pseudo: newUser.pseudo,
-        role: newUser.role,
-        phone: newUser.phone,
-        avatar: newUser.avatar,
-      },
+      message: "Utilisateur enregistré avec succès.",
+      user: userResponse,
       token,
     });
   } catch (error) {
-    console.error('Erreur lors de l\'inscription:', error);
-    res.status(500).json({ message: 'Une erreur est survenue lors de l\'inscription.' });
+    console.error("Erreur lors de l'inscription:", error);
+    res
+      .status(500)
+      .json({ message: "Une erreur est survenue lors de l'inscription." });
   }
 };
 
@@ -89,25 +140,29 @@ exports.login = async (req, res) => {
     // Trouver l'utilisateur par email
     const user = await User.findByEmail(email);
     if (!user) {
-      return res.status(401).json({ message: 'Email ou mot de passe incorrect.' });
+      return res
+        .status(401)
+        .json({ message: "Email ou mot de passe incorrect." });
     }
 
     // Vérifier le mot de passe
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
-      return res.status(401).json({ message: 'Email ou mot de passe incorrect.' });
+      return res
+        .status(401)
+        .json({ message: "Email ou mot de passe incorrect." });
     }
 
     // Générer un token JWT
     const token = jwt.sign(
       { id: user.id, email: user.email, role: user.role },
       process.env.JWT_SECRET,
-      { expiresIn: '24h' }
+      { expiresIn: "24h" }
     );
 
     // Répondre avec les infos de l'utilisateur et le token
     res.json({
-      message: 'Connexion réussie.',
+      message: "Connexion réussie.",
       user: {
         id: user.id,
         firstName: user.firstName,
@@ -121,8 +176,10 @@ exports.login = async (req, res) => {
       token,
     });
   } catch (error) {
-    console.error('Erreur lors de la connexion:', error);
-    res.status(500).json({ message: 'Une erreur est survenue lors de la connexion.' });
+    console.error("Erreur lors de la connexion:", error);
+    res
+      .status(500)
+      .json({ message: "Une erreur est survenue lors de la connexion." });
   }
 };
 
@@ -133,11 +190,11 @@ exports.getCurrentUser = async (req, res) => {
   try {
     // L'utilisateur est déjà attaché à la requête par le middleware d'authentification
     const userId = req.user.id;
-    
+
     // Récupérer les détails complets de l'utilisateur
     const user = await User.findById(userId);
     if (!user) {
-      return res.status(404).json({ message: 'Utilisateur non trouvé.' });
+      return res.status(404).json({ message: "Utilisateur non trouvé." });
     }
 
     res.json({
@@ -153,8 +210,11 @@ exports.getCurrentUser = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error('Erreur lors de la récupération de l\'utilisateur:', error);
-    res.status(500).json({ message: 'Une erreur est survenue lors de la récupération des données utilisateur.' });
+    console.error("Erreur lors de la récupération de l'utilisateur:", error);
+    res.status(500).json({
+      message:
+        "Une erreur est survenue lors de la récupération des données utilisateur.",
+    });
   }
 };
 
@@ -176,7 +236,9 @@ exports.updateProfile = async (req, res) => {
     if (email) {
       const existingUser = await User.findByEmail(email);
       if (existingUser && existingUser.id !== userId) {
-        return res.status(400).json({ message: 'Cet email est déjà utilisé par un autre compte.' });
+        return res
+          .status(400)
+          .json({ message: "Cet email est déjà utilisé par un autre compte." });
       }
     }
 
@@ -184,7 +246,9 @@ exports.updateProfile = async (req, res) => {
     if (pseudo) {
       const existingPseudo = await User.findByPseudo(pseudo);
       if (existingPseudo && existingPseudo.id !== userId) {
-        return res.status(400).json({ message: 'Ce pseudo est déjà utilisé par un autre compte.' });
+        return res
+          .status(400)
+          .json({ message: "Ce pseudo est déjà utilisé par un autre compte." });
       }
     }
 
@@ -195,11 +259,11 @@ exports.updateProfile = async (req, res) => {
       email,
       phone,
       pseudo,
-      avatar
+      avatar,
     });
 
     res.json({
-      message: 'Profil mis à jour avec succès.',
+      message: "Profil mis à jour avec succès.",
       user: {
         id: updatedUser.id,
         firstName: updatedUser.firstName,
@@ -212,8 +276,10 @@ exports.updateProfile = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error('Erreur lors de la mise à jour du profil:', error);
-    res.status(500).json({ message: 'Une erreur est survenue lors de la mise à jour du profil.' });
+    console.error("Erreur lors de la mise à jour du profil:", error);
+    res.status(500).json({
+      message: "Une erreur est survenue lors de la mise à jour du profil.",
+    });
   }
 };
 
@@ -228,13 +294,18 @@ exports.changePassword = async (req, res) => {
     // Récupérer l'utilisateur
     const user = await User.findById(userId);
     if (!user) {
-      return res.status(404).json({ message: 'Utilisateur non trouvé.' });
+      return res.status(404).json({ message: "Utilisateur non trouvé." });
     }
 
     // Vérifier le mot de passe actuel
-    const isPasswordValid = await bcrypt.compare(currentPassword, user.password);
+    const isPasswordValid = await bcrypt.compare(
+      currentPassword,
+      user.password
+    );
     if (!isPasswordValid) {
-      return res.status(400).json({ message: 'Le mot de passe actuel est incorrect.' });
+      return res
+        .status(400)
+        .json({ message: "Le mot de passe actuel est incorrect." });
     }
 
     // Hasher le nouveau mot de passe
@@ -243,10 +314,12 @@ exports.changePassword = async (req, res) => {
     // Mettre à jour le mot de passe
     await User.updatePassword(userId, hashedPassword);
 
-    res.json({ message: 'Mot de passe modifié avec succès.' });
+    res.json({ message: "Mot de passe modifié avec succès." });
   } catch (error) {
-    console.error('Erreur lors du changement de mot de passe:', error);
-    res.status(500).json({ message: 'Une erreur est survenue lors du changement de mot de passe.' });
+    console.error("Erreur lors du changement de mot de passe:", error);
+    res.status(500).json({
+      message: "Une erreur est survenue lors du changement de mot de passe.",
+    });
   }
 };
 
@@ -256,20 +329,28 @@ exports.changePassword = async (req, res) => {
 exports.uploadAvatar = async (req, res) => {
   try {
     if (!req.files || !req.files.avatar) {
-      return res.status(400).json({ message: 'Aucun fichier téléchargé.' });
+      return res.status(400).json({ message: "Aucun fichier téléchargé." });
     }
 
     const { avatar } = req.files;
     const userId = req.user.id;
 
     // Vérifier le type de fichier
-    if (!avatar.mimetype.startsWith('image/')) {
-      return res.status(400).json({ message: 'Seules les images sont autorisées.' });
+    if (!avatar.mimetype.startsWith("image/")) {
+      return res
+        .status(400)
+        .json({ message: "Seules les images sont autorisées." });
     }
 
     // Générer un nom de fichier unique
-    const filename = `avatar_${userId}_${Date.now()}${require('path').extname(avatar.name)}`;
-    const uploadPath = require('path').join(__dirname, '../public/uploads/', filename);
+    const filename = `avatar_${userId}_${Date.now()}${require("path").extname(
+      avatar.name
+    )}`;
+    const uploadPath = require("path").join(
+      __dirname,
+      "../public/uploads/",
+      filename
+    );
 
     // Déplacer le fichier téléchargé vers le dossier de destination
     await avatar.mv(uploadPath);
@@ -279,11 +360,13 @@ exports.uploadAvatar = async (req, res) => {
     await User.update(userId, { avatar: avatarUrl, isPresetAvatar: false });
 
     res.json({
-      message: 'Avatar téléchargé avec succès.',
-      avatar: avatarUrl
+      message: "Avatar téléchargé avec succès.",
+      avatar: avatarUrl,
     });
   } catch (error) {
-    console.error('Erreur lors du téléchargement de l\'avatar:', error);
-    res.status(500).json({ message: 'Une erreur est survenue lors du téléchargement de l\'avatar.' });
+    console.error("Erreur lors du téléchargement de l'avatar:", error);
+    res.status(500).json({
+      message: "Une erreur est survenue lors du téléchargement de l'avatar.",
+    });
   }
 };

@@ -4,10 +4,12 @@
  */
 
 // URL de base de l'API (depuis .env)
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+export const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
 
 // URL de base pour les fichiers médias (depuis .env)
-export const MEDIA_BASE_URL = import.meta.env.VITE_MEDIA_BASE_URL || 'http://localhost:5000';
+export const MEDIA_BASE_URL =
+  import.meta.env.VITE_MEDIA_BASE_URL || "http://localhost:5000";
 
 /**
  * Obtient l'URL complète pour un fichier média
@@ -16,16 +18,19 @@ export const MEDIA_BASE_URL = import.meta.env.VITE_MEDIA_BASE_URL || 'http://loc
  */
 export function getFullMediaUrl(path: string | null | undefined): string {
   if (!path) {
+    console.log("getFullMediaUrl: No path provided, using default avatar");
     return `${MEDIA_BASE_URL}/avatars/avatar1.svg`; // Image par défaut
   }
-  
+
   // Si le chemin commence déjà par http, c'est déjà une URL complète
-  if (path.startsWith('http')) {
+  if (path.startsWith("http")) {
     return path;
   }
-  
+
   // Sinon, ajouter l'URL de base
-  return `${MEDIA_BASE_URL}${path.startsWith('/') ? '' : '/'}${path}`;
+  const fullUrl = `${MEDIA_BASE_URL}${path.startsWith("/") ? "" : "/"}${path}`;
+  console.log(`getFullMediaUrl: ${path} => ${fullUrl}`);
+  return fullUrl;
 }
 
 /**
@@ -47,9 +52,11 @@ export function preloadImage(url: string): Promise<void> {
  * @param avatarPath - Chemin de l'avatar à vérifier
  * @returns Promise qui se résout avec true si l'avatar est accessible, false sinon
  */
-export async function isAvatarAccessible(avatarPath: string | null | undefined): Promise<boolean> {
+export async function isAvatarAccessible(
+  avatarPath: string | null | undefined
+): Promise<boolean> {
   if (!avatarPath) return false;
-  
+
   const url = getFullMediaUrl(avatarPath);
   try {
     await preloadImage(url);

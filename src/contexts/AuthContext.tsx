@@ -18,6 +18,7 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   error: string | null;
+  setError: (error: string | null) => void;
   login: (email: string, password: string) => Promise<void>;
   register: (userData: {
     firstName: string;
@@ -27,11 +28,12 @@ interface AuthContextType {
     pseudo?: string;
     phone?: string;
     role?: 'user' | 'admin';
-  }) => Promise<void>;
+  }) => Promise<any>;
   logout: () => void;
   updateUser: (data: { firstName?: string; lastName?: string; email?: string; avatar?: string; isPresetAvatar?: boolean; avatarColor?: string; avatarInitials?: string }) => Promise<void>;
   changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
   uploadAvatar: (file: File) => Promise<void>;
+  refreshUserData: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -43,7 +45,35 @@ interface AuthProviderProps {
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);  // Check for stored user data on mount
+  const [error, setError] = useState<string | null>(null);
+
+  // Fonction pour rafraîchir les données de l'utilisateur
+  const refreshUserData = async () => {
+    try {
+      console.log("Rafraîchissement des données utilisateur...");
+      const token = localStorage.getItem('token');
+      if (!token) {
+        console.log("Pas de token, impossible de rafraîchir les données utilisateur");
+        return;
+      }
+
+      const userData = await authService.getCurrentUser();
+      if (userData) {
+        console.log("Données utilisateur rafraîchies avec succès:", {
+          id: userData.id,
+          email: userData.email,
+          firstName: userData.firstName,
+          lastName: userData.lastName
+        });
+
+        // Mettre à jour l'état et le localStorage
+        setUser(userData);
+        localStorage.setItem('user', JSON.stringify(userData));
+      }
+    } catch (error) {
+      console.error("Erreur lors du rafraîchissement des données utilisateur:", error);
+    }
+  };  // Check for stored user data on mount
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
     if (storedUser) {
@@ -169,7 +199,43 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     try {
       const response = await authService.login({ email, password });
-      setUser(response.user);
+
+      // Vérifier les données de l'utilisateur avant de les stocker
+      console.log("Connexion réussie, données utilisateur:", {
+        id: response.user?.id,
+        email: response.user?.email,
+        firstName: response.user?.firstName,
+        lastName: response.user?.lastName,
+        role: response.user?.role,
+        pseudo: response.user?.pseudo
+      });
+
+      // S'assurer que toutes les données nécessaires sont présentes
+      if (!response.user || !response.user.id || !response.user.email) {
+        console.error("Données utilisateur incomplètes reçues lors de la connexion");
+
+        // Tenter de récupérer l'utilisateur complet si les données sont incomplètes
+        try {
+          console.log("Tentative de récupération des données complètes de l'utilisateur");
+          const currentUser = await authService.getCurrentUser();
+          if (currentUser) {
+            console.log("Utilisateur complet récupéré:", currentUser);
+            // Mettre à jour l'utilisateur avec les données complètes
+            localStorage.setItem('user', JSON.stringify(currentUser));
+            setUser(currentUser);
+          } else {
+            console.error("Impossible de récupérer les données complètes de l'utilisateur");
+            setUser(response.user);
+          }
+        } catch (fetchError) {
+          console.error("Erreur lors de la récupération des données complètes:", fetchError);
+          // Utiliser les données reçues même si incomplètes
+          setUser(response.user);
+        }
+      } else {
+        // Les données sont complètes, les utiliser directement
+        setUser(response.user);
+      }
     } catch (err: any) {
       setError(err.response?.data?.message || 'Échec de la connexion. Veuillez vérifier vos identifiants.');
       console.error(err);
@@ -190,8 +256,55 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setError(null);
 
     try {
+      console.log("Tentative d'inscription avec:", {
+        ...userData,
+        password: "****" // Masquer le mot de passe dans les logs
+      });
+
       const response = await authService.register(userData);
+      console.log("Inscription réussie, utilisateur:", response.user);
+
+      // Vérifier que nous avons bien un utilisateur et un token
+      if (!response.user || !response.token) {
+        throw new Error("Données d'authentification incomplètes après inscription");
+      }
+
+      // Stocker le token et l'utilisateur dans localStorage, comme dans la fonction login
+      localStorage.setItem('token', response.token);
+      localStorage.setItem('user', JSON.stringify(response.user));
+      console.log('Token et utilisateur stockés dans localStorage après inscription');
+
+      // Vérifier les données avant de mettre à jour l'état
+      console.log("Données de l'utilisateur après inscription:", {
+        id: response.user?.id,
+        email: response.user?.email,
+        firstName: response.user?.firstName,
+        role: response.user?.role
+      });
+
+      // Mettre à jour l'état de l'utilisateur immédiatement
       setUser(response.user);
+      console.log("État user mis à jour dans le contexte:", response.user ? "présent" : "absent");
+
+      // Créer et dispatcher un événement de stockage pour informer les autres composants
+      const event = new StorageEvent('storage', {
+        key: 'user',
+        newValue: JSON.stringify(response.user)
+      });
+      window.dispatchEvent(event);
+      console.log('Événement de stockage dispatché pour informer les autres composants');
+
+      // Log pour vérifier l'état du localStorage après l'inscription
+      setTimeout(() => {
+        const storedToken = localStorage.getItem('token');
+        const storedUser = localStorage.getItem('user');
+        console.log('Vérification localStorage après 500ms:', {
+          token: storedToken ? "présent" : "absent",
+          user: storedUser ? "présent" : "absent"
+        });
+      }, 500);
+
+      return response; // Retourner la réponse pour permettre au composant de continuer
     } catch (err: any) {
       // Récupérer le message d'erreur de la réponse de l'API ou de l'objet d'erreur
       const errorMessage = err.response?.data?.message || err.message || "Échec de l'inscription. Veuillez réessayer.";
@@ -359,12 +472,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         user,
         loading,
         error,
+        setError,
         login,
         register,
         logout,
         updateUser,
         changePassword,
-        uploadAvatar
+        uploadAvatar,
+        refreshUserData
       }}
     >
       {children}
