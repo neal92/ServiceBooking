@@ -102,7 +102,7 @@ const AvatarSelector = ({ currentAvatar, onAvatarSelect, userFirstName = '' }: A
     } catch (err) {
       console.error('Erreur lors de la sélection de l\'avatar:', err);
     }
-  }; const generateInitialAvatar = async () => {
+  };  const generateInitialAvatar = async () => {
     // Extraire le code couleur sans le # pour l'insérer dans le nom du fichier
     const colorCode = bgColor.replace('#', '');
 
@@ -130,6 +130,10 @@ const AvatarSelector = ({ currentAvatar, onAvatarSelect, userFirstName = '' }: A
         colorCode: colorCode,
         taille: base64Content.length
       });
+      
+      // Mettre à jour les données extraites avant d'appeler onAvatarSelect
+      setExtractedColor(bgColor);
+      setExtractedInitials(initials.toUpperCase());
 
       // Appel de la fonction d'upload avec la data URL
       await onAvatarSelect(dataUrl);

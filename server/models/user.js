@@ -9,9 +9,11 @@ class User {
   // Find user by email
   static async findByEmail(email) {
     try {
-      console.log(`Looking up user by email: ${email}`);
+      // Nettoyer l'email pour éviter les problèmes d'espaces
+      const cleanEmail = email ? email.trim() : email;
+      console.log(`Looking up user by email: ${cleanEmail}`);
       const [rows] = await db.query("SELECT * FROM users WHERE email = ?", [
-        email,
+        cleanEmail,
       ]);
       if (rows.length > 0) {
         console.log(`User found with email: ${email}`);
@@ -186,6 +188,11 @@ class User {
         );
         return false;
       }
+      
+      console.log(`Vérification du mot de passe avec bcrypt.compare`);
+      console.log(`- Longueur du mot de passe en clair: ${plainPassword.length} caractères`);
+      console.log(`- Longueur du hash: ${hashedPassword.length} caractères`);
+      console.log(`- Format du hash: ${hashedPassword.substring(0, 7)}...`);
 
       const isValid = await bcrypt.compare(plainPassword, hashedPassword);
       console.log(
@@ -194,6 +201,11 @@ class User {
       return isValid;
     } catch (error) {
       console.error("Error verifying password:", error);
+      console.error("Error details:", {
+        message: error.message,
+        stack: error.stack
+      });
+      
       if (
         error.message &&
         error.message.includes("data and hash arguments required")

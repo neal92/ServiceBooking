@@ -310,13 +310,16 @@ const Profile = () => {
                       // Upload de l'avatar avec l'indication que c'est un avatar prédéfini
                       const uploadResponse = await authService.uploadAvatar(file);
 
-                      await updateUser({
-                        firstName: user?.firstName,
-                        lastName: user?.lastName,
-                        email: user?.email,
+                      // S'assurer que nous préservons toutes les données utilisateur existantes
+                      const updatedUserData = {
+                        firstName: user?.firstName || '',
+                        lastName: user?.lastName || '',
+                        email: user?.email || '',
                         avatar: uploadResponse.avatarUrl,
                         isPresetAvatar: true,
-                      });                        // Afficher la notification de succès
+                      };
+                      console.log("Mise à jour du profil avec avatar prédéfini:", updatedUserData);
+                      await updateUser(updatedUserData);                        // Afficher la notification de succès
                       showSuccess('Avatar prédéfini mis à jour avec succès');
                       // Afficher la popup modale de succès pour l'avatar
                       setShowSuccessModal(true);
@@ -366,15 +369,18 @@ const Profile = () => {
                       const uploadResponse = await authService.uploadAvatar(file);
 
                       // Mise à jour du profil utilisateur avec les métadonnées extraites
-                      await updateUser({
-                        firstName: user?.firstName,
-                        lastName: user?.lastName,
-                        email: user?.email,
+                      // S'assurer que nous préservons toutes les données utilisateur existantes
+                      const updatedUserData = {
+                        firstName: user?.firstName || '',
+                        lastName: user?.lastName || '',
+                        email: user?.email || '',
                         avatar: uploadResponse.avatarUrl,
                         isPresetAvatar: false,
                         avatarColor: extractedColor,
                         avatarInitials: extractedInitials,
-                      });// Afficher la notification de succès
+                      };
+                      console.log("Mise à jour du profil avec avatar personnalisé:", updatedUserData);
+                      await updateUser(updatedUserData);// Afficher la notification de succès
                       showSuccess('Avatar personnalisé mis à jour avec succès');
                       // Afficher la popup modale de succès pour l'avatar
                       setShowSuccessModal(true);

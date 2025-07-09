@@ -79,12 +79,12 @@ apiClient.interceptors.request.use(
     const token = localStorage.getItem("token");
     console.log(
       "Interceptor - Token in localStorage:",
-      token ? "present" : "not present"
+      token ? `present (starts with ${token.substring(0, 10)}...)` : "not present"
     );
 
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
-      console.log("Interceptor - Added Authorization header");
+      console.log(`Interceptor - Added Authorization header: Bearer ${token.substring(0, 10)}...`);
 
       // Décodez et affichez le contenu du token pour débogage (sans vérification de signature)
       try {
@@ -237,9 +237,21 @@ const authService = {
 
   login: async (credentials: LoginCredentials): Promise<AuthResponse> => {
     try {
+      // Nettoyer l'email avant l'envoi (supprimer les espaces avant/après)
+      const cleanedCredentials = {
+        email: credentials.email.trim(),
+        password: credentials.password
+      };
+      
+      console.log("Tentative de connexion avec email:", cleanedCredentials.email);
+      
+      // Réinitialiser localStorage avant tentative de connexion pour éviter tout conflit
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      
       const response = await apiClient.post<AuthResponse>(
         "/auth/login",
-        credentials
+        cleanedCredentials
       );
       console.log("Login response:", {
         token: response.data.token ? "present" : "not present",
@@ -276,6 +288,30 @@ const authService = {
         console.log(
           "Saved to localStorage - Token and user data with defaults"
         );
+        
+        // Déboguer le token pour s'assurer qu'il contient les bonnes informations
+        try {
+          const base64Url = response.data.token.split(".")[1];
+          const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+          const jsonPayload = decodeURIComponent(
+            atob(base64)
+              .split("")
+              .map((c) => {
+                return "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2);
+              })
+              .join("")
+          );
+          const decodedToken = JSON.parse(jsonPayload);
+          console.log("Token décodé après login:", {
+            id: decodedToken.id,
+            email: decodedToken.email,
+            role: decodedToken.role,
+            iat: decodedToken.iat ? new Date(decodedToken.iat * 1000).toISOString() : 'non présent',
+            exp: decodedToken.exp ? new Date(decodedToken.exp * 1000).toISOString() : 'non présent',
+          });
+        } catch (e) {
+          console.error("Erreur lors du décodage du token:", e);
+        }
 
         // Mettre à jour la réponse avec les données complétées
         response.data.user = userWithDefaults;
@@ -286,6 +322,22 @@ const authService = {
       return response.data;
     } catch (error: any) {
       console.error("Login error:", error);
+      
+      // Log detailed error information
+      if (error.response) {
+        // The request was made and the server responded with a status code
+        // that falls out of the range of 2xx
+        console.error("Response data:", error.response.data);
+        console.error("Response status:", error.response.status);
+        console.error("Response headers:", error.response.headers);
+      } else if (error.request) {
+        // The request was made but no response was received
+        console.error("No response received:", error.request);
+      } else {
+        // Something happened in setting up the request that triggered an Error
+        console.error("Error setting up request:", error.message);
+      }
+      
       const status = error.response?.status;
 
       // Handle specific status codes

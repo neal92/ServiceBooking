@@ -18,12 +18,16 @@ exports.register = async (req, res) => {
     const {
       firstName,
       lastName,
-      email,
+      email: rawEmail,
       password,
-      pseudo,
+      pseudo: rawPseudo,
       role = "user",
       phone,
     } = req.body;
+    
+    // Nettoyer l'email et le pseudo (supprimer les espaces avant et après)
+    const email = rawEmail.trim();
+    const pseudo = rawPseudo ? rawPseudo.trim() : rawPseudo;
 
     // Log pour débogage
     console.log("Données d'inscription reçues:", {
@@ -44,12 +48,15 @@ exports.register = async (req, res) => {
     // Vérifier si le pseudo est unique (si fourni)
     if (pseudo) {
       try {
+        console.log(`Vérification de l'unicité du pseudo: ${pseudo}`);
         const existingPseudo = await User.findByPseudo(pseudo);
         if (existingPseudo) {
+          console.log(`Le pseudo ${pseudo} est déjà utilisé`);
           return res
             .status(400)
             .json({ message: "Ce pseudo est déjà utilisé." });
         }
+        console.log(`Le pseudo ${pseudo} est disponible`);
       } catch (err) {
         console.error("Erreur lors de la vérification du pseudo:", err);
         return res
@@ -87,11 +94,33 @@ exports.register = async (req, res) => {
     }
 
     // Générer un token JWT
+    // NOTE: Assurez-vous que l'ID utilisateur est inclus sous la clé 'id'
+    // car le middleware auth.js vérifie decoded.id
+    const tokenPayload = { 
+      id: newUser.id, 
+      email: newUser.email, 
+      role: newUser.role 
+    };
+    console.log('Création du token d\'enregistrement avec payload:', tokenPayload);
+    
+    // Utiliser la même clé secrète que dans le middleware d'authentification
+    const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
+    console.log('JWT_SECRET pour inscription (first 5 chars):', JWT_SECRET.substring(0, 5) + '...');
+    
     const token = jwt.sign(
-      { id: newUser.id, email: newUser.email, role: newUser.role },
-      process.env.JWT_SECRET,
+      tokenPayload,
+      JWT_SECRET,
       { expiresIn: "24h" }
     );
+    console.log('Token JWT d\'enregistrement généré avec succès');
+    
+    // Vérifier que le token est valide
+    try {
+      const decoded = jwt.verify(token, JWT_SECRET);
+      console.log('Token d\'enregistrement vérifié avec succès. Contenu:', { id: decoded.id, email: decoded.email, role: decoded.role });
+    } catch (e) {
+      console.error('Erreur lors de la vérification du token d\'enregistrement:', e);
+    }
 
     // S'assurer que toutes les données nécessaires sont présentes
     const userResponse = {
@@ -135,30 +164,102 @@ exports.login = async (req, res) => {
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { email, password } = req.body;
+    const { email: rawEmail, password } = req.body;
+    
+    // Nettoyer l'email (supprimer les espaces avant et après)
+    const email = rawEmail.trim();
+    
+    console.log(`Tentative de connexion avec email: ${email}`);
 
     // Trouver l'utilisateur par email
     const user = await User.findByEmail(email);
     if (!user) {
+      console.log(`Aucun utilisateur trouvé avec l'email: ${email}`);
       return res
         .status(401)
         .json({ message: "Email ou mot de passe incorrect." });
     }
+    
+    console.log(`Utilisateur trouvé: ID=${user.id}, Email=${user.email}`);
 
     // Vérifier le mot de passe
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-    if (!isPasswordValid) {
+    console.log('====== Vérification détaillée du mot de passe ======');
+    console.log(`Mot de passe fourni: "${password}" (longueur: ${password ? password.length : 0} caractères)`);
+    console.log(`Mot de passe stocké en BDD: ${user.password ? user.password.substring(0, 10) + '...' : 'Non disponible'}`);
+    console.log(`Format du hash: ${user.password ? user.password.substring(0, 7) : 'N/A'}`);
+    console.log(`Longueur du hash: ${user.password ? user.password.length : 0} caractères`);
+    console.log(`Est au format bcrypt ($2a, $2b ou $2y): ${user.password ? /^\$2[aby]\$/.test(user.password) : 'N/A'}`);
+    
+    // Tester si le hash est valide avant de faire la comparaison
+    if (!user.password || user.password.length < 60 || !/^\$2[aby]\$/.test(user.password)) {
+      console.error('ERREUR: Le hash stocké ne semble pas être un hash bcrypt valide');
       return res
         .status(401)
-        .json({ message: "Email ou mot de passe incorrect." });
+        .json({ message: "Erreur d'authentification. Contactez l'administrateur." });
+    }
+    
+    try {
+      console.log('Appel de bcrypt.compare avec les paramètres:');
+      console.log('- password:', password ? `"${password}"` : 'Non fourni');
+      console.log('- hash (début):', user.password.substring(0, 10) + '...');
+      
+      const startTime = Date.now();
+      const isPasswordValid = await bcrypt.compare(password, user.password);
+      const duration = Date.now() - startTime;
+      
+      console.log(`Résultat de bcrypt.compare: ${isPasswordValid ? 'TRUE (Valide)' : 'FALSE (Invalide)'}`);
+      console.log(`Durée de la vérification: ${duration}ms`);
+      
+      if (!isPasswordValid) {
+        console.log('Mot de passe invalide, accès refusé');
+        
+        // Pour le débogage, vérifier si le mot de passe correspond au hash
+        console.log('⚠️ Pour le débogage uniquement:');
+        const testHash = await bcrypt.hash(password, 10);
+        console.log('Hash généré avec le mot de passe fourni:', testHash);
+        console.log('Les hash sont-ils similaires?', testHash.substring(0, 7) === user.password.substring(0, 7) ? 'Format identique' : 'Format différent');
+        
+        return res
+          .status(401)
+          .json({ message: "Email ou mot de passe incorrect." });
+      }
+      
+      console.log('✅ Mot de passe valide, accès autorisé');
+    } catch (error) {
+      console.error('ERREUR lors de la comparaison bcrypt:', error);
+      return res
+        .status(500)
+        .json({ message: "Erreur lors de la vérification des identifiants." });
     }
 
     // Générer un token JWT
+    // NOTE: Assurez-vous que l'ID utilisateur est inclus sous la clé 'id'
+    // car le middleware auth.js vérifie decoded.id
+    const tokenPayload = { 
+      id: user.id, 
+      email: user.email, 
+      role: user.role 
+    };
+    console.log('Création du token avec payload:', tokenPayload);
+    
+    // Utiliser la même clé secrète que dans le middleware d'authentification
+    const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
+    console.log('JWT_SECRET pour login (first 5 chars):', JWT_SECRET.substring(0, 5) + '...');
+    
     const token = jwt.sign(
-      { id: user.id, email: user.email, role: user.role },
-      process.env.JWT_SECRET,
+      tokenPayload,
+      JWT_SECRET,
       { expiresIn: "24h" }
     );
+    console.log('Token JWT généré avec succès');
+    
+    // Vérifier que le token est valide
+    try {
+      const decoded = jwt.verify(token, JWT_SECRET);
+      console.log('Token vérifié avec succès. Contenu:', { id: decoded.id, email: decoded.email, role: decoded.role });
+    } catch (e) {
+      console.error('Erreur lors de la vérification du token:', e);
+    }
 
     // Répondre avec les infos de l'utilisateur et le token
     res.json({

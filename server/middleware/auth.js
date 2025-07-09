@@ -5,15 +5,17 @@ require('dotenv').config();
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 
 console.log('Auth middleware loaded. JWT_SECRET is', JWT_SECRET ? 'configured' : 'NOT configured');
+console.log('JWT_SECRET first 5 chars:', JWT_SECRET.substring(0, 5) + '...');
 
 exports.authenticate = (req, res, next) => {
   console.log('Authentication middleware called');
   
-  // Get token from header
-  const authHeader = req.header('Authorization');
-  console.log('Authorization header:', authHeader ? 'present' : 'not present');
+  // Get token from header (plus robuste)
+  const authHeader = req.header('Authorization') || req.headers['authorization']; // Essayer deux façons d'accéder aux headers
+  console.log('Authorization header:', authHeader);
   
-  const token = authHeader && authHeader.split(' ')[1]; // Format: "Bearer TOKEN"
+  // Format attendu: "Bearer TOKEN" - analyse plus robuste
+  const token = authHeader && authHeader.split(' ').length > 1 ? authHeader.split(' ')[1] : authHeader;
   
   if (!token) {
     console.log('Authentication failed: No token provided');
@@ -21,22 +23,54 @@ exports.authenticate = (req, res, next) => {
   }
   try {
     console.log('Verifying JWT token');
+    // Dump first few characters of token for debugging
+    console.log('Token (first 15 chars):', token.substring(0, 15) + '...');
+    console.log('JWT_SECRET first 5 chars used for verification:', JWT_SECRET.substring(0, 5) + '...');
+    
     // Verify token
     const decoded = jwt.verify(token, JWT_SECRET);
-    console.log('Token verification successful:', decoded);
-    console.log('User ID from token:', decoded.userId);
+    console.log('Token verification successful, decoded payload:', JSON.stringify(decoded, null, 2));
+    console.log('User ID from token:', decoded.id || 'not present');
     console.log('User email from token:', decoded.email || 'not present');
+    console.log('Token issuing time:', decoded.iat ? new Date(decoded.iat * 1000).toISOString() : 'not present');
+    console.log('Token expiry time:', decoded.exp ? new Date(decoded.exp * 1000).toISOString() : 'not present');
+    
+    // Si l'ID est manquant dans le token, renvoyer une erreur
+    if (!decoded.id) {
+      console.error('Token missing required field: id');
+      return res.status(401).json({ 
+        message: 'Invalid token format: missing user ID.', 
+        code: 'INVALID_TOKEN_FORMAT' 
+      });
+    }
+    
     req.user = decoded; // Add user info to request
-    next();  } catch (error) {
+    next();
+  } catch (error) {
     console.error('Authentication error:', error.message);
+    console.error('Error name:', error.name);
+    console.error('Full error:', error);
+    
     if (error.name === 'JsonWebTokenError') {
       console.error('Invalid token signature. Check JWT_SECRET configuration.');
-      res.status(401).json({ message: 'Invalid token.', code: 'INVALID_TOKEN' });
+      res.status(401).json({ 
+        message: 'Invalid token signature. Please log in again.', 
+        code: 'INVALID_TOKEN',
+        details: error.message 
+      });
     } else if (error.name === 'TokenExpiredError') {
       console.error('Token has expired');
-      res.status(401).json({ message: 'Token has expired.', code: 'TOKEN_EXPIRED' });
+      res.status(401).json({ 
+        message: 'Your session has expired. Please log in again.', 
+        code: 'TOKEN_EXPIRED',
+        expiredAt: error.expiredAt
+      });
     } else {
-      res.status(401).json({ message: 'Authentication failed.', code: 'AUTH_FAILED' });
+      res.status(401).json({ 
+        message: 'Authentication failed.', 
+        code: 'AUTH_FAILED',
+        details: error.message 
+      });
     }
   }
 };

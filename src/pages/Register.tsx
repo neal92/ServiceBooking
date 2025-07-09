@@ -401,7 +401,7 @@ const Register = () => {
     if (currentStep === steps.length - 1) {
       console.log("Étape des mots de passe (dernière étape)");
       // Vérifier si les mots de passe sont valides
-      const passwordsValid = password && confirmPassword && password === confirmPassword && PASSWORD_REGEX.test(password);
+      const passwordsValid = !!(password && confirmPassword && password === confirmPassword && PASSWORD_REGEX.test(password));
       setIsComplete(passwordsValid);
       console.log(`Les mots de passe sont ${passwordsValid ? 'valides' : 'invalides'}, isComplete: ${passwordsValid}`);
 

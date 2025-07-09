@@ -198,7 +198,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setError(null);
 
     try {
+      console.log("Tentative de connexion avec email:", email);
+      
+      // Vider les données précédentes d'authentification pour éviter les conflits
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      console.log("Données d'authentification précédentes effacées");
+      
       const response = await authService.login({ email, password });
+
+      if (!response || !response.token) {
+        console.error("Réponse de connexion invalide - token manquant:", response);
+        throw new Error("Le serveur n'a pas fourni de token d'authentification");
+      }
 
       // Vérifier les données de l'utilisateur avant de les stocker
       console.log("Connexion réussie, données utilisateur:", {
@@ -320,15 +332,34 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setLoading(true);
     setError(null);
 
-    console.log('Mise à jour du profil avec les données:', {
-      ...data,
-      avatar: data.avatar ? 'présent' : 'absent',
+    // S'assurer que nous avons des données utilisateur valides
+    if (!user && !data.firstName) {
+      setError("Impossible de mettre à jour les données utilisateur: utilisateur non connecté");
+      setLoading(false);
+      throw new Error("Utilisateur non connecté");
+    }
+
+    // Fusionner les données actuelles de l'utilisateur avec les nouvelles données
+    const updatedData = {
+      firstName: data.firstName || user?.firstName || '',
+      lastName: data.lastName || user?.lastName || '',
+      email: data.email || user?.email || '',
+      avatar: data.avatar,
+      isPresetAvatar: data.isPresetAvatar,
       avatarColor: data.avatarColor,
       avatarInitials: data.avatarInitials
+    };
+
+    console.log('Mise à jour du profil avec les données fusionnées:', {
+      ...updatedData,
+      avatar: updatedData.avatar ? 'présent' : 'absent',
+      avatarColor: updatedData.avatarColor,
+      avatarInitials: updatedData.avatarInitials
     });
 
     try {
-      const response = await authService.updateProfile(data);
+      // Envoi des données fusionnées à l'API
+      const response = await authService.updateProfile(updatedData);
       console.log('Profil mis à jour, réponse reçue:', {
         ...response.user,
         avatar: response.user.avatar ? 'présent' : 'absent'
@@ -337,8 +368,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       // Créer un utilisateur mis à jour avec les métadonnées d'avatar si présentes
       const updatedUser = {
         ...response.user,
-        avatarColor: data.avatarColor || user?.avatarColor,
-        avatarInitials: data.avatarInitials || user?.avatarInitials
+        avatarColor: updatedData.avatarColor || user?.avatarColor,
+        avatarInitials: updatedData.avatarInitials || user?.avatarInitials
       };
 
       // Mettre à jour l'état utilisateur
@@ -356,7 +387,24 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       console.log('Données utilisateur mises à jour dans le localStorage et événement dispatché');
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Échec de la mise à jour du profil.');
+      console.error("Erreur lors de la mise à jour du profil:", err);
+      
+      // Conserver les données utilisateur actuelles en cas d'erreur
+      console.log("Conservation des données utilisateur actuelles en cas d'erreur");
+      
+      // Afficher un message d'erreur plus précis pour l'utilisateur
+      if (err.response?.status === 401 || err.response?.status === 403) {
+        setError("Session expirée, veuillez vous reconnecter");
+      } else if (err.response?.status === 400) {
+        setError(err.response?.data?.message || "Données invalides dans le formulaire");
+      } else if (err.response?.status === 404) {
+        setError("Utilisateur non trouvé, veuillez vous reconnecter");
+      } else if (err.response?.status === 500) {
+        setError("Erreur serveur, veuillez réessayer plus tard");
+      } else {
+        setError(err.response?.data?.message || 'Échec de la mise à jour du profil.');
+      }
+      
       console.error(err);
       throw err;
     } finally {
