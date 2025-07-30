@@ -28,7 +28,7 @@ interface AuthContextType {
     role?: 'user' | 'admin';
   }) => Promise<any>;
   logout: () => void;
-  updateUser: (data: { firstName?: string; lastName?: string; email?: string; avatar?: string; isPresetAvatar?: boolean; avatarColor?: string; avatarInitials?: string }) => Promise<void>;
+  updateUser: (data: { firstName?: string; lastName?: string; email?: string; pseudo?: string; avatar?: string; isPresetAvatar?: boolean; avatarColor?: string; avatarInitials?: string }) => Promise<void>;
   changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
   uploadAvatar: (file: File) => Promise<void>;
   refreshUserData: () => Promise<void>;
@@ -325,7 +325,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setLoading(false);
     }
   };// Update user profile
-  const updateUser = async (data: { firstName?: string; lastName?: string; email?: string; avatar?: string; isPresetAvatar?: boolean; avatarColor?: string; avatarInitials?: string }) => {
+  const updateUser = async (data: { firstName?: string; lastName?: string; email?: string; pseudo?: string; avatar?: string; isPresetAvatar?: boolean; avatarColor?: string; avatarInitials?: string }) => {
     setLoading(true);
     setError(null);
 
@@ -341,6 +341,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       firstName: data.firstName || user?.firstName || '',
       lastName: data.lastName || user?.lastName || '',
       email: data.email || user?.email || '',
+      pseudo: data.pseudo || user?.pseudo || '',
       avatar: data.avatar,
       isPresetAvatar: data.isPresetAvatar,
       avatarColor: data.avatarColor,
@@ -362,12 +363,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         avatar: response.user.avatar ? 'présent' : 'absent'
       });
 
-      // Créer un utilisateur mis à jour avec les métadonnées d'avatar si présentes
+      // Créer un utilisateur mis à jour en fusionnant l'utilisateur actuel avec la réponse
       const updatedUser = {
-        ...response.user,
+        ...user, // Commencer avec l'utilisateur actuel
+        ...response.user, // Appliquer les mises à jour du serveur
         avatarColor: updatedData.avatarColor || user?.avatarColor,
         avatarInitials: updatedData.avatarInitials || user?.avatarInitials
       };
+
+      console.log('Utilisateur mis à jour dans le contexte:', updatedUser);
 
       // Mettre à jour l'état utilisateur
       setUser(updatedUser);

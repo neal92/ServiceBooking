@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import { Category } from '../../types';
 import ModalPortal from '../layout/ModalPortal';
-// import ImageUpload from '../ui/ImageUpload';  // Temporairement commenté
+// import ImageUpload from '../ui/ImageUpload';  // Temporairement commenté pour éviter l'erreur
 import categoryServiceWithImages from '../../services/categoryService';
 
 // Extended Category interface with color field for UI purposes
@@ -186,16 +186,15 @@ const NewCategoryModal = ({ isOpen, onClose, category, onSuccess }: NewCategoryM
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Image de la catégorie
                   </label>
-                  {/* <ImageUpload
+                  {/* Temporairement commenté pour éviter l'erreur
+                  <ImageUpload
                     onImageChange={setSelectedImage}
                     currentImage={category?.image}
                     placeholder="Ajouter une image pour cette catégorie"
                     imageType="categories"
                     enableResize={true}
-                  /> */}
-                  <div className="p-4 border-2 border-dashed border-gray-300 rounded-lg text-center">
-                    <p className="text-gray-500">Upload d'image temporairement désactivé</p>
-                  </div>
+                  />
+                  */}
                   <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
                     L'image apparaîtra sur la carte de la catégorie. Formats acceptés : JPG, PNG, GIF, WebP (max 5MB)
                   </p>

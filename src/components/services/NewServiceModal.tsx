@@ -3,6 +3,7 @@ import { X } from 'lucide-react';
 import { Service, Category } from '../../types';
 import { serviceService, categoryService } from '../../services/api';
 import ModalPortal from '../layout/ModalPortal';
+// import ImageUpload from '../ui/ImageUpload';  // Temporairement commenté pour éviter l'erreur
 
 interface NewServiceModalProps {
   isOpen: boolean;
@@ -17,6 +18,7 @@ const NewServiceModal = ({ isOpen, onClose, service, onSuccess }: NewServiceModa
   const [price, setPrice] = useState('');
   const [duration, setDuration] = useState('60');
   const [categoryId, setCategoryId] = useState('');
+  // const [selectedImage, setSelectedImage] = useState<File | null>(null);  // Temporairement commenté
   const [categories, setCategories] = useState<Category[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -37,12 +39,14 @@ const NewServiceModal = ({ isOpen, onClose, service, onSuccess }: NewServiceModa
       setPrice(service.price.toString());
       setDuration(service.duration.toString());
       setCategoryId(service.categoryId.toString());
+      // setSelectedImage(null); // Reset image for editing - Temporairement commenté
     } else {
       setName('');
       setDescription('');
       setPrice('');
       setDuration('60');
       setCategoryId('');
+      // setSelectedImage(null);  // Temporairement commenté
     }
   }, [service, isOpen]);
 
@@ -70,6 +74,7 @@ const NewServiceModal = ({ isOpen, onClose, service, onSuccess }: NewServiceModa
         price: parseFloat(price),
         duration: parseInt(duration),
         categoryId: parseInt(categoryId)
+        // image: selectedImage || undefined  // Temporairement commenté
       };
 
       let successMsg = '';
@@ -238,6 +243,26 @@ const NewServiceModal = ({ isOpen, onClose, service, onSuccess }: NewServiceModa
                       Chargement des catégories...
                     </div>
                   )}
+                </div>
+
+                {/* Upload d'image */}
+                <div className="sm:col-span-6">
+                  <label className="block text-base font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Image du service
+                  </label>
+                  {/* <ImageUpload
+                    onImageChange={setSelectedImage}
+                    currentImage={service?.image}
+                    placeholder="Ajouter une image pour ce service"
+                    imageType="services"
+                    enableResize={true}
+                  /> */}
+                  <div className="p-4 border-2 border-dashed border-gray-300 rounded-lg text-center">
+                    <p className="text-gray-500">Upload d'image temporairement désactivé</p>
+                  </div>
+                  <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                    L'image apparaîtra sur la carte du service. Formats acceptés : JPG, PNG, GIF, WebP (max 5MB)
+                  </p>
                 </div>
               </div>
             </div>
