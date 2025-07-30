@@ -1,5 +1,5 @@
 import React from 'react';
-import { Edit, Trash, Clock, Tag, Calendar as CalendarIcon } from 'lucide-react';
+import { Edit, Trash, Clock, Tag, Calendar as CalendarIcon, Image as ImageIcon } from 'lucide-react';
 import { Service } from '../../types';
 
 interface ServiceCardProps {
@@ -9,8 +9,38 @@ interface ServiceCardProps {
 }
 
 const ServiceCard = ({ service, onEdit, onDelete }: ServiceCardProps) => {
-  return (    <div className="bg-white dark:bg-gray-800 overflow-hidden shadow-md rounded-xl border border-gray-100 dark:border-gray-700 transition-all hover:shadow-lg hover:-translate-y-1 duration-300">
-      <div className="h-2 bg-teal-500 dark:bg-teal-600"></div>
+  return (
+    <div className="bg-white dark:bg-gray-800 overflow-hidden shadow-md rounded-xl border border-gray-100 dark:border-gray-700 transition-all hover:shadow-lg hover:-translate-y-1 duration-300">
+      {/* Image du service */}
+      <div className="relative h-40 bg-gray-100 dark:bg-gray-700 overflow-hidden">
+        {service.image ? (
+          <img
+            src={`/images/services/${service.image}`}
+            alt={service.name}
+            className="w-full h-full object-cover"
+            onError={(e) => {
+              // Si l'image ne se charge pas, masquer l'élément img et afficher le placeholder
+              e.currentTarget.style.display = 'none';
+              const placeholder = e.currentTarget.nextElementSibling as HTMLElement;
+              if (placeholder) {
+                placeholder.style.display = 'flex';
+              }
+            }}
+          />
+        ) : null}
+        
+        {/* Placeholder pour les services sans image */}
+        <div 
+          className={`w-full h-full flex items-center justify-center ${service.image ? 'hidden' : 'flex'}`}
+          style={{ display: service.image ? 'none' : 'flex' }}
+        >
+          <ImageIcon className="w-12 h-12 text-gray-400 dark:text-gray-500" />
+        </div>
+        
+        {/* Bande colorée */}
+        <div className="absolute bottom-0 left-0 right-0 h-2 bg-teal-500 dark:bg-teal-600"></div>
+      </div>
+
       <div className="p-5">
         <div className="flex justify-between items-start">
           <div>
@@ -20,7 +50,8 @@ const ServiceCard = ({ service, onEdit, onDelete }: ServiceCardProps) => {
               {service.categoryName || 'Sans catégorie'}
             </div>
           </div>
-          <div className="flex space-x-1">            <button 
+          <div className="flex space-x-1">
+            <button 
               onClick={onEdit}
               className="p-2 text-gray-500 dark:text-gray-400 hover:text-teal-600 dark:hover:text-teal-400 rounded-full hover:bg-teal-50 dark:hover:bg-teal-900/20 transition-all"
               title="Modifier"
@@ -36,7 +67,8 @@ const ServiceCard = ({ service, onEdit, onDelete }: ServiceCardProps) => {
             </button>
           </div>
         </div>
-          <div className="mt-4 border-t border-gray-100 dark:border-gray-700 pt-4">
+
+        <div className="mt-4 border-t border-gray-100 dark:border-gray-700 pt-4">
           <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-3 min-h-[3rem]">
             {service.description || <span className="italic text-gray-400 dark:text-gray-500">Aucune description</span>}
           </p>
@@ -52,7 +84,8 @@ const ServiceCard = ({ service, onEdit, onDelete }: ServiceCardProps) => {
             <span className="text-base font-bold text-teal-700 dark:text-teal-300">{service.price}€</span>
           </div>
         </div>
-          <div className="mt-3 flex items-center text-xs text-gray-500 dark:text-gray-400">
+
+        <div className="mt-3 flex items-center text-xs text-gray-500 dark:text-gray-400">
           <CalendarIcon className="h-3 w-3 mr-1" />
           <span>Disponible sur rendez-vous</span>
         </div>

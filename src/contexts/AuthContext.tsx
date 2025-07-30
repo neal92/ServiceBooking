@@ -9,7 +9,6 @@ interface User {
   role: string;
   avatar?: string;
   pseudo?: string;
-  phone?: string;
   avatarColor?: string;
   avatarInitials?: string;
 }
@@ -26,7 +25,6 @@ interface AuthContextType {
     email: string;
     password: string;
     pseudo?: string;
-    phone?: string;
     role?: 'user' | 'admin';
   }) => Promise<any>;
   logout: () => void;
@@ -261,7 +259,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     email: string;
     password: string;
     pseudo?: string;
-    phone?: string;
     role?: 'user' | 'admin';
   }) => {
     setLoading(true);

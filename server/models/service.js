@@ -30,29 +30,58 @@ const Service = {
   
   create: async (serviceData) => {
     const [result] = await db.query(
-      'INSERT INTO services (name, description, price, duration, categoryId) VALUES (?, ?, ?, ?, ?)',
-      [
-        serviceData.name,
-        serviceData.description,
-        serviceData.price,
-        serviceData.duration,
-        serviceData.categoryId
-      ]
-    );
-    return result.insertId;
-  },
-  
-  update: async (id, serviceData) => {
-    const [result] = await db.query(
-      'UPDATE services SET name = ?, description = ?, price = ?, duration = ?, categoryId = ? WHERE id = ?',
+      'INSERT INTO services (name, description, price, duration, categoryId, image) VALUES (?, ?, ?, ?, ?, ?)',
       [
         serviceData.name,
         serviceData.description,
         serviceData.price,
         serviceData.duration,
         serviceData.categoryId,
-        id
+        serviceData.image
       ]
+    );
+    return result.insertId;
+  },
+  
+  update: async (id, serviceData) => {
+    // Build dynamic query based on provided fields
+    const fields = [];
+    const values = [];
+    
+    if (serviceData.name !== undefined) {
+      fields.push('name = ?');
+      values.push(serviceData.name);
+    }
+    if (serviceData.description !== undefined) {
+      fields.push('description = ?');
+      values.push(serviceData.description);
+    }
+    if (serviceData.price !== undefined) {
+      fields.push('price = ?');
+      values.push(serviceData.price);
+    }
+    if (serviceData.duration !== undefined) {
+      fields.push('duration = ?');
+      values.push(serviceData.duration);
+    }
+    if (serviceData.categoryId !== undefined) {
+      fields.push('categoryId = ?');
+      values.push(serviceData.categoryId);
+    }
+    if (serviceData.image !== undefined) {
+      fields.push('image = ?');
+      values.push(serviceData.image);
+    }
+    
+    if (fields.length === 0) {
+      return false; // No fields to update
+    }
+    
+    values.push(id); // Add ID for WHERE clause
+    
+    const [result] = await db.query(
+      `UPDATE services SET ${fields.join(', ')} WHERE id = ?`,
+      values
     );
     return result.affectedRows > 0;
   },

@@ -331,7 +331,7 @@ exports.updateProfile = async (req, res) => {
     }
 
     const userId = req.user.id;
-    const { firstName, lastName, email, phone, pseudo, avatar } = req.body;
+    const { firstName, lastName, email, pseudo, avatar } = req.body;
 
     // Vérifier si l'email existe déjà pour un autre utilisateur
     if (email) {
@@ -358,7 +358,6 @@ exports.updateProfile = async (req, res) => {
       firstName,
       lastName,
       email,
-      phone,
       pseudo,
       avatar,
     });
@@ -372,7 +371,6 @@ exports.updateProfile = async (req, res) => {
         email: updatedUser.email,
         pseudo: updatedUser.pseudo,
         role: updatedUser.role,
-        phone: updatedUser.phone,
         avatar: updatedUser.avatar,
       },
     });
@@ -462,7 +460,7 @@ exports.uploadAvatar = async (req, res) => {
 
     res.json({
       message: "Avatar téléchargé avec succès.",
-      avatar: avatarUrl,
+      avatarUrl: avatarUrl,
     });
   } catch (error) {
     console.error("Erreur lors du téléchargement de l'avatar:", error);

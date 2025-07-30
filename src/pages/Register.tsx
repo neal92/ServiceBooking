@@ -5,11 +5,13 @@ import { useAuth } from '../contexts/AuthContext';
 import { getFullMediaUrl } from '../utils/config';
 import PageTransition from '../components/layout/PageTransition';
 import { motion, AnimatePresence } from 'framer-motion';
+/* Imports CSS temporairement commentés pour éviter les erreurs
 import '../styles/form-styles.css';
 import '../styles/auth-styles.css';
 import '../styles/register-form.css';
 import '../styles/register-images.css';
 import '../styles/image-preload.css';
+*/
 
 const Register = () => {
   // Récupérer le type d'utilisateur depuis la navigation

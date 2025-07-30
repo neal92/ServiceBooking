@@ -36,6 +36,16 @@ app.use(
   express.static(path.join(__dirname, "..", "public", "images"))
 );
 
+// Servir les images des services et catégories
+app.use(
+  "/images/services",
+  express.static(path.join(__dirname, "public", "images", "services"))
+);
+app.use(
+  "/images/categories",
+  express.static(path.join(__dirname, "public", "images", "categories"))
+);
+
 // Add request logging middleware
 app.use((req, res, next) => {
   console.log(`${new Date().toISOString()} - ${req.method} ${req.originalUrl}`);

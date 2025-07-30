@@ -24,6 +24,7 @@ export interface Service {
   duration: number; // Duration in minutes
   categoryId: number;
   categoryName?: string; // From JOIN with categories
+  image?: string; // Image filename
   createdAt?: string;
 }
 
@@ -32,6 +33,7 @@ export interface Category {
   name: string;
   description: string;
   color?: string;
+  image?: string; // Image filename
   createdAt?: string;
   // This is a virtual field not in database but can be calculated on backend via SQL query
   servicesCount?: number;

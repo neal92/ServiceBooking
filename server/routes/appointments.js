@@ -11,6 +11,9 @@ router.get('/client', appointmentController.getClientAppointments);
 // GET appointment by id
 router.get('/:id', appointmentController.getAppointmentById);
 
+// GET check availability for date and time
+router.get('/check/:date/:time', appointmentController.checkAvailability);
+
 // POST create new appointment
 router.post('/', appointmentController.createAppointment);
 

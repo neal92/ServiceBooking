@@ -1,4 +1,6 @@
 const Category = require('../models/category');
+const path = require('path');
+const fs = require('fs');
 
 // Get all categories
 exports.getAllCategories = async (req, res) => {
@@ -34,7 +36,48 @@ exports.createCategory = async (req, res) => {
       return res.status(400).json({ message: 'Category name is required' });
     }
     
-    const categoryId = await Category.create({ name, description, color });
+    let imageName = null;
+    
+    // Handle image upload if present
+    if (req.files && req.files.image) {
+      const imageFile = req.files.image;
+      
+      // Validate file type
+      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+      if (!allowedTypes.includes(imageFile.mimetype)) {
+        return res.status(400).json({ 
+          message: 'Invalid file type. Only JPEG, PNG, GIF and WebP are allowed.' 
+        });
+      }
+      
+      // Validate file size (max 5MB)
+      if (imageFile.size > 5 * 1024 * 1024) {
+        return res.status(400).json({ 
+          message: 'File size too large. Maximum size is 5MB.' 
+        });
+      }
+      
+      // Generate unique filename
+      const fileExtension = path.extname(imageFile.name);
+      imageName = `category_${Date.now()}_${Math.random().toString(36).substring(2, 15)}${fileExtension}`;
+      
+      // Ensure upload directory exists
+      const uploadDir = path.join(__dirname, '..', 'public', 'images', 'categories');
+      if (!fs.existsSync(uploadDir)) {
+        fs.mkdirSync(uploadDir, { recursive: true });
+      }
+      
+      // Save the file
+      const uploadPath = path.join(uploadDir, imageName);
+      await imageFile.mv(uploadPath);
+    }
+    
+    const categoryId = await Category.create({ 
+      name, 
+      description, 
+      color, 
+      image: imageName 
+    });
     res.status(201).json({ 
       message: 'Category created successfully', 
       categoryId 
@@ -55,7 +98,59 @@ exports.updateCategory = async (req, res) => {
       return res.status(400).json({ message: 'Category name is required' });
     }
     
-    const success = await Category.update(id, { name, description, color });
+    let imageName = null;
+    
+    // Handle image upload if present
+    if (req.files && req.files.image) {
+      const imageFile = req.files.image;
+      
+      // Validate file type
+      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+      if (!allowedTypes.includes(imageFile.mimetype)) {
+        return res.status(400).json({ 
+          message: 'Invalid file type. Only JPEG, PNG, GIF and WebP are allowed.' 
+        });
+      }
+      
+      // Validate file size (max 5MB)
+      if (imageFile.size > 5 * 1024 * 1024) {
+        return res.status(400).json({ 
+          message: 'File size too large. Maximum size is 5MB.' 
+        });
+      }
+      
+      // Get current category to delete old image
+      const currentCategory = await Category.getById(id);
+      if (currentCategory && currentCategory.image) {
+        const oldImagePath = path.join(__dirname, '..', 'public', 'images', 'categories', currentCategory.image);
+        if (fs.existsSync(oldImagePath)) {
+          fs.unlinkSync(oldImagePath);
+        }
+      }
+      
+      // Generate unique filename
+      const fileExtension = path.extname(imageFile.name);
+      imageName = `category_${Date.now()}_${Math.random().toString(36).substring(2, 15)}${fileExtension}`;
+      
+      // Ensure upload directory exists
+      const uploadDir = path.join(__dirname, '..', 'public', 'images', 'categories');
+      if (!fs.existsSync(uploadDir)) {
+        fs.mkdirSync(uploadDir, { recursive: true });
+      }
+      
+      // Save the file
+      const uploadPath = path.join(uploadDir, imageName);
+      await imageFile.mv(uploadPath);
+    }
+    
+    const updateData = { name, description, color };
+    
+    // Only add image to update if a new one was uploaded
+    if (imageName) {
+      updateData.image = imageName;
+    }
+    
+    const success = await Category.update(id, updateData);
     
     if (!success) {
       return res.status(404).json({ message: 'Category not found or no changes made' });

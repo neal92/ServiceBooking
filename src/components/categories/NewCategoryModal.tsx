@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import { Category } from '../../types';
-import { categoryService } from '../../services/api';
 import ModalPortal from '../layout/ModalPortal';
+// import ImageUpload from '../ui/ImageUpload';  // Temporairement commenté
+import categoryServiceWithImages from '../../services/categoryService';
 
 // Extended Category interface with color field for UI purposes
 interface CategoryWithColor extends Category {
@@ -30,6 +31,7 @@ const NewCategoryModal = ({ isOpen, onClose, category, onSuccess }: NewCategoryM
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [color, setColor] = useState('blue');
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
 
@@ -38,29 +40,37 @@ const NewCategoryModal = ({ isOpen, onClose, category, onSuccess }: NewCategoryM
       setName(category.name);
       setDescription(category.description);
       setColor(category.color || 'blue');
+      setSelectedImage(null); // Reset image for editing
     } else {
       setName('');
       setDescription('');
       setColor('blue');
+      setSelectedImage(null);
     }
   }, [category, isOpen]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    setError('');    try {
+    setError('');
+
+    try {
       const categoryData = {
         name,
         description,
-        color
+        color,
+        image: selectedImage || undefined
       };
 
       let successMsg = '';
       if (category && category.id) {
-        await categoryService.update(category.id.toString(), categoryData);
+        await categoryServiceWithImages.update({
+          ...categoryData,
+          id: category.id
+        });
         successMsg = 'Catégorie modifiée avec succès';
       } else {
-        await categoryService.create(categoryData);
+        await categoryServiceWithImages.create(categoryData);
         successMsg = 'Catégorie créée avec succès';
       }
       
@@ -169,6 +179,26 @@ const NewCategoryModal = ({ isOpen, onClose, category, onSuccess }: NewCategoryM
                       </div>
                     ))}
                   </div>
+                </div>
+
+                {/* Upload d'image */}
+                <div className="sm:col-span-6">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Image de la catégorie
+                  </label>
+                  {/* <ImageUpload
+                    onImageChange={setSelectedImage}
+                    currentImage={category?.image}
+                    placeholder="Ajouter une image pour cette catégorie"
+                    imageType="categories"
+                    enableResize={true}
+                  /> */}
+                  <div className="p-4 border-2 border-dashed border-gray-300 rounded-lg text-center">
+                    <p className="text-gray-500">Upload d'image temporairement désactivé</p>
+                  </div>
+                  <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                    L'image apparaîtra sur la carte de la catégorie. Formats acceptés : JPG, PNG, GIF, WebP (max 5MB)
+                  </p>
                 </div>
               </div>
             </div>

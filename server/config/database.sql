@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS users (
     firstName VARCHAR(50) NOT NULL,
     lastName VARCHAR(50) NOT NULL,
     email VARCHAR(100) NOT NULL UNIQUE,
-    pseudo VARCHAR(50) NOT NULL UNIQUE,
+    pseudo VARCHAR(50) UNIQUE,
     password VARCHAR(255) NOT NULL,
     role ENUM('admin', 'user') DEFAULT 'user',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -24,7 +24,7 @@ CREATE TABLE IF NOT EXISTS categories (
     description TEXT,
     color VARCHAR(20),
     createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    image VARCHAR(255),
+    image VARCHAR(255)
 );
 
 -- Create services table
@@ -34,17 +34,19 @@ CREATE TABLE IF NOT EXISTS services (
     description TEXT,
     price DECIMAL(10, 2) NOT NULL,
     duration INT NOT NULL COMMENT 'Duration in minutes',
-    image VARCHAR(255),
+    image VARCHAR(255) DEFAULT NULL,  
     categoryId INT,
     createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (categoryId) REFERENCES categories(id) ON DELETE SET NULL
 );
+
 
 -- Create appointments table
 CREATE TABLE IF NOT EXISTS appointments (
     id INT AUTO_INCREMENT PRIMARY KEY,
     clientName VARCHAR(100) NOT NULL,
     clientEmail VARCHAR(100) NOT NULL,
+    clientPhone VARCHAR(20),
     serviceId INT,
     date DATE NOT NULL,
     time TIME NOT NULL,
@@ -61,6 +63,27 @@ INSERT INTO categories (name, description) VALUES
 ('Coloring', 'Hair coloring services including highlights, lowlights, and full color'),
 ('Treatments', 'Hair treatments for damaged hair, scalp treatments, and more'),
 ('Styling', 'Hairstyling services for special occasions, events, and everyday');
+
+CREATE TABLE notifications (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NOT NULL,
+  type ENUM('appointment', 'service', 'category', 'user', 'system', 'reminder') NOT NULL,
+  title VARCHAR(255) NOT NULL,
+  message TEXT NOT NULL,
+  related_id INT NULL,
+  related_type VARCHAR(50) NULL,
+  created_by INT NULL,
+  is_read BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  read_at TIMESTAMP NULL,
+  
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL,
+  
+  INDEX idx_user_read (user_id, is_read),
+  INDEX idx_created_at (created_at),
+  INDEX idx_type (type)
+);
 
 -- Insert some sample services
 INSERT INTO services (name, description, price, duration, categoryId) VALUES
@@ -83,5 +106,5 @@ INSERT INTO appointments (clientName, clientEmail, clientPhone, serviceId, date,
 ('Sarah Williams', 'sarah.williams@example.com', '555-789-0123', 10, '2025-06-20', '16:00:00', 'pending', 'Wedding preparation');
 
 -- Insert admin user (password: admin123)
-INSERT INTO users (firstName, lastName, email, password, role) VALUES
-('Admin', 'User', 'admin@example.com', '$2b$10$96Qr8PnqJCXTt1uGMTGvIOLKLY.5O9XpZpPGC8cbtCOlcVg2xi1Iy', 'admin');
+INSERT INTO users (firstName, lastName, email, pseudo, password, role) VALUES
+('Admin', 'User', 'admin@example.com', 'admin', '$2b$10$96Qr8PnqJCXTt1uGMTGvIOLKLY.5O9XpZpPGC8cbtCOlcVg2xi1Iy', 'admin');

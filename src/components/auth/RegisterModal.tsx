@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Calendar, Briefcase, X } from 'lucide-react';
 import { getFullMediaUrl } from '../../utils/config';
 import { useTheme } from '../../contexts/ThemeContext';
-import '../../styles/image-preload.css';
+/* import '../../styles/image-preload.css'; */
 
 interface RegisterModalProps {
   isOpen: boolean;

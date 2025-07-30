@@ -237,6 +237,10 @@ class User {
         fields.push("email = ?");
         values.push(userData.email);
       }
+      if (userData.pseudo !== undefined) {
+        fields.push("pseudo = ?");
+        values.push(userData.pseudo);
+      }
       if (userData.avatar !== undefined) {
         fields.push("avatar = ?");
         values.push(userData.avatar);
@@ -263,7 +267,13 @@ class User {
         changedRows: result.changedRows,
       });
 
-      return result.affectedRows > 0;
+      if (result.affectedRows > 0) {
+        // Récupérer l'utilisateur mis à jour
+        const updatedUser = await this.findById(id);
+        return updatedUser;
+      } else {
+        return false;
+      }
     } catch (error) {
       console.error("Error updating user:", error);
       throw error;

@@ -42,6 +42,81 @@ exports.getClientAppointments = async (req, res) => {
   }
 };
 
+// Check availability for a specific date and time
+exports.checkAvailability = async (req, res) => {
+  try {
+    const { date, time } = req.params;
+    
+    if (!date || !time) {
+      return res.status(400).json({ 
+        message: 'Date and time parameters are required' 
+      });
+    }
+
+    // Validate date format (YYYY-MM-DD)
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    if (!dateRegex.test(date)) {
+      return res.status(400).json({ 
+        message: 'Date must be in YYYY-MM-DD format' 
+      });
+    }
+
+    // Validate time format (HH:MM)
+    const timeRegex = /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/;
+    if (!timeRegex.test(time)) {
+      return res.status(400).json({ 
+        message: 'Time must be in HH:MM format' 
+      });
+    }
+
+    // Check if date is in the past
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const appointmentDate = new Date(date);
+    
+    if (appointmentDate < today) {
+      return res.status(400).json({
+        message: 'Cannot check availability for past dates',
+        available: false
+      });
+    }
+
+    // If date is today, check that time is not in the past
+    if (appointmentDate.toDateString() === today.toDateString()) {
+      const [hours, minutes] = time.split(':').map(Number);
+      const appointmentTime = hours * 60 + minutes;
+      const currentTime = now.getHours() * 60 + now.getMinutes();
+      
+      if (appointmentTime < currentTime) {
+        return res.status(200).json({
+          message: 'Time slot is in the past',
+          available: false,
+          appointments: []
+        });
+      }
+    }
+
+    // Check existing appointments
+    const existingAppointments = await Appointment.getByDateTime(date, time);
+    const isAvailable = !existingAppointments || existingAppointments.length === 0;
+
+    res.status(200).json({
+      available: isAvailable,
+      message: isAvailable ? 'Time slot is available' : 'Time slot is already booked',
+      appointments: existingAppointments || [],
+      date: date,
+      time: time
+    });
+
+  } catch (error) {
+    console.error('Error checking availability:', error);
+    res.status(500).json({ 
+      message: 'Server error while checking availability',
+      available: false 
+    });
+  }
+};
+
 // Create new appointment
 exports.createAppointment = async (req, res) => {
   try {

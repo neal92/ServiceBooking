@@ -4,12 +4,14 @@ import { Calendar, ArrowLeft } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { getFullMediaUrl } from '../utils/config';
 import PageTransition from '../components/layout/PageTransition';
+/* Imports CSS temporairement commentés pour éviter les erreurs
 import '../styles/form-styles.css';
 import '../styles/auth-styles.css';
 import '../styles/slider.css';
 import '../styles/image-preload.css'; // Importer les styles de préchargement
 import '../styles/animations.css'; // Nouvelles animations
 import '../styles/transition-indicator.css'; // Styles pour l'indicateur de transition
+*/
 
 const Login = () => {
   const [email, setEmail] = useState('');

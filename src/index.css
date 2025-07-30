@@ -1,8 +1,8 @@
 /* Import des correctifs de profil - Doit être placé avant les autres règles CSS */
-@import "./styles/profile-fix.css";
-@import "./styles/form-styles.css";
+/* @import "./styles/profile-fix.css"; */
+/* @import "./styles/form-styles.css";
 @import "./styles/message-animations.css";
-@import "./styles/password-strength.css";
+@import "./styles/password-strength.css"; */
 
 @tailwind base;
 @tailwind components;

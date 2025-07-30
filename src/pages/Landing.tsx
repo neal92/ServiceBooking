@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Calendar, Clock, Users, Shield, Check, Menu, X, Star, UserCheck, PhoneCall, Moon, Sun } from 'lucide-react';
 import RegisterModal from '../components/auth/RegisterModal';
 import { useTheme } from '../contexts/ThemeContext';
+import { motion } from 'framer-motion';
 
 const Landing: React.FC = () => {
   const navigate = useNavigate();
@@ -21,6 +22,8 @@ const Landing: React.FC = () => {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  
 
   // Fonctions de redirection
   const handleLoginClick = () => navigate('/login');
@@ -211,8 +214,7 @@ const Landing: React.FC = () => {
         )}
       </nav>
 
-      {/* Hero Section */}
-      <section className="pt-28 md:pt-32 pb-12 md:pb-20">
+  <section className="pt-28 md:pt-32 pb-12 md:pb-20">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row md:items-center">
             <div className="md:w-1/2 mb-10 md:mb-0">
@@ -240,11 +242,11 @@ const Landing: React.FC = () => {
         </div>
       </section>
 
-      {/* Section Partenaires */}
+ {/* Section Partenaires */}
       <section className="py-8 bg-gray-50 dark:bg-gray-800/50">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <p className="text-center text-sm text-gray-500 dark:text-gray-400 mb-6">
-            Nous vous proposons un espace personalisable pour les professionelles en mettant en avant vos services
+            Nous vous proposons un espace personalisable pour les professionelles en mettant en avant vos services dans différente secteur d'acitivité.
           </p>
           <div className="flex flex-wrap justify-center items-center gap-8 md:gap-12 opacity-70 grayscale">
             <div className="h-8 flex items-center">
@@ -265,6 +267,7 @@ const Landing: React.FC = () => {
           </div>
         </div>
       </section>
+
 
       {/* Section Fonctionnalités */}
       <section id="fonctionnalites" className="py-16 md:py-24 bg-white dark:bg-gray-900">
@@ -360,6 +363,58 @@ const Landing: React.FC = () => {
         </div>
       </section>
 
+  <section className="py-16 bg-gray-50 dark:bg-gray-800/50">
+    <div className="container mx-auto px-4 sm:px-6 lg:px-8 space-y-16">
+
+      {/* Interface Web */}
+      <div className="flex flex-col md:flex-row items-center bg-white dark:bg-gray-900 rounded-xl shadow-lg overflow-hidden">
+        {/* Image gauche */}
+        <div className="md:w-1/2 w-full">
+          <img
+            src="/images/interface-web.png" // remplace par ton visuel
+            alt="Interface web"
+            className="w-full h-full object-cover"
+          />
+        </div>
+
+        {/* Texte droite */}
+        <div className="md:w-1/2 w-full p-8">
+          <h3 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-4">
+            Une interface simple et moderne
+          </h3>
+          <p className="text-gray-600 dark:text-gray-300 text-lg">
+            Gagnez du temps et gérez facilement vos rendez-vous depuis votre espace web personnalisé. Une expérience fluide, pensée pour les professionnels.
+          </p>
+        </div>
+      </div>
+
+      {/* Interface Mobile */}
+      <div className="flex flex-col md:flex-row-reverse items-center bg-white dark:bg-gray-900 rounded-xl shadow-lg overflow-hidden">
+        {/* Image droite */}
+        <div className="md:w-1/2 w-full max-h-[400px] overflow-hidden">
+          <img
+            src="/images/mobile.png"
+            alt="Interface mobile"
+            className="w-full h-full object-contain md:object-cover"
+          />
+        </div>
+
+
+        {/* Texte gauche */}
+        <div className="md:w-1/2 w-full p-8">
+          <h3 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-4">
+            Une application mobile à portée de main
+          </h3>
+          <p className="text-gray-600 dark:text-gray-300 text-lg">
+            Vos clients peuvent réserver où qu’ils soient, et vous pouvez échanger via la messagerie intégrée. Pratique, rapide et toujours disponible.
+          </p>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+
       {/* Section Témoignages */}
       <section id="temoignages" className="py-16 md:py-24 bg-gray-50 dark:bg-gray-800/50">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -446,149 +501,122 @@ const Landing: React.FC = () => {
       </section>
 
       {/* Section Tarifs */}
-      <section id="tarifs" className="py-16 md:py-24 bg-white dark:bg-gray-900">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-3xl mx-auto mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white">
-              Des tarifs adaptés à vos besoins
-            </h2>
-            <p className="mt-4 text-lg text-gray-600 dark:text-gray-300">
-              Solutions flexibles pour les professionnels de toutes tailles
+  <section id="tarifs" className="py-16 md:py-24 bg-white dark:bg-gray-900">
+    <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="text-center max-w-3xl mx-auto mb-16">
+        <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white">
+          Des tarifs adaptés à vos besoins
+        </h2>
+        <p className="mt-4 text-lg text-gray-600 dark:text-gray-300">
+          Solutions flexibles pour les professionnels de toutes tailles
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 justify-center gap-8 max-w-4xl mx-auto">
+        {/* Plan Starter */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 overflow-hidden transform transition-transform hover:scale-105 hover:shadow-xl">
+          <div className="p-6">
+            <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Starter</h3>
+            <div className="mb-4">
+              <span className="text-4xl font-bold text-gray-900 dark:text-white">0€</span>
+              <span className="text-gray-500 dark:text-gray-400">/pendant 1 mois puis 5€ par mois</span>
+            </div>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
+              Idéal pour les professionnels indépendants qui débutent
             </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-            {/* Plan Starter */}
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 overflow-hidden transform transition-transform hover:scale-105 hover:shadow-xl">
-              <div className="p-6">
-                <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Starter</h3>
-                <div className="mb-4">
-                  <span className="text-4xl font-bold text-gray-900 dark:text-white">€0</span>
-                  <span className="text-gray-500 dark:text-gray-400">/mois</span>
-                </div>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
-                  Idéal pour les professionnels indépendants qui débutent
-                </p>
-                <ul className="space-y-3 mb-6">
-                  <li className="flex items-center">
-                    <Check className="h-5 w-5 text-green-500 mr-2 flex-shrink-0" />
-                    <span className="text-gray-600 dark:text-gray-300">Jusqu'à 10 rendez-vous/mois</span>
-                  </li>
-                  <li className="flex items-center">
-                    <Check className="h-5 w-5 text-green-500 mr-2 flex-shrink-0" />
-                    <span className="text-gray-600 dark:text-gray-300">Gestion de base du calendrier</span>
-                  </li>
-                  <li className="flex items-center">
-                    <Check className="h-5 w-5 text-green-500 mr-2 flex-shrink-0" />
-                    <span className="text-gray-600 dark:text-gray-300">Base de donnée clients</span>
-                  </li>
-                </ul>                <button
-                  onClick={() => setIsRegisterModalOpen(true)}
-                  className="w-full py-3 px-4 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-800 dark:text-white font-medium rounded-lg transition-colors"
-                >
-                  Essayer gratuitement
-                </button>
-              </div>
-            </div>
-
-            {/* Plan Pro */}
-            <div className="bg-gradient-to-br from-blue-500 to-blue-700 rounded-xl shadow-xl transform transition-transform hover:scale-105 hover:shadow-2xl relative">
-              <div className="absolute top-0 right-0 bg-yellow-400 text-gray-900 text-xs font-bold px-3 py-1 rounded-bl-lg rounded-tr-lg">
-                POPULAIRE
-              </div>
-              <div className="p-6 text-white">
-                <h3 className="text-xl font-semibold mb-4">Pro</h3>
-                <div className="mb-4">
-                  <span className="text-4xl font-bold">€29</span>
-                  <span className="opacity-80">/mois</span>
-                </div>
-                <p className="text-sm opacity-80 mb-6">
-                  Pour les professionnels qui cherchent à se développer
-                </p>
-                <ul className="space-y-3 mb-6">
-                  <li className="flex items-center">
-                    <Check className="h-5 w-5 text-white mr-2 flex-shrink-0" />
-                    <span>Rendez-vous illimités</span>
-                  </li>
-                  <li className="flex items-center">
-                    <Check className="h-5 w-5 text-white mr-2 flex-shrink-0" />
-                    <span>Rappels automatiques</span>
-                  </li>
-                  <li className="flex items-center">
-                    <Check className="h-5 w-5 text-white mr-2 flex-shrink-0" />
-                    <span>Paiements en ligne</span>
-                  </li>
-                  <li className="flex items-center">
-                    <Check className="h-5 w-5 text-white mr-2 flex-shrink-0" />
-                    <span>Rapports d'activité</span>
-                  </li>
-                </ul>
-                <button
-                  onClick={handleRegisterClick}
-                  className="w-full py-3 px-4 bg-white hover:bg-gray-100 text-blue-600 font-medium rounded-lg transition-colors"
-                >
-                  S'inscrire maintenant
-                </button>
-              </div>
-            </div>
-
-            {/* Plan Business */}
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 overflow-hidden transform transition-transform hover:scale-105 hover:shadow-xl">
-              <div className="p-6">
-                <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Business</h3>
-                <div className="mb-4">
-                  <span className="text-4xl font-bold text-gray-900 dark:text-white">€79</span>
-                  <span className="text-gray-500 dark:text-gray-400">/mois</span>
-                </div>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
-                  Pour les entreprises avec plusieurs employés
-                </p>
-                <ul className="space-y-3 mb-6">
-                  <li className="flex items-center">
-                    <Check className="h-5 w-5 text-green-500 mr-2 flex-shrink-0" />
-                    <span className="text-gray-600 dark:text-gray-300">Tout le plan Pro</span>
-                  </li>
-                  <li className="flex items-center">
-                    <Check className="h-5 w-5 text-green-500 mr-2 flex-shrink-0" />
-                    <span className="text-gray-600 dark:text-gray-300">Jusqu'à 10 employés</span>
-                  </li>
-                  <li className="flex items-center">
-                    <Check className="h-5 w-5 text-green-500 mr-2 flex-shrink-0" />
-                    <span className="text-gray-600 dark:text-gray-300">API personnalisable</span>
-                  </li>
-                  <li className="flex items-center">
-                    <Check className="h-5 w-5 text-green-500 mr-2 flex-shrink-0" />
-                    <span className="text-gray-600 dark:text-gray-300">Support prioritaire</span>
-                  </li>
-                </ul>
-                <button
-                  onClick={handleRegisterClick}
-                  className="w-full py-3 px-4 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-800 dark:text-white font-medium rounded-lg transition-colors"
-                >
-                  Nous contacter
-                </button>
-              </div>
-            </div>
+            <ul className="space-y-3 mb-6">
+              <li className="flex items-center">
+                <Check className="h-5 w-5 text-green-500 mr-2 flex-shrink-0" />
+                <span className="text-gray-600 dark:text-gray-300">Jusqu'à 5 rendez-vous/mois</span>
+              </li>
+              <li className="flex items-center">
+                <Check className="h-5 w-5 text-green-500 mr-2 flex-shrink-0" />
+                <span className="text-gray-600 dark:text-gray-300">Création de services limités</span>
+              </li>
+              <li className="flex items-center">
+                <Check className="h-5 w-5 text-green-500 mr-2 flex-shrink-0" />
+                <span className="text-gray-600 dark:text-gray-300">Création de catégories limitées</span>
+              </li>
+              <li className="flex items-center">
+                <Check className="h-5 w-5 text-green-500 mr-2 flex-shrink-0" />
+                <span className="text-gray-600 dark:text-gray-300">Jusqu'à 10 clients dans la base de données</span>
+              </li>
+            </ul>
+            <button
+              onClick={() => setIsRegisterModalOpen(true)}
+              className="w-full py-3 px-4 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-800 dark:text-white font-medium rounded-lg transition-colors"
+            >
+              Essayer gratuitement
+            </button>
           </div>
         </div>
-      </section>
 
-      {/* Section CTA */}
-      <section className="py-16 md:py-20 bg-gradient-to-r from-blue-600 to-blue-800">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
-            Prêt à transformer votre gestion de rendez-vous ?
-          </h2>
-          <p className="text-xl text-blue-100 mb-8 max-w-3xl mx-auto">
-            Rejoignez des milliers de professionnels qui utilisent ServiceBooking chaque jour pour simplifier leur vie et développer leur activité.
-          </p>          <button
-            onClick={() => setIsRegisterModalOpen(true)}
-            className="px-8 py-3 bg-white text-blue-600 font-medium text-lg rounded-lg shadow-lg hover:bg-blue-50 transition-all transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-blue-600"
-          >
-            Commencer maintenant
-          </button>
+        {/* Plan Basique */}
+        <div className="bg-gradient-to-br from-blue-500 to-blue-700 rounded-xl shadow-xl transform transition-transform hover:scale-105 hover:shadow-2xl relative">
+          <div className="absolute top-0 right-0 bg-yellow-400 text-gray-900 text-xs font-bold px-3 py-1 rounded-bl-lg rounded-tr-lg">
+            POPULAIRE
+          </div>
+          <div className="p-6 text-white">
+            <h3 className="text-xl font-semibold mb-4">Basique</h3>
+            <div className="mb-4">
+              <span className="text-4xl font-bold">15€</span>
+              <span className="opacity-80">/mois</span>
+            </div>
+            <p className="text-sm opacity-80 mb-6">
+              Pour les professionnels qui cherchent à se développer
+            </p>
+            <ul className="space-y-3 mb-6">
+              <li className="flex items-center">
+                <Check className="h-5 w-5 text-white mr-2 flex-shrink-0" />
+                <span>Rendez-vous illimités</span>
+              </li>
+              <li className="flex items-center">
+                <Check className="h-5 w-5 text-white mr-2 flex-shrink-0" />
+                <span>Catégorie Illimitée</span>
+              </li>
+              <li className="flex items-center">
+                <Check className="h-5 w-5 text-white mr-2 flex-shrink-0" />
+                <span>Services de messagerie</span>
+              </li>
+              <li className="flex items-center">
+                <Check className="h-5 w-5 text-white mr-2 flex-shrink-0" />
+                <span>Interface web et mobile pour professionnels</span>
+              </li>
+              <li className="flex items-center">
+                <Check className="h-5 w-5 text-white mr-2 flex-shrink-0" />
+                <span>Support prioritaire</span>
+              </li>
+            </ul>
+            <button
+              onClick={handleRegisterClick}
+              className="w-full py-3 px-4 bg-white hover:bg-gray-100 text-blue-600 font-medium rounded-lg transition-colors"
+            >
+              S'inscrire maintenant
+            </button>
+          </div>
         </div>
-      </section>
+      </div>
+    </div>
+  </section>
+
+{/* Section CTA */}
+  <section className="py-16 md:py-20 bg-gradient-to-r from-blue-600 to-blue-800">
+    <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
+      <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
+        Prêt à transformer votre gestion de rendez-vous ?
+      </h2>
+      <p className="text-xl text-blue-100 mb-8 max-w-3xl mx-auto">
+        Rejoignez des milliers de professionnels qui utilisent ServiceBooking chaque jour pour simplifier leur vie et développer leur activité.
+      </p>
+      <button
+        onClick={() => setIsRegisterModalOpen(true)}
+        className="px-8 py-3 bg-white text-blue-600 font-medium text-lg rounded-lg shadow-lg hover:bg-blue-50 transition-all transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-blue-600"
+      >
+        Commencer maintenant
+      </button>
+    </div>
+  </section>
+
 
       {/* Footer */}
       <footer className="bg-gray-900 text-gray-300 py-12 md:py-16">
@@ -633,7 +661,7 @@ const Landing: React.FC = () => {
               </ul>
             </div>
           </div>
-
+          
           <div className="border-t border-gray-800 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center">
             <p className="text-sm text-gray-400">
               © {new Date().getFullYear()} ServiceBooking. Tous droits réservés.

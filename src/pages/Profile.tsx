@@ -3,7 +3,6 @@ import { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import PageTransition from '../components/layout/PageTransition';
 import authService from '../services/auth';
-import { API_BASE_URL } from '../utils/config';
 import AvatarSelector from '../components/profile/AvatarSelector';
 import { SuccessToast, ErrorToast } from '../components/layout';
 import '../styles/profile-fix.css';
@@ -18,6 +17,7 @@ const Profile = () => {
     firstName: user?.firstName || '',
     lastName: user?.lastName || '',
     email: user?.email || '',
+    pseudo: user?.pseudo || '',
   });
 
   // Effet pour mettre à jour l'état local lorsque les données utilisateur changent
@@ -32,6 +32,7 @@ const Profile = () => {
         firstName: user.firstName || '',
         lastName: user.lastName || '',
         email: user.email || '',
+        pseudo: user.pseudo || '',
       });
     }
   }, [user]);
@@ -309,17 +310,12 @@ const Profile = () => {
 
                       // Upload de l'avatar avec l'indication que c'est un avatar prédéfini
                       const uploadResponse = await authService.uploadAvatar(file);
+                      console.log("Avatar uploadé avec succès:", uploadResponse.avatarUrl);
 
-                      // S'assurer que nous préservons toutes les données utilisateur existantes
-                      const updatedUserData = {
-                        firstName: user?.firstName || '',
-                        lastName: user?.lastName || '',
-                        email: user?.email || '',
-                        avatar: uploadResponse.avatarUrl,
-                        isPresetAvatar: true,
-                      };
-                      console.log("Mise à jour du profil avec avatar prédéfini:", updatedUserData);
-                      await updateUser(updatedUserData);                        // Afficher la notification de succès
+                      // Rafraîchir les données utilisateur pour voir l'avatar mis à jour
+                      await refreshUserData();
+
+                      // Afficher la notification de succès
                       showSuccess('Avatar prédéfini mis à jour avec succès');
                       // Afficher la popup modale de succès pour l'avatar
                       setShowSuccessModal(true);
@@ -366,21 +362,13 @@ const Profile = () => {
 
                       console.log('Envoi de l\'avatar personnalisé au serveur:', fileName);
                       // Upload de l'avatar (on s'assure que le service comprend que ce n'est PAS un avatar prédéfini)
-                      const uploadResponse = await authService.uploadAvatar(file);
+                      await authService.uploadAvatar(file);
 
-                      // Mise à jour du profil utilisateur avec les métadonnées extraites
-                      // S'assurer que nous préservons toutes les données utilisateur existantes
-                      const updatedUserData = {
-                        firstName: user?.firstName || '',
-                        lastName: user?.lastName || '',
-                        email: user?.email || '',
-                        avatar: uploadResponse.avatarUrl,
-                        isPresetAvatar: false,
-                        avatarColor: extractedColor,
-                        avatarInitials: extractedInitials,
-                      };
-                      console.log("Mise à jour du profil avec avatar personnalisé:", updatedUserData);
-                      await updateUser(updatedUserData);// Afficher la notification de succès
+                      // Recharger les données utilisateur pour refléter les changements
+                      console.log("Rechargement des données utilisateur après upload d'avatar personnalisé");
+                      await refreshUserData();
+                      
+                      // Afficher la notification de succès
                       showSuccess('Avatar personnalisé mis à jour avec succès');
                       // Afficher la popup modale de succès pour l'avatar
                       setShowSuccessModal(true);
@@ -434,6 +422,11 @@ const Profile = () => {
                           <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Email</label>
                           <div className="text-lg text-gray-900 dark:text-white break-all">{user?.email}</div>
                         </div>
+
+                        <div className="space-y-1">
+                          <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Pseudo</label>
+                          <div className="text-lg text-gray-900 dark:text-white">{user?.pseudo || '-'}</div>
+                        </div>
                       </div>
 
                       <button
@@ -444,6 +437,7 @@ const Profile = () => {
                             firstName: user?.firstName || '',
                             lastName: user?.lastName || '',
                             email: user?.email || '',
+                            pseudo: user?.pseudo || '',
                           });
                         }}
                         className="mt-6 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:bg-blue-700 dark:hover:bg-blue-600 transition-colors"
@@ -490,6 +484,20 @@ const Profile = () => {
                             value={userInfo.email}
                             onChange={(e) => setUserInfo({ ...userInfo, email: e.target.value })}
                             className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2.5 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white transition-colors"
+                          />
+                        </div>
+
+                        <div className="md:col-span-2">
+                          <label htmlFor="pseudo" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                            Pseudo
+                          </label>
+                          <input
+                            type="text"
+                            id="pseudo"
+                            value={userInfo.pseudo}
+                            onChange={(e) => setUserInfo({ ...userInfo, pseudo: e.target.value })}
+                            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2.5 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white transition-colors"
+                            placeholder="Ex: john_doe"
                           />
                         </div>
                       </div>
