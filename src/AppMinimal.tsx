@@ -1,10 +1,10 @@
-import * as React from 'react';
+import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { AuthProvider } from './contexts/AuthContext';
 import LandingSimple from './LandingSimple';
-import Login from './pages/Login';
-import Register from './pages/Register';
+import LoginSimple from './pages/LoginSimple';
+import RegisterSimple from './pages/RegisterSimple';
 
 function AppMinimal() {
   return (
@@ -13,8 +13,8 @@ function AppMinimal() {
         <AuthProvider>
           <Routes>
             <Route path="/" element={<LandingSimple />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
+            <Route path="/login" element={<LoginSimple />} />
+            <Route path="/register" element={<RegisterSimple />} />
             <Route path="*" element={
               <div className="min-h-screen flex items-center justify-center">
                 <div className="text-center">

@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
@@ -8,8 +8,8 @@ import RoleBasedRedirect from './components/RoleBasedRedirect';
 import Layout from './components/layout/Layout';
 import Dashboard from './pages/Dashboard';
 import UserHome from './pages/UserHome';
-import Login from './pages/Login';
-import Register from './pages/Register';
+import LoginSimple from './pages/LoginSimple';
+import RegisterSimple from './pages/RegisterSimple';
 import Services from './pages/Services';
 import Categories from './pages/Categories';
 import Appointments from './pages/Appointments';
@@ -26,8 +26,8 @@ function AppWorking() {
           <Routes>
             {/* Page d'accueil publique */}
             <Route path="/" element={<Landing />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
+            <Route path="/login" element={<LoginSimple />} />
+            <Route path="/register" element={<RegisterSimple />} />
             
             {/* Routes protégées */}
             <Route path="/app" element={

@@ -11,6 +11,7 @@ interface NewAppointmentModalProps {
   appointment?: Appointment | null;
   services?: Service[]; // Pour une initialisation directe des services depuis le parent
   selectedServiceId?: string | null; // ID du service présélectionné (pour la réservation depuis la page d'accueil)
+  selectedDate?: string | null; // Date pré-sélectionnée au format YYYY-MM-DD (pour la réservation depuis le calendrier)
   onAppointmentCreated?: () => Promise<void>; // Callback appelé après la création d'un rendez-vous
   onDelete?: (id: number) => Promise<void>; // Fonction pour supprimer un rendez-vous
   onSuccess?: (message: string) => void; // Callback pour afficher une notification de succès
@@ -21,6 +22,7 @@ const NewAppointmentModal: React.FC<NewAppointmentModalProps> = ({
   onClose, 
   appointment, 
   services: initialServices,   selectedServiceId,
+  selectedDate,
   onAppointmentCreated,
   onDelete,
   onSuccess
@@ -97,11 +99,12 @@ const NewAppointmentModal: React.FC<NewAppointmentModalProps> = ({
       }
       
       setClientPhone('');
-      setDate('');
+      // Si une date est pré-sélectionnée (depuis le calendrier), l'utiliser
+      setDate(selectedDate || '');
       setTime('');
       setNotes('');
     }
-  }, [appointment, isOpen, user]);
+  }, [appointment, isOpen, user, selectedDate]);
 
   const fetchServices = async () => {
     setIsLoading(true);

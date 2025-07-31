@@ -3,7 +3,7 @@ const db = require('../config/db');
 const Appointment = {
   getAll: async () => {
     const [rows] = await db.query(`
-      SELECT a.*, s.name as serviceName, s.price, s.duration
+      SELECT a.*, a.clientFname as clientName, s.name as serviceName, s.price, s.duration
       FROM appointments a
       LEFT JOIN services s ON a.serviceId = s.id
       ORDER BY a.date DESC, a.time DESC
@@ -13,7 +13,7 @@ const Appointment = {
   
   getByUserId: async (userId) => {
     const [rows] = await db.query(`
-      SELECT a.*, s.name as serviceName, s.price, s.duration
+      SELECT a.*, a.clientFname as clientName, s.name as serviceName, s.price, s.duration
       FROM appointments a
       LEFT JOIN services s ON a.serviceId = s.id
       WHERE a.userId = ?
@@ -33,7 +33,7 @@ const Appointment = {
   
   getById: async (id) => {
     const [rows] = await db.query(`
-      SELECT a.*, s.name as serviceName, s.price, s.duration
+      SELECT a.*, a.clientFname as clientName, s.name as serviceName, s.price, s.duration
       FROM appointments a
       LEFT JOIN services s ON a.serviceId = s.id
       WHERE a.id = ?
@@ -48,7 +48,7 @@ const Appointment = {
       formattedDate = appointmentData.date.split('T')[0];
       console.log(`Formatted date for database: ${formattedDate}`);
     }    const [result] = await db.query(
-      'INSERT INTO appointments (clientName, clientEmail, clientPhone, serviceId, date, time, status, notes, createdBy) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO appointments (clientFname, clientEmail, clientPhone, serviceId, date, time, status, notes, createdBy) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [
         appointmentData.clientName,
         appointmentData.clientEmail,
@@ -73,7 +73,7 @@ const Appointment = {
     }
 
     const [result] = await db.query(
-      'UPDATE appointments SET clientName = ?, clientEmail = ?, clientPhone = ?, serviceId = ?, date = ?, time = ?, status = ?, notes = ? WHERE id = ?',
+      'UPDATE appointments SET clientFname = ?, clientEmail = ?, clientPhone = ?, serviceId = ?, date = ?, time = ?, status = ?, notes = ? WHERE id = ?',
       [
         appointmentData.clientName,
         appointmentData.clientEmail,
@@ -108,7 +108,7 @@ const Appointment = {
     console.log(`Checking for appointments on date: ${formattedDate}, time: ${time}`);
     
     const [rows] = await db.query(`
-      SELECT a.*, s.name as serviceName, s.price, s.duration
+      SELECT a.*, a.clientFname as clientName, s.name as serviceName, s.price, s.duration
       FROM appointments a
       LEFT JOIN services s ON a.serviceId = s.id
       WHERE a.date = ? AND a.time = ?
@@ -124,7 +124,7 @@ const Appointment = {
   
   getByClientEmail: async (email) => {
     const [rows] = await db.query(`
-      SELECT a.*, s.name as serviceName, s.price, s.duration
+      SELECT a.*, a.clientFname as clientName, s.name as serviceName, s.price, s.duration
       FROM appointments a
       LEFT JOIN services s ON a.serviceId = s.id
       WHERE a.clientEmail = ?
@@ -150,7 +150,7 @@ const Appointment = {
     }
 
     const [result] = await db.query(
-      'INSERT INTO appointments (clientName, clientEmail, clientPhone, serviceId, date, time, status, notes, createdBy) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO appointments (clientFname, clientEmail, clientPhone, serviceId, date, time, status, notes, createdBy) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [
         appointmentData.clientName,
         appointmentData.clientEmail,

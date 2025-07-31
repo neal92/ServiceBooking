@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import ImageUpload from '../ui/ImageUpload';
+// import ImageUpload from '../ui/ImageUpload';  // Temporairement commenté pour éviter l'erreur
 
 interface ServiceFormData {
   name: string;
@@ -42,12 +42,14 @@ const ServiceForm: React.FC<ServiceFormProps> = ({
     }));
   };
 
+  /* Temporairement commenté car ImageUpload est désactivé
   const handleImageChange = (file: File | null) => {
     setFormData(prev => ({
       ...prev,
       image: file
     }));
   };
+  */
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -159,12 +161,14 @@ const ServiceForm: React.FC<ServiceFormProps> = ({
         </select>
       </div>
 
+      {/* Temporairement commenté pour éviter l'erreur
       <ImageUpload
         onImageChange={handleImageChange}
         placeholder="Ajouter une image pour ce service"
         imageType="services"
         enableResize={true}
       />
+      */}
 
       <div className="flex justify-end space-x-3">
         <button

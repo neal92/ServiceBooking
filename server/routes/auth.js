@@ -5,6 +5,89 @@ const authController = require("../controllers/authController");
 const pseudoController = require("../controllers/pseudoController");
 const { authenticate } = require("../middleware/auth");
 
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     RegisterRequest:
+ *       type: object
+ *       required:
+ *         - firstName
+ *         - email
+ *         - password
+ *       properties:
+ *         firstName:
+ *           type: string
+ *           description: Prénom de l'utilisateur
+ *         lastName:
+ *           type: string
+ *           description: Nom de famille (optionnel)
+ *         email:
+ *           type: string
+ *           format: email
+ *           description: Adresse email
+ *         password:
+ *           type: string
+ *           minLength: 6
+ *           description: Mot de passe (minimum 6 caractères)
+ *         pseudo:
+ *           type: string
+ *           description: Pseudo (optionnel)
+ *         phone:
+ *           type: string
+ *           description: Numéro de téléphone (optionnel)
+ *     LoginRequest:
+ *       type: object
+ *       required:
+ *         - email
+ *         - password
+ *       properties:
+ *         email:
+ *           type: string
+ *           format: email
+ *           description: Adresse email
+ *         password:
+ *           type: string
+ *           description: Mot de passe
+ *     AuthResponse:
+ *       type: object
+ *       properties:
+ *         token:
+ *           type: string
+ *           description: Token JWT d'authentification
+ *         user:
+ *           $ref: '#/components/schemas/User'
+ */
+
+/**
+ * @swagger
+ * /auth/register:
+ *   post:
+ *     summary: Créer un nouveau compte utilisateur
+ *     description: Inscription d'un nouvel utilisateur dans le système
+ *     tags: [Authentication]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/RegisterRequest'
+ *     responses:
+ *       201:
+ *         description: Compte créé avec succès
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/AuthResponse'
+ *       400:
+ *         description: Données invalides ou email déjà utilisé
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Erreur serveur
+ */
 // Register route
 router.post(
   "/register",

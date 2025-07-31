@@ -1,6 +1,8 @@
 const express = require("express");
 const cors = require("cors");
 const fileUpload = require("express-fileupload");
+const swaggerUi = require('swagger-ui-express');
+const swaggerSpecs = require('./config/swagger');
 require("dotenv").config();
 
 // Log environment variables (without sensitive data)
@@ -45,6 +47,13 @@ app.use(
   "/images/categories",
   express.static(path.join(__dirname, "public", "images", "categories"))
 );
+
+// Documentation Swagger
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpecs, {
+  explorer: true,
+  customCssUrl: '/swagger-ui.css',
+  customSiteTitle: 'ServiceBooking API Documentation'
+}));
 
 // Add request logging middleware
 app.use((req, res, next) => {

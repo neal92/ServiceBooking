@@ -23,6 +23,7 @@ const Appointments = () => {
   const [appointmentStatusFilter, setAppointmentStatusFilter] = useState<AppointmentStatusFilter>('all-status');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null);
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
@@ -56,6 +57,12 @@ const Appointments = () => {
       const serviceId = searchParams.get('serviceId');
       if (serviceId) {
         setSelectedServiceId(serviceId);
+      }
+      
+      // Récupérer la date pré-sélectionnée si disponible
+      const date = searchParams.get('date');
+      if (date) {
+        setSelectedDate(date);
       }
     }
     
@@ -134,12 +141,22 @@ const Appointments = () => {
       let appointmentsData: Appointment[] = [];
       
       // Si c'est un admin, récupérer tous les rendez-vous
-      // Si c'est un utilisateur normal, récupérer uniquement ses propres rendez-vous
       if (isAdmin) {
         appointmentsData = await appointmentService.getAll();
       } else if (user?.email) {
-        // Utiliser l'email de l'utilisateur connecté pour filtrer ses rendez-vous
+        // Pour les utilisateurs normaux, récupérer leurs rendez-vous via l'email
+        console.log(`Récupération des rendez-vous pour l'utilisateur: ${user.email}`);
+        
+        // TEST: Essayons d'abord de récupérer TOUS les rendez-vous pour debug
+        console.log("🔍 TEST: Récupération de TOUS les rendez-vous pour debug...");
+        const allAppointments = await appointmentService.getAll();
+        console.log(`📋 TOUS les rendez-vous disponibles: ${allAppointments.length}`, allAppointments);
+        
+        // Maintenant récupérons seulement ceux du client
         appointmentsData = await appointmentService.getByClientEmail(user.email);
+        console.log(`👤 Rendez-vous pour ${user.email}: ${appointmentsData.length}`, appointmentsData);
+      } else {
+        console.warn("Utilisateur connecté mais sans email - impossible de récupérer les rendez-vous");
       }
       
       // Récupérer les services dans tous les cas
@@ -664,9 +681,13 @@ const Appointments = () => {
       
       <ModalPortal isOpen={isModalOpen}>        <NewAppointmentModal 
           isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
+          onClose={() => {
+            setIsModalOpen(false);
+            setSelectedDate(null); // Réinitialiser la date sélectionnée
+          }}
           services={services}
           selectedServiceId={selectedServiceId}
+          selectedDate={selectedDate}
           onAppointmentCreated={fetchData}
           onSuccess={(message) => {
             setSuccessMessage(message);

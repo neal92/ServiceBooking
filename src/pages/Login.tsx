@@ -234,70 +234,7 @@ const Login = () => {
                     e.currentTarget.src = fallbackUrl;
                   }}
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
-                <div
-                  className="absolute inset-0 transition-all"
-                  style={{
-                    background: index === slideIndex
-                      ? 'linear-gradient(to right, rgba(30, 64, 175, 0.05), rgba(79, 70, 229, 0.05))'
-                      : 'linear-gradient(to right, rgba(30, 64, 175, 0.2), rgba(79, 70, 229, 0.2))',
-                    opacity: index === slideIndex ? 1 : 0.7,
-                    transition: 'opacity 1.5s ease-in-out, background 1.5s ease-in-out'
-                  }}
-                ></div>
-                {/* Ajout d'un effet de surbrillance pendant la transition */}
-                {isTransitioning && index === slideIndex && (
-                  <div
-                    className="absolute inset-0"
-                    style={{
-                      background: 'radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%)',
-                      animation: 'fadeIn 0.8s ease-out, fadeOut 1.2s ease-in 0.8s'
-                    }}
-                  ></div>
-                )}
-                <div className="absolute inset-0 bg-blue-600/0 hover:bg-blue-600/20 transition-colors duration-300"></div>
-                <div
-                  className="absolute inset-0 flex items-end p-8"
-                  style={{
-                    opacity: index === slideIndex ? 1 : 0,
-                    transform: index === slideIndex ? 'translateY(0)' : 'translateY(10px)',
-                    transition: 'opacity 1.2s ease-out, transform 1.2s ease-out',
-                    transitionDelay: index === slideIndex ? '0.5s' : '0s'
-                  }}
-                >
-                  <div className="text-white">
-                    <h3
-                      className="text-2xl font-bold mb-2 text-shadow"
-                      style={{
-                        opacity: index === slideIndex ? 1 : 0,
-                        transform: index === slideIndex ? 'translateY(0)' : 'translateY(5px)',
-                        transition: 'opacity 1.2s cubic-bezier(0.33, 1, 0.68, 1), transform 1.2s cubic-bezier(0.33, 1, 0.68, 1)',
-                        transitionDelay: index === slideIndex ? '1.1s' : '0s'
-                      }}
-                    >
-                      ServiceBooking
-                    </h3>
-                    <p
-                      className="text-sm opacity-90 text-shadow"
-                      style={{
-                        opacity: index === slideIndex ? 1 : 0,
-                        transform: index === slideIndex ? 'translateY(0)' : 'translateY(5px)',
-                        transition: 'opacity 1.2s cubic-bezier(0.33, 1, 0.68, 1), transform 1.2s cubic-bezier(0.33, 1, 0.68, 1)',
-                        transitionDelay: index === slideIndex ? '1.3s' : '0s'
-                      }}
-                    >
-                      {index === 0 && "Réservez facilement vos rendez-vous"}
-                      {index === 1 && "Planifiez votre agenda en toute simplicité"}
-                      {index === 2 && "Gérez vos services professionnels"}
-                      {index === 3 && "Suivez vos réservations en temps réel"}
-                      {index === 4 && "Une interface intuitive pour tous vos besoins"}
-                      {index === 5 && "Optimisez votre temps et votre efficacité"}
-                      {index === 6 && "Restez connecté avec vos clients"}
-                      {index === 7 && "Des notifications pour ne rien manquer"}
-                      {index === 8 && "Votre succès, notre priorité"}
-                    </p>
-                  </div>
-                </div>
+
               </div>
             ))}
 
@@ -320,7 +257,7 @@ const Login = () => {
                 </div>
               </div>
             </div>
-            <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+            <form className="mt-4 space-y-4" onSubmit={handleSubmit}>
               {sessionExpired && (
                 <div className="login-session-expired bg-amber-50 dark:bg-amber-900/30 border border-amber-500 dark:border-amber-600 rounded-md p-3 mb-3 animate-fadeIn shadow-sm animate-pulse-subtle">
                   <div className="flex items-center">
@@ -361,7 +298,7 @@ const Login = () => {
                   />
                 </div>
               </div>
-              <div className="mt-5">
+              <div className="mt-3">
                 <label htmlFor="password" className="block text-base font-medium text-gray-700 dark:text-gray-300">
                   Mot de passe <span className="text-red-500 dark:text-red-400">*</span>
                 </label>
@@ -421,7 +358,7 @@ const Login = () => {
               </div>
             </form>
             {/* Séparateur et lien d'inscription */}
-            <div className="mt-8 pt-4 border-t border-gray-200 dark:border-gray-700">
+            <div className="mt-4 pt-3 border-t border-gray-200 dark:border-gray-700">
               <div className="text-center">
                 <p className="text-[11px] xs:text-xs sm:text-sm text-gray-600 dark:text-gray-400">
                   Pas encore de compte ?{' '}
