@@ -114,7 +114,51 @@ const Profile = () => {
   };
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    // ...existing code for password change...
+    setError('');
+    setPasswordErrors({ current: '', new: '', confirm: '' });
+
+    console.log('Profile: Début du changement de mot de passe');
+
+    // Validation des champs
+    const isCurrentValid = validateCurrentPassword(password);
+    const isNewValid = validateNewPassword(newPassword);
+    const isConfirmValid = validateConfirmPassword(newPassword, confirmPassword);
+
+    console.log('Profile: Validation des champs:', {
+      isCurrentValid,
+      isNewValid,
+      isConfirmValid,
+      currentPasswordLength: password.length,
+      newPasswordLength: newPassword.length
+    });
+
+    if (!isCurrentValid || !isNewValid || !isConfirmValid) {
+      console.log('Profile: Validation échouée, arrêt du processus');
+      return;
+    }
+
+    try {
+      console.log('Profile: Appel de changePassword...');
+      await changePassword(password, newPassword);
+      
+      console.log('Profile: Changement de mot de passe réussi');
+      
+      // Réinitialiser les champs
+      setPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+      setIsEditingPassword(false);
+      
+      // Afficher le message de succès
+      showSuccess('Mot de passe modifié avec succès');
+    } catch (err: any) {
+      console.error('Profile: Erreur lors du changement de mot de passe:', err);
+      if (err.message.includes('mot de passe actuel')) {
+        setPasswordErrors(prev => ({ ...prev, current: 'Le mot de passe actuel est incorrect' }));
+      } else {
+        setError(err.message || 'Erreur lors du changement de mot de passe');
+      }
+    }
   };
 
   // Utilisation de la fonction refreshUserData du contexte
@@ -365,9 +409,69 @@ const Profile = () => {
                   </button>
                 ) : (
                   <form onSubmit={handleChangePassword} className="space-y-6">
-                    {/* ...existing code for password fields and error display... */}
                     <div className="space-y-4">
-                      {/* ...existing code for password fields... */}
+                      <div>
+                        <label htmlFor="currentPassword" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                          Mot de passe actuel *
+                        </label>
+                        <input
+                          type="password"
+                          id="currentPassword"
+                          value={password}
+                          onChange={(e) => {
+                            setPassword(e.target.value);
+                            validateCurrentPassword(e.target.value);
+                          }}
+                          className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2.5 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white transition-colors"
+                          placeholder="Votre mot de passe actuel"
+                        />
+                        {passwordErrors.current && (
+                          <p className="mt-1 text-sm text-red-600 dark:text-red-400">{passwordErrors.current}</p>
+                        )}
+                      </div>
+
+                      <div>
+                        <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                          Nouveau mot de passe *
+                        </label>
+                        <input
+                          type="password"
+                          id="newPassword"
+                          value={newPassword}
+                          onChange={(e) => {
+                            setNewPassword(e.target.value);
+                            validateNewPassword(e.target.value);
+                            if (confirmPassword) {
+                              validateConfirmPassword(e.target.value, confirmPassword);
+                            }
+                          }}
+                          className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2.5 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white transition-colors"
+                          placeholder="Minimum 6 caractères avec lettres et chiffres"
+                        />
+                        {passwordErrors.new && (
+                          <p className="mt-1 text-sm text-red-600 dark:text-red-400">{passwordErrors.new}</p>
+                        )}
+                      </div>
+
+                      <div>
+                        <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                          Confirmer le nouveau mot de passe *
+                        </label>
+                        <input
+                          type="password"
+                          id="confirmPassword"
+                          value={confirmPassword}
+                          onChange={(e) => {
+                            setConfirmPassword(e.target.value);
+                            validateConfirmPassword(newPassword, e.target.value);
+                          }}
+                          className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2.5 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white transition-colors"
+                          placeholder="Confirmez votre nouveau mot de passe"
+                        />
+                        {passwordErrors.confirm && (
+                          <p className="mt-1 text-sm text-red-600 dark:text-red-400">{passwordErrors.confirm}</p>
+                        )}
+                      </div>
                     </div>
                     {error && (
                       <div className="p-4 bg-red-50 dark:bg-red-900/30 border-l-4 border-red-400 dark:border-red-500 text-red-700 dark:text-red-400">

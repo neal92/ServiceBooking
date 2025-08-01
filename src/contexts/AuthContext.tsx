@@ -338,10 +338,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     // Fusionner les données actuelles de l'utilisateur avec les nouvelles données
     const updatedData = {
-      firstName: data.firstName || user?.firstName || '',
-      lastName: data.lastName || user?.lastName || '',
-      email: data.email || user?.email || '',
-      pseudo: data.pseudo || user?.pseudo || '',
+      firstName: data.firstName !== undefined ? data.firstName : user?.firstName || '',
+      lastName: data.lastName !== undefined ? data.lastName : user?.lastName || '',
+      email: data.email !== undefined ? data.email : user?.email || '',
+      pseudo: data.pseudo !== undefined ? data.pseudo : user?.pseudo || '',
       avatar: data.avatar,
       isPresetAvatar: data.isPresetAvatar,
       avatarColor: data.avatarColor,

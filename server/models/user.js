@@ -67,8 +67,8 @@ class User {
         includePassword ? "(including password)" : ""
       );
       const columns = includePassword
-        ? "id, email, firstName, lastName, role, password, avatar, isPresetAvatar, created_at"
-        : "id, email, firstName, lastName, role, avatar, isPresetAvatar, created_at";
+        ? "id, email, firstName, lastName, role, password, avatar, isPresetAvatar, pseudo, created_at"
+        : "id, email, firstName, lastName, role, avatar, isPresetAvatar, pseudo, created_at";
 
       const [rows] = await db.query(
         `SELECT ${columns} FROM users WHERE id = ?`,

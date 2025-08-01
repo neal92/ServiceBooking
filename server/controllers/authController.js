@@ -390,10 +390,16 @@ exports.changePassword = async (req, res) => {
     const { currentPassword, newPassword } = req.body;
     const userId = req.user.id;
 
-    // Récupérer l'utilisateur
-    const user = await User.findById(userId);
+    // Récupérer l'utilisateur avec le mot de passe
+    const user = await User.findById(userId, true); // includePassword = true
     if (!user) {
       return res.status(404).json({ message: "Utilisateur non trouvé." });
+    }
+
+    // Vérifier que le mot de passe existe dans la base de données
+    if (!user.password) {
+      console.error("Mot de passe manquant pour l'utilisateur:", userId);
+      return res.status(500).json({ message: "Erreur de configuration du compte." });
     }
 
     // Vérifier le mot de passe actuel
@@ -407,11 +413,8 @@ exports.changePassword = async (req, res) => {
         .json({ message: "Le mot de passe actuel est incorrect." });
     }
 
-    // Hasher le nouveau mot de passe
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
-
-    // Mettre à jour le mot de passe
-    await User.updatePassword(userId, hashedPassword);
+    // Mettre à jour le mot de passe (la méthode changePassword se charge du hachage)
+    await User.changePassword(userId, newPassword);
 
     res.json({ message: "Mot de passe modifié avec succès." });
   } catch (error) {
