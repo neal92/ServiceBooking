@@ -18,7 +18,6 @@ export const MEDIA_BASE_URL =
  */
 export function getFullMediaUrl(path: string | null | undefined): string {
   if (!path) {
-    console.log("getFullMediaUrl: No path provided, using default avatar");
     return `${MEDIA_BASE_URL}/avatars/avatar1.svg`; // Image par défaut
   }
 
@@ -29,7 +28,6 @@ export function getFullMediaUrl(path: string | null | undefined): string {
 
   // Sinon, ajouter l'URL de base
   const fullUrl = `${MEDIA_BASE_URL}${path.startsWith("/") ? "" : "/"}${path}`;
-  console.log(`getFullMediaUrl: ${path} => ${fullUrl}`);
   return fullUrl;
 }
 

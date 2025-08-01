@@ -2,9 +2,10 @@ import * as React from 'react';
 import { useState, useEffect, useRef } from 'react';
 import { Menu, Bell, Sun, Moon, LogOut } from 'lucide-react';
 import { getFullMediaUrl } from '../../utils/config';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
+import { getPageTitle } from '../../utils/pageTitles';
 
 interface HeaderProps {
   openSidebar: () => void;
@@ -16,6 +17,8 @@ const Header = ({ openSidebar }: HeaderProps) => {
   const { darkMode, toggleDarkMode } = useTheme();
   const navigate = useNavigate();
   const menuRef = useRef<HTMLDivElement>(null);
+  const location = useLocation();
+  const pageTitle = getPageTitle(location.pathname);
 
   // Fermer le menu quand on clique en dehors
   useEffect(() => {
@@ -43,7 +46,7 @@ const Header = ({ openSidebar }: HeaderProps) => {
       </button>
       <div className="flex-1 px-4 flex justify-between">
         <div className="flex-1 flex items-center">
-          <h1 className="text-xl sm:text-2xl font-semibold text-blue-600 dark:text-blue-400">RDV Manager</h1>
+          <h1 className="text-xl sm:text-2xl font-semibold text-blue-600 dark:text-blue-400">{pageTitle}</h1>
         </div>
         <div className="ml-4 flex items-center md:ml-6 space-x-2 sm:space-x-3">
           {/* Theme toggle button */}
@@ -108,7 +111,7 @@ const Header = ({ openSidebar }: HeaderProps) => {
                 <button
                   onClick={() => {
                     setShowUserMenu(false);
-                    navigate('/profile');
+                    navigate('/app/profile');
                   }}
                   className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600"
                 >

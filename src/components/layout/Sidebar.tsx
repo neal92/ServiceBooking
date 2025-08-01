@@ -48,7 +48,7 @@ const Sidebar = ({ mobile, closeSidebar }: SidebarProps) => {
         )}
         <div className="flex items-center">
           <ClipboardList className="h-8 w-8 text-blue-600" />
-          <h1 className="ml-2 text-xl font-bold text-blue-600">RDV Manager</h1>
+          <h1 className="ml-2 text-xl font-bold text-blue-600">ServiceBooking</h1>
         </div>
       </div>
 

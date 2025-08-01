@@ -496,7 +496,7 @@ const Register = () => {
                     setFirstName(e.target.value);
                     setFirstNameError('');
                   }}
-                  className="w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                  className="w-full pl-10 pr-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
                   placeholder="Votre prénom"
                 />
               </div>
@@ -518,7 +518,7 @@ const Register = () => {
                     setLastName(e.target.value);
                     setLastNameError('');
                   }}
-                  className="w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                  className="w-full pl-10 pr-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
                   placeholder="Votre nom (optionnel)"
                 />
               </div>
@@ -547,7 +547,7 @@ const Register = () => {
                     setPseudoAlreadyExists(false);
                     setPseudoSuggestions([]);
                   }}
-                  className="w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                  className="w-full pl-10 pr-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
                   placeholder="votre_pseudo"
                 />
                 {checkingPseudo && (
@@ -600,7 +600,7 @@ const Register = () => {
                     setEmail(e.target.value);
                     setEmailError('');
                   }}
-                  className="w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                  className="w-full pl-10 pr-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
                   placeholder="votre@email.com"
                 />
                 {checkingEmail && (
@@ -630,9 +630,9 @@ const Register = () => {
                   value={password}
                   onChange={(e) => {
                     setPassword(e.target.value);
-                    setPasswordError('');
+                    validatePassword(e.target.value);
                   }}
-                  className="w-full pl-10 pr-10 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                  className="w-full pl-10 pr-10 py-1.5 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
                   placeholder="Minimum 6 caractères"
                 />
                 <button
@@ -656,9 +656,9 @@ const Register = () => {
                   value={confirmPassword}
                   onChange={(e) => {
                     setConfirmPassword(e.target.value);
-                    setPasswordError('');
+                    validateConfirmPassword(e.target.value);
                   }}
-                  className="w-full pl-10 pr-10 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                  className="w-full pl-10 pr-10 py-1.5 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
                   placeholder="Confirmer le mot de passe"
                 />
                 <button
