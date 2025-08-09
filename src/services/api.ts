@@ -28,9 +28,7 @@ const API_URL = API_BASE_URL;
 
 const apiClient = axios.create({
   baseURL: API_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
+  // Ne pas définir Content-Type par défaut pour permettre FormData
 });
 
 // Add authentication token to requests
@@ -39,6 +37,13 @@ apiClient.interceptors.request.use((config) => {
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+  
+  // Ne pas forcer application/json si on envoie FormData
+  if (config.data instanceof FormData) {
+    // Supprimer le Content-Type pour laisser axios gérer automatiquement
+    delete config.headers['Content-Type'];
+  }
+  
   return config;
 }, (error) => {
   return Promise.reject(error);
@@ -82,18 +87,45 @@ export const categoryService = {
   },
   
   create: async (category: Omit<Category, 'id' | 'servicesCount' | 'createdAt'>): Promise<{ categoryId: string }> => {
-    const response = await apiClient.post('/categories', category);
+    const response = await apiClient.post('/categories', category, {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
     return response.data;
   },
   
   update: async (id: string, category: Omit<Category, 'id' | 'servicesCount' | 'createdAt'>): Promise<void> => {
-    await apiClient.put(`/categories/${id}`, category);
+    await apiClient.put(`/categories/${id}`, category, {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
   },
   
   delete: async (id: string): Promise<void> => {
     await apiClient.delete(`/categories/${id}`);
   }
 };
+
+// Types pour l'upload de services
+interface ServiceCreateData {
+  name: string;
+  description: string;
+  price: number;
+  duration: number;
+  categoryId: number;
+  image?: File;
+}
+
+interface ServiceUpdateData {
+  name: string;
+  description: string;
+  price: number;
+  duration: number;
+  categoryId: number;
+  image?: File;
+}
 
 // API Service for Services
 export const serviceService = {
@@ -108,29 +140,86 @@ export const serviceService = {
   },
   
   getByCategory: async (categoryId: string): Promise<Service[]> => {
-    const response = await apiClient.get(`/services/category/${categoryId}`);
+    const response = await apiClient.get(`/services/category/${categoryId}`); 
     return response.data;
   },
   
-  create: async (service: Omit<Service, 'id'>): Promise<{ serviceId: string }> => {
-    const response = await apiClient.post('/services', {
-      ...service,
-      price: Number(service.price),
-      duration: Number(service.duration)
-    });
-    return response.data;
+  create: async (service: ServiceCreateData): Promise<{ serviceId: string }> => {
+    // Si une image est fournie, utiliser FormData pour l'upload
+    if (service.image) {
+      const formData = new FormData();
+      formData.append('name', service.name);
+      formData.append('description', service.description || '');
+      formData.append('price', service.price.toString());
+      formData.append('duration', service.duration.toString());
+      formData.append('categoryId', service.categoryId.toString());
+      formData.append('image', service.image);
+
+      const response = await apiClient.post('/services', formData, {
+        headers: {
+          // Ne pas définir Content-Type, axios va le faire automatiquement avec le boundary
+        },
+      });
+      return response.data;
+    } else {
+      // Sinon, utiliser la méthode normale
+      const response = await apiClient.post('/services', {
+        ...service,
+        price: Number(service.price),
+        duration: Number(service.duration)
+      }, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      return response.data;
+    }
   },
   
-  update: async (id: string, service: Omit<Service, 'id'>): Promise<void> => {
-    await apiClient.put(`/services/${id}`, {
-      ...service,
-      price: Number(service.price),
-      duration: Number(service.duration)
-    });
+  update: async (id: string, service: ServiceUpdateData): Promise<void> => {
+    // Si une image est fournie, utiliser FormData pour l'upload
+    if (service.image) {
+      const formData = new FormData();
+      formData.append('name', service.name);
+      formData.append('description', service.description || '');
+      formData.append('price', service.price.toString());
+      formData.append('duration', service.duration.toString());
+      formData.append('categoryId', service.categoryId.toString());
+      formData.append('image', service.image);
+
+      await apiClient.put(`/services/${id}`, formData, {
+        headers: {
+          // Ne pas définir Content-Type, axios va le faire automatiquement avec le boundary
+        },
+      });
+    } else {
+      // Sinon, utiliser la méthode normale
+      await apiClient.put(`/services/${id}`, {
+        ...service,
+        price: Number(service.price),
+        duration: Number(service.duration)
+      }, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+    }
   },
   
   delete: async (id: string): Promise<void> => {
     await apiClient.delete(`/services/${id}`);
+  },
+
+  // Nouvelle méthode pour récupérer l'image d'un service
+  getImageUrl: (serviceId: string, cacheBuster?: boolean): string => {
+    const baseUrl = `${API_URL}/services/${serviceId}/image`;
+    return cacheBuster ? `${baseUrl}?t=${Date.now()}` : baseUrl;
+  },
+
+  // Nouvelle méthode pour récupérer le thumbnail d'un service
+  getThumbnailUrl: (serviceId: string, cacheBuster?: boolean): string => {
+    const baseUrl = `${API_URL}/services/${serviceId}/thumbnail`;
+    return cacheBuster ? `${baseUrl}?t=${Date.now()}` : baseUrl;
   }
 };
 
@@ -165,13 +254,16 @@ export const appointmentService = {
     const response = await apiClient.post('/appointments', {
       clientName: appointment.clientName,
       clientEmail: appointment.clientEmail || '',
-      clientPhone: appointment.clientPhone || '',
       serviceId: appointment.serviceId, 
       date: appointment.date,
       time: appointment.time,
       status: appointment.status,
       notes: appointment.notes || '',
       createdBy: appointment.createdBy || 'client' // Ajout du champ createdBy
+    }, {
+      headers: {
+        'Content-Type': 'application/json',
+      },
     });
     return response.data;
   },
@@ -180,15 +272,22 @@ export const appointmentService = {
     await apiClient.put(`/appointments/${id}`, {
       clientName: appointment.clientName,
       clientEmail: appointment.clientEmail || '',
-      clientPhone: appointment.clientPhone || '',
       serviceId: appointment.serviceId,
       date: appointment.date,
       time: appointment.time,
       status: appointment.status,
       notes: appointment.notes || ''
+    }, {
+      headers: {
+        'Content-Type': 'application/json',
+      },
     });
   },    updateStatus: async (id: string, status: Appointment['status']): Promise<void> => {
-    try {    const response = await apiClient.patch(`/appointments/${id}/status`, { status });
+    try {    const response = await apiClient.patch(`/appointments/${id}/status`, { status }, {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
     if (!response.data || response.status !== 200) {
       throw new Error('La mise à jour du statut a échoué');
     }

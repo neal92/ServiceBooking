@@ -188,10 +188,10 @@ exports.login = async (req, res) => {
     console.log(`Mot de passe stocké en BDD: ${user.password ? user.password.substring(0, 10) + '...' : 'Non disponible'}`);
     console.log(`Format du hash: ${user.password ? user.password.substring(0, 7) : 'N/A'}`);
     console.log(`Longueur du hash: ${user.password ? user.password.length : 0} caractères`);
-    console.log(`Est au format bcrypt ($2a, $2b ou $2y): ${user.password ? /^\$2[aby]\$/.test(user.password) : 'N/A'}`);
+    console.log(`Est au format bcrypt ($2a, $2b ou $2y): ${user.password ? /^\$2[aby]\$\d+\$/.test(user.password) : 'N/A'}`);
     
     // Tester si le hash est valide avant de faire la comparaison
-    if (!user.password || user.password.length < 60 || !/^\$2[aby]\$/.test(user.password)) {
+    if (!user.password || user.password.length < 60 || !/^\$2[aby]\$\d+\$/.test(user.password)) {
       console.error('ERREUR: Le hash stocké ne semble pas être un hash bcrypt valide');
       return res
         .status(401)
@@ -324,42 +324,109 @@ exports.getCurrentUser = async (req, res) => {
  */
 exports.updateProfile = async (req, res) => {
   try {
+    console.log("📝 Début updateProfile - Données reçues:", req.body);
+    
     // Vérifier les erreurs de validation
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
+      console.log("❌ Erreurs de validation:", errors.array());
+      
+      // Créer un message d'erreur plus informatif
+      const errorMessages = errors.array().map(error => `${error.param}: ${error.msg}`);
+      return res.status(400).json({ 
+        message: "Erreurs de validation: " + errorMessages.join(", "),
+        errors: errors.array() 
+      });
     }
 
     const userId = req.user.id;
     const { firstName, lastName, email, pseudo, avatar } = req.body;
+    
+    console.log("🔍 Données extraites:", {
+      userId,
+      firstName: firstName ? `"${firstName}"` : 'null',
+      lastName: lastName ? `"${lastName}"` : 'null', 
+      email: email ? `"${email}"` : 'null',
+      pseudo: pseudo ? `"${pseudo}"` : 'null',
+      avatar: avatar ? 'présent' : 'absent'
+    });
+
+    // Valider les champs requis
+    if (!firstName || firstName.trim() === '') {
+      return res.status(400).json({ 
+        message: "Le prénom est requis et ne peut pas être vide" 
+      });
+    }
+
+    if (!lastName || lastName.trim() === '') {
+      return res.status(400).json({ 
+        message: "Le nom est requis et ne peut pas être vide" 
+      });
+    }
+
+    if (!email || email.trim() === '') {
+      return res.status(400).json({ 
+        message: "L'email est requis et ne peut pas être vide" 
+      });
+    }
 
     // Vérifier si l'email existe déjà pour un autre utilisateur
-    if (email) {
-      const existingUser = await User.findByEmail(email);
-      if (existingUser && existingUser.id !== userId) {
-        return res
-          .status(400)
-          .json({ message: "Cet email est déjà utilisé par un autre compte." });
+    console.log("🔍 Vérification de l'email:", email);
+    const existingUser = await User.findByEmail(email);
+    if (existingUser && existingUser.id !== userId) {
+      console.log("❌ Email déjà utilisé par un autre utilisateur");
+      return res
+        .status(400)
+        .json({ message: "Cet email est déjà utilisé par un autre compte." });
+    }
+    console.log("✅ Email disponible");
+
+    // Vérifier si le pseudo existe déjà pour un autre utilisateur (seulement si fourni)
+    if (pseudo && pseudo.trim() !== '') {
+      const trimmedPseudo = pseudo.trim();
+      console.log("🔍 Vérification du pseudo:", `"${trimmedPseudo}"`);
+      
+      try {
+        const existingPseudo = await User.findByPseudo(trimmedPseudo);
+        console.log("📊 Résultat recherche pseudo:", existingPseudo ? `Trouvé: ${existingPseudo.id}` : 'Disponible');
+        
+        if (existingPseudo && existingPseudo.id !== userId) {
+          console.log("❌ Pseudo déjà utilisé par un autre utilisateur:", existingPseudo.id);
+          return res
+            .status(400)
+            .json({ message: "Ce pseudo est déjà utilisé par un autre compte." });
+        }
+        console.log("✅ Pseudo disponible");
+      } catch (error) {
+        console.error("❌ Erreur lors de la vérification du pseudo:", error);
+        return res.status(500).json({ message: "Erreur lors de la vérification du pseudo." });
       }
     }
 
-    // Vérifier si le pseudo existe déjà pour un autre utilisateur
-    if (pseudo) {
-      const existingPseudo = await User.findByPseudo(pseudo);
-      if (existingPseudo && existingPseudo.id !== userId) {
-        return res
-          .status(400)
-          .json({ message: "Ce pseudo est déjà utilisé par un autre compte." });
-      }
-    }
-
+    console.log("📝 Mise à jour de l'utilisateur en cours...");
+    
     // Mettre à jour l'utilisateur
     const updatedUser = await User.update(userId, {
-      firstName,
-      lastName,
-      email,
-      pseudo,
+      firstName: firstName.trim(),
+      lastName: lastName.trim(),
+      email: email.trim(),
+      pseudo: pseudo && pseudo.trim() !== '' ? pseudo.trim() : null,
       avatar,
+    });
+    
+    if (!updatedUser) {
+      console.log("❌ Échec de la mise à jour");
+      return res.status(500).json({
+        message: "Échec de la mise à jour du profil."
+      });
+    }
+    
+    console.log("✅ Utilisateur mis à jour avec succès:", {
+      id: updatedUser.id,
+      firstName: updatedUser.firstName,
+      lastName: updatedUser.lastName,
+      email: updatedUser.email,
+      pseudo: updatedUser.pseudo
     });
 
     res.json({
@@ -375,9 +442,10 @@ exports.updateProfile = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Erreur lors de la mise à jour du profil:", error);
+    console.error("❌ Erreur lors de la mise à jour du profil:", error);
     res.status(500).json({
       message: "Une erreur est survenue lors de la mise à jour du profil.",
+      error: error.message
     });
   }
 };
@@ -426,6 +494,77 @@ exports.changePassword = async (req, res) => {
 };
 
 /**
+ * Controller pour récupérer tous les utilisateurs (Admin uniquement)
+ */
+exports.getAllUsers = async (req, res) => {
+  try {
+    // Vérifier que l'utilisateur connecté est un administrateur
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ 
+        message: "Accès refusé. Droits d'administrateur requis." 
+      });
+    }
+
+    // Récupérer tous les utilisateurs sans les mots de passe
+    const users = await User.getAll();
+    
+    console.log(`Admin ${req.user.email} a récupéré la liste de ${users.length} utilisateur(s)`);
+
+    res.json({
+      message: "Liste des utilisateurs récupérée avec succès.",
+      users: users,
+      total: users.length
+    });
+  } catch (error) {
+    console.error("Erreur lors de la récupération des utilisateurs:", error);
+    res.status(500).json({
+      message: "Une erreur est survenue lors de la récupération des utilisateurs.",
+    });
+  }
+};
+
+/**
+ * Controller pour récupérer les utilisateurs avec pagination (Admin uniquement)
+ */
+exports.getUsersWithPagination = async (req, res) => {
+  try {
+    // Vérifier que l'utilisateur connecté est un administrateur
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ 
+        message: "Accès refusé. Droits d'administrateur requis." 
+      });
+    }
+
+    // Récupérer les paramètres de pagination depuis la query string
+    const limit = parseInt(req.query.limit) || 5;
+    const page = parseInt(req.query.page) || 1;
+    const offset = (page - 1) * limit;
+
+    // Récupérer les utilisateurs avec pagination
+    const result = await User.getAllWithPagination(limit, offset);
+    
+    console.log(`Admin ${req.user.email} a récupéré ${result.users.length} utilisateur(s) (page ${page}/${result.totalPages})`);
+
+    res.json({
+      message: "Liste des utilisateurs récupérée avec succès.",
+      users: result.users,
+      pagination: {
+        total: result.total,
+        hasMore: result.hasMore,
+        currentPage: result.currentPage,
+        totalPages: result.totalPages,
+        limit: limit
+      }
+    });
+  } catch (error) {
+    console.error("Erreur lors de la récupération des utilisateurs avec pagination:", error);
+    res.status(500).json({
+      message: "Une erreur est survenue lors de la récupération des utilisateurs.",
+    });
+  }
+};
+
+/**
  * Controller pour télécharger et mettre à jour l'avatar de l'utilisateur
  */
 exports.uploadAvatar = async (req, res) => {
@@ -457,13 +596,72 @@ exports.uploadAvatar = async (req, res) => {
     // Déplacer le fichier téléchargé vers le dossier de destination
     await avatar.mv(uploadPath);
 
-    // Mettre à jour l'avatar de l'utilisateur dans la base de données
+    // Extraire les métadonnées SVG si c'est un fichier SVG
+    let avatarColor = null;
+    let avatarInitials = null;
+
+    if (avatar.mimetype === "image/svg+xml" || filename.endsWith('.svg')) {
+      try {
+        const fs = require('fs');
+        const svgContent = fs.readFileSync(uploadPath, 'utf8');
+        
+        // Extraire la couleur des métadonnées
+        const colorMatch = svgContent.match(/<metadata>\s*<color>(.*?)<\/color>/s);
+        if (colorMatch) {
+          avatarColor = colorMatch[1].trim();
+          console.log('Couleur extraite du SVG:', avatarColor);
+        }
+        
+        // Extraire les initiales des métadonnées
+        const initialsMatch = svgContent.match(/<initials>(.*?)<\/initials>/s);
+        if (initialsMatch) {
+          avatarInitials = initialsMatch[1].trim();
+          console.log('Initiales extraites du SVG:', avatarInitials);
+        }
+
+        // Si pas de métadonnées, essayer d'extraire depuis le contenu
+        if (!avatarInitials) {
+          const textMatch = svgContent.match(/<text[^>]*>([^<]+)<\/text>/);
+          if (textMatch) {
+            avatarInitials = textMatch[1].trim();
+          }
+        }
+
+        if (!avatarColor) {
+          const fillMatch = svgContent.match(/fill="([^"]+)"/);
+          if (fillMatch && fillMatch[1] !== "white") {
+            avatarColor = fillMatch[1];
+          }
+        }
+
+      } catch (svgError) {
+        console.error("Erreur lors de l'extraction des métadonnées SVG:", svgError);
+      }
+    }
+
+    // Mettre à jour l'avatar de l'utilisateur dans la base de données avec les métadonnées
     const avatarUrl = `/uploads/${filename}`;
-    await User.update(userId, { avatar: avatarUrl, isPresetAvatar: false });
+    const updateData = { 
+      avatar: avatarUrl, 
+      isPresetAvatar: false,
+      avatarColor: avatarColor,
+      avatarInitials: avatarInitials
+    };
+    
+    await User.update(userId, updateData);
+
+    console.log('Avatar mis à jour avec métadonnées:', {
+      userId,
+      avatarUrl,
+      avatarColor,
+      avatarInitials
+    });
 
     res.json({
       message: "Avatar téléchargé avec succès.",
       avatarUrl: avatarUrl,
+      avatarColor: avatarColor,
+      avatarInitials: avatarInitials
     });
   } catch (error) {
     console.error("Erreur lors du téléchargement de l'avatar:", error);

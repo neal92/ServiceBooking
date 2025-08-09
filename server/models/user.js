@@ -36,19 +36,35 @@ class User {
   // Find user by pseudo - Method reinforced to ensure availability
   static async findByPseudo(pseudo) {
     try {
-      console.log(`Looking up user by pseudo: ${pseudo} (reinforced method)`);
+      console.log(`🔍 Looking up user by pseudo: "${pseudo}" (reinforced method)`);
+      
+      if (!pseudo) {
+        console.log("⚠️ Pseudo is null or empty");
+        return null;
+      }
+      
+      const trimmedPseudo = pseudo.trim();
+      if (trimmedPseudo === '') {
+        console.log("⚠️ Pseudo is empty after trim");
+        return null;
+      }
+      
+      console.log(`📊 Executing query for pseudo: "${trimmedPseudo}"`);
       const [rows] = await db.query("SELECT * FROM users WHERE pseudo = ?", [
-        pseudo,
+        trimmedPseudo,
       ]);
+      
+      console.log(`📊 Query result: ${rows.length} row(s) found`);
+      
       if (rows.length > 0) {
-        console.log(`User found with pseudo: ${pseudo}`);
+        console.log(`✅ User found with pseudo: "${trimmedPseudo}" - ID: ${rows[0].id}`);
         return rows[0];
       } else {
-        console.log(`No user found with pseudo: ${pseudo}`);
+        console.log(`✅ No user found with pseudo: "${trimmedPseudo}" - Available!`);
         return null;
       }
     } catch (error) {
-      console.error("Error finding user by pseudo:", error);
+      console.error("❌ Error in findByPseudo:", error);
       if (error.code === "ER_NO_SUCH_TABLE") {
         console.error("Users table does not exist in database");
       } else if (error.sqlMessage) {
@@ -90,6 +106,75 @@ class User {
       throw error;
     }
   }
+
+  // Get all users (without passwords)
+  static async getAll() {
+    try {
+      console.log("Retrieving all users from database");
+      const [rows] = await db.query(`
+        SELECT 
+          id, 
+          email, 
+          firstName, 
+          lastName, 
+          role, 
+          avatar, 
+          isPresetAvatar, 
+          pseudo, 
+          created_at
+        FROM users 
+        ORDER BY created_at DESC
+      `);
+      
+      console.log(`Found ${rows.length} users in database`);
+      return rows;
+    } catch (error) {
+      console.error("Error retrieving all users:", error);
+      throw error;
+    }
+  }
+
+  // Get users with pagination
+  static async getAllWithPagination(limit = 5, offset = 0) {
+    try {
+      console.log(`Retrieving users with pagination: limit=${limit}, offset=${offset}`);
+      
+      // Compter le nombre total d'utilisateurs
+      const [countResult] = await db.query(`SELECT COUNT(*) as total FROM users`);
+      const total = countResult[0].total;
+      
+      // Récupérer les utilisateurs avec pagination
+      const [rows] = await db.query(`
+        SELECT 
+          id, 
+          email, 
+          firstName, 
+          lastName, 
+          role, 
+          avatar, 
+          isPresetAvatar, 
+          pseudo, 
+          created_at
+        FROM users 
+        ORDER BY created_at DESC
+        LIMIT ? OFFSET ?
+      `, [limit, offset]);
+      
+      console.log(`Found ${rows.length} users out of ${total} total users`);
+      
+      return {
+        users: rows,
+        total: total,
+        hasMore: (offset + limit) < total,
+        currentPage: Math.floor(offset / limit) + 1,
+        totalPages: Math.ceil(total / limit)
+      };
+    } catch (error) {
+      console.error("Error retrieving users with pagination:", error);
+      throw error;
+    }
+  }
+
   // Create a new user
   static async create(userData) {
     try {
@@ -220,7 +305,14 @@ class User {
   // Update user
   static async update(id, userData) {
     try {
-      console.log("Updating user data:", { id, ...userData });
+      console.log("📝 Updating user data:", { 
+        id, 
+        userData: {
+          ...userData,
+          pseudo: userData.pseudo ? `"${userData.pseudo}"` : 'null'
+        }
+      });
+      
       let query = "UPDATE users SET ";
       const values = [];
       const fields = [];
@@ -240,10 +332,19 @@ class User {
       if (userData.pseudo !== undefined) {
         fields.push("pseudo = ?");
         values.push(userData.pseudo);
+        console.log(`📝 Pseudo will be updated to: "${userData.pseudo}"`);
       }
       if (userData.avatar !== undefined) {
         fields.push("avatar = ?");
         values.push(userData.avatar);
+      }
+      if (userData.avatarColor !== undefined) {
+        fields.push("avatarColor = ?");
+        values.push(userData.avatarColor);
+      }
+      if (userData.avatarInitials !== undefined) {
+        fields.push("avatarInitials = ?");
+        values.push(userData.avatarInitials);
       }
       if (userData.isPresetAvatar !== undefined) {
         fields.push("isPresetAvatar = ?");
@@ -251,31 +352,38 @@ class User {
       }
 
       if (fields.length === 0) {
-        console.log("No fields to update");
+        console.log("⚠️ No fields to update");
         return false;
       }
 
       query += fields.join(", ") + " WHERE id = ?";
       values.push(id);
 
-      console.log("Update query:", query);
-      console.log("Update values:", values);
+      console.log("📊 Update query:", query);
+      console.log("📊 Update values:", values.map((v, i) => 
+        fields[i] && fields[i].includes('pseudo') ? `"${v}"` : v
+      ));
 
       const [result] = await db.query(query, values);
-      console.log("Update result:", {
+      console.log("📊 Update result:", {
         affectedRows: result.affectedRows,
-        changedRows: result.changedRows,
+        changedRows: result.changedRows
       });
 
       if (result.affectedRows > 0) {
         // Récupérer l'utilisateur mis à jour
         const updatedUser = await this.findById(id);
+        console.log("✅ User successfully updated:", {
+          id: updatedUser.id,
+          pseudo: updatedUser.pseudo
+        });
         return updatedUser;
       } else {
+        console.log("⚠️ No rows affected - user not found or no changes");
         return false;
       }
     } catch (error) {
-      console.error("Error updating user:", error);
+      console.error("❌ Error updating user:", error);
       throw error;
     }
   }
@@ -326,5 +434,7 @@ console.log(
   typeof User.findByPseudo === "function" ? "OK" : "MISSING"
 );
 console.log("- create:", typeof User.create === "function" ? "OK" : "MISSING");
+console.log("- getAll:", typeof User.getAll === "function" ? "OK" : "MISSING");
+console.log("- getAllWithPagination:", typeof User.getAllWithPagination === "function" ? "OK" : "MISSING");
 
 module.exports = User;

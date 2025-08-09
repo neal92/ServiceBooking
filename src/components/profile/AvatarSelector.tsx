@@ -103,15 +103,26 @@ const AvatarSelector = ({ currentAvatar, onAvatarSelect, userFirstName = '' }: A
       console.error('Erreur lors de la sélection de l\'avatar:', err);
     }
   };  const generateInitialAvatar = async () => {
+    if (!initials || initials.trim() === '') {
+      console.error('Impossible de créer un avatar sans initiales');
+      alert('Veuillez entrer des initiales avant de créer l\'avatar');
+      return;
+    }
+
+    console.log('🎨 Début de création d\'avatar avec initiales:', {
+      initiales: initials,
+      couleur: bgColor
+    });
+
     // Extraire le code couleur sans le # pour l'insérer dans le nom du fichier
     const colorCode = bgColor.replace('#', '');
 
     // Création du contenu SVG avec les initiales et la couleur choisie
     // Ajout de métadonnées sur la couleur pour faciliter la récupération ultérieure
-    const svgContent = `
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="200" height="200">
+    const svgContent = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="200" height="200">
   <metadata>
     <color>${bgColor}</color>
+    <initials>${initials.toUpperCase()}</initials>
   </metadata>
   <circle cx="50" cy="50" r="50" fill="${bgColor}" />
   <text x="50" y="50" dy="0.35em" font-family="Arial, sans-serif" font-size="${initials.length > 1 ? '35' : '40'}" font-weight="bold" text-anchor="middle" fill="white">
@@ -124,25 +135,32 @@ const AvatarSelector = ({ currentAvatar, onAvatarSelect, userFirstName = '' }: A
       const base64Content = btoa(svgContent);
       const dataUrl = `data:image/svg+xml;base64,${base64Content}`;
 
-      console.log('Avatar avec initiales créé:', {
+      console.log('✅ Avatar SVG généré avec succès:', {
         initiales: initials,
         couleur: bgColor,
         colorCode: colorCode,
-        taille: base64Content.length
+        tailleSVG: svgContent.length,
+        tailleBase64: base64Content.length,
+        dataUrl: dataUrl.substring(0, 100) + '...'
       });
       
       // Mettre à jour les données extraites avant d'appeler onAvatarSelect
       setExtractedColor(bgColor);
       setExtractedInitials(initials.toUpperCase());
 
+      console.log('📤 Appel de onAvatarSelect avec la data URL...');
+      
       // Appel de la fonction d'upload avec la data URL
       await onAvatarSelect(dataUrl);
+
+      console.log('✅ Avatar créé et envoyé avec succès');
 
       // Fermeture des sélecteurs après réussite
       setShowInitialsCreator(false);
       setShowAvatarSelector(false);
-    } catch (err) {
-      console.error('Erreur de création d\'avatar avec initiales:', err);
+    } catch (err: any) {
+      console.error('❌ Erreur de création d\'avatar avec initiales:', err);
+      alert(`Erreur lors de la création de l'avatar: ${err?.message || String(err)}`);
     }
   };
 
@@ -264,14 +282,24 @@ const AvatarSelector = ({ currentAvatar, onAvatarSelect, userFirstName = '' }: A
                         </span>
                       </div>
                     </div>
-                  </div>                  <div className="flex justify-end">
+                  </div>                  <div className="flex justify-center space-x-3">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowInitialsCreator(false);
+                        setShowAvatarSelector(false);
+                      }}
+                      className="px-4 py-2 bg-gray-300 hover:bg-gray-400 dark:bg-gray-600 dark:hover:bg-gray-500 text-gray-800 dark:text-white rounded-md shadow-sm transition-colors"
+                    >
+                      Annuler
+                    </button>
                     <button
                       type="button"
                       onClick={generateInitialAvatar}
-                      disabled={!initials}
-                      className={`px-4 py-2 bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white rounded-md shadow-sm transition-colors ${!initials ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      disabled={!initials || initials.trim() === ''}
+                      className={`px-6 py-2 bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white rounded-md shadow-sm transition-colors font-medium ${!initials || initials.trim() === '' ? 'opacity-50 cursor-not-allowed' : 'hover:shadow-lg'}`}
                     >
-                      Créer
+                      🎨 Créer l'avatar
                     </button>
                   </div>
                 </div>

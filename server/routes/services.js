@@ -11,8 +11,11 @@ router.get('/mobile/list', serviceController.getServicesForMobile);
 // GET service by id
 router.get('/:id', serviceController.getServiceById);
 
-// GET service image
+// GET service image (main image)
 router.get('/:id/image', serviceController.getServiceImage);
+
+// GET service thumbnail
+router.get('/:id/thumbnail', serviceController.getServiceThumbnail);
 
 // GET services by category
 router.get('/category/:categoryId', serviceController.getServicesByCategory);

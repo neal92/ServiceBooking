@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
+import React, { createContext, useState, useContext, ReactNode, useEffect, useCallback } from 'react';
 import authService from '../services/auth';
 
 interface User {
@@ -46,7 +46,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [error, setError] = useState<string | null>(null);
 
   // Fonction pour rafraîchir les données de l'utilisateur
-  const refreshUserData = async () => {
+  const refreshUserData = useCallback(async () => {
     try {
       console.log("Rafraîchissement des données utilisateur...");
       const token = localStorage.getItem('token');
@@ -71,7 +71,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     } catch (error) {
       console.error("Erreur lors du rafraîchissement des données utilisateur:", error);
     }
-  };  // Check for stored user data on mount
+  }, []);  // Pas de dépendances car on utilise des valeurs depuis localStorage et setUser est stable  // Check for stored user data on mount
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
     if (storedUser) {
@@ -324,8 +324,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  };// Update user profile
-  const updateUser = async (data: { firstName?: string; lastName?: string; email?: string; pseudo?: string; avatar?: string; isPresetAvatar?: boolean; avatarColor?: string; avatarInitials?: string }) => {
+  };  // Update user profile
+  const updateUser = useCallback(async (data: { firstName?: string; lastName?: string; email?: string; pseudo?: string; avatar?: string; isPresetAvatar?: boolean; avatarColor?: string; avatarInitials?: string }) => {
     setLoading(true);
     setError(null);
 
@@ -389,29 +389,49 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       console.log('Données utilisateur mises à jour dans le localStorage et événement dispatché');
     } catch (err: any) {
       console.error("Erreur lors de la mise à jour du profil:", err);
+      console.error("Détails de l'erreur:", {
+        status: err.response?.status,
+        data: err.response?.data,
+        message: err.message
+      });
       
       // Conserver les données utilisateur actuelles en cas d'erreur
       console.log("Conservation des données utilisateur actuelles en cas d'erreur");
       
       // Afficher un message d'erreur plus précis pour l'utilisateur
+      let errorMessage = 'Échec de la mise à jour du profil.';
+      
       if (err.response?.status === 401 || err.response?.status === 403) {
-        setError("Session expirée, veuillez vous reconnecter");
+        errorMessage = "Session expirée, veuillez vous reconnecter";
       } else if (err.response?.status === 400) {
-        setError(err.response?.data?.message || "Données invalides dans le formulaire");
+        // Essayer d'extraire le message d'erreur spécifique du serveur
+        if (err.response?.data?.message) {
+          errorMessage = err.response.data.message;
+        } else if (err.response?.data?.errors && Array.isArray(err.response.data.errors)) {
+          // Si c'est un tableau d'erreurs de validation
+          const validationErrors = err.response.data.errors.map((error: any) => 
+            `${error.param}: ${error.msg}`
+          ).join(', ');
+          errorMessage = `Erreurs de validation: ${validationErrors}`;
+        } else {
+          errorMessage = "Données invalides dans le formulaire";
+        }
       } else if (err.response?.status === 404) {
-        setError("Utilisateur non trouvé, veuillez vous reconnecter");
+        errorMessage = "Utilisateur non trouvé, veuillez vous reconnecter";
       } else if (err.response?.status === 500) {
-        setError("Erreur serveur, veuillez réessayer plus tard");
-      } else {
-        setError(err.response?.data?.message || 'Échec de la mise à jour du profil.');
+        errorMessage = "Erreur serveur, veuillez réessayer plus tard";
+      } else if (err.response?.data?.message) {
+        errorMessage = err.response.data.message;
       }
       
-      console.error(err);
-      throw err;
+      setError(errorMessage);
+      console.error("Message d'erreur final:", errorMessage);
+      
+      throw new Error(errorMessage);
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
 
   // Change password
   const changePassword = async (currentPassword: string, newPassword: string) => {
@@ -446,7 +466,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
   // Upload avatar
-  const uploadAvatar = async (file: File) => {
+  const uploadAvatar = useCallback(async (file: File) => {
     setLoading(true);
     setError(null);
 
@@ -500,7 +520,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user, updateUser]);
   // Logout function
   const logout = () => {
     console.log('Logout appelé depuis AuthContext');

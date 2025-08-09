@@ -18,7 +18,6 @@ export const createAppointment = async (appointmentData: Partial<Appointment>): 
     const appointment = {
       clientName: appointmentData.clientName || '',
       clientEmail: appointmentData.clientEmail || '',
-      clientPhone: appointmentData.clientPhone || '',
       serviceId: appointmentData.serviceId || 0,
       date: appointmentData.date || '',
       time: appointmentData.time || '',

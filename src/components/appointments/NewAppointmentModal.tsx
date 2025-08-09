@@ -33,7 +33,6 @@ const NewAppointmentModal: React.FC<NewAppointmentModalProps> = ({
   const [serviceId, setServiceId] = useState(selectedServiceId || '');
   const [clientName, setClientName] = useState('');
   const [clientEmail, setClientEmail] = useState('');
-  const [clientPhone, setClientPhone] = useState('');
   const [date, setDate] = useState('');
   const [time, setTime] = useState('');
   const [notes, setNotes] = useState('');
@@ -76,7 +75,6 @@ const NewAppointmentModal: React.FC<NewAppointmentModalProps> = ({
       setServiceId(appointment.serviceId.toString());
       setClientName(appointment.clientName);
       setClientEmail(appointment.clientEmail || '');
-      setClientPhone(appointment.clientPhone || '');
       
       // Extract date and time from appointment.date
       const dateObj = new Date(appointment.date);
@@ -98,7 +96,6 @@ const NewAppointmentModal: React.FC<NewAppointmentModalProps> = ({
         setClientEmail('');
       }
       
-      setClientPhone('');
       // Si une date est pré-sélectionnée (depuis le calendrier), l'utiliser
       setDate(selectedDate || '');
       setTime('');
@@ -207,7 +204,6 @@ const NewAppointmentModal: React.FC<NewAppointmentModalProps> = ({
       const appointmentData = {
         clientName: clientName || '',
         clientEmail: clientEmail || '',
-        clientPhone: clientPhone || '',
         serviceId: parseInt(serviceId),
         // Utiliser uniquement la partie date (YYYY-MM-DD) sans l'heure
         date: formattedDate,
@@ -444,22 +440,6 @@ const NewAppointmentModal: React.FC<NewAppointmentModalProps> = ({
                           Ce champ est automatiquement rempli avec votre email
                         </p>
                       )}
-                    </div>
-                  </div>
-
-                  <div className="sm:col-span-3">
-                    <label htmlFor="clientPhone" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                      Téléphone du client
-                    </label>
-                    <div className="mt-1">
-                      <input
-                        type="tel"
-                        name="clientPhone"
-                        id="clientPhone"
-                        value={clientPhone}
-                        onChange={(e) => setClientPhone(e.target.value)}
-                        className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full text-base py-3 px-4 border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md"
-                      />
                     </div>
                   </div>
 

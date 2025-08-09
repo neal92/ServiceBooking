@@ -2,7 +2,7 @@ export interface Appointment {
   id: number;
   clientName: string;
   clientEmail: string;
-  clientPhone: string;
+  clientPhone?: string;
   serviceId: number;
   serviceName?: string; // From JOIN with services
   date: string;

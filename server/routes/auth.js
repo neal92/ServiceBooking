@@ -137,22 +137,27 @@ router.put(
   authenticate,
   [
     body("firstName")
-      .optional()
-      .notEmpty()
-      .withMessage("Le prénom ne peut pas être vide"),
-    body("lastName").optional(),
+      .optional({ checkFalsy: false })
+      .isLength({ min: 1, max: 50 })
+      .withMessage("Le prénom doit contenir entre 1 et 50 caractères"),
+    body("lastName")
+      .optional({ checkFalsy: false })
+      .isLength({ min: 1, max: 50 })
+      .withMessage("Le nom doit contenir entre 1 et 50 caractères"),
     body("email")
-      .optional()
+      .optional({ checkFalsy: false })
       .isEmail()
       .withMessage("Une adresse email valide est requise"),
     body("phone")
-      .optional()
+      .optional({ nullable: true, checkFalsy: true })
       .isMobilePhone(["fr-FR", "any"])
       .withMessage("Le numéro de téléphone doit être valide"),
     body("pseudo")
-      .optional()
-      .isLength({ min: 3 })
-      .withMessage("Le pseudo doit contenir au moins 3 caractères"),
+      .optional({ nullable: true, checkFalsy: true })
+      .isLength({ min: 3, max: 20 })
+      .withMessage("Le pseudo doit contenir entre 3 et 20 caractères")
+      .matches(/^[a-zA-Z0-9_.-]+$/)
+      .withMessage("Le pseudo ne peut contenir que des lettres, chiffres, points, tirets et underscores"),
   ],
   authController.updateProfile
 );
@@ -172,27 +177,6 @@ router.post(
       ),
   ],
   authController.changePassword
-);
-
-// Update profile (protected route)
-router.put(
-  "/profile",
-  authenticate,
-  [
-    body("firstName")
-      .optional()
-      .notEmpty()
-      .withMessage("First name cannot be empty if provided"),
-    body("lastName")
-      .optional()
-      .notEmpty()
-      .withMessage("Last name cannot be empty if provided"),
-    body("email")
-      .optional()
-      .isEmail()
-      .withMessage("Valid email is required if provided"),
-  ],
-  authController.updateProfile
 );
 
 // Change password (protected route)
@@ -219,5 +203,100 @@ router.get("/check-pseudo", pseudoController.checkPseudoAvailability);
 // Vérifier la disponibilité de l'email (route publique)
 const emailController = require("../controllers/emailController");
 router.get("/check-email", emailController.checkEmailAvailability);
+
+/**
+ * @swagger
+ * /auth/users:
+ *   get:
+ *     summary: Récupérer tous les utilisateurs (Admin uniquement)
+ *     description: Récupère la liste complète des utilisateurs. Accessible uniquement aux administrateurs.
+ *     tags: [Authentication]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Liste des utilisateurs récupérée avec succès
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   description: Message de succès
+ *                 users:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: integer
+ *                       email:
+ *                         type: string
+ *                       firstName:
+ *                         type: string
+ *                       lastName:
+ *                         type: string
+ *                       role:
+ *                         type: string
+ *                       pseudo:
+ *                         type: string
+ *                       phone:
+ *                         type: string
+ *                       avatar:
+ *                         type: string
+ *                       created_at:
+ *                         type: string
+ *                         format: date-time
+ *                 total:
+ *                   type: integer
+ *                   description: Nombre total d'utilisateurs
+ *       403:
+ *         description: Accès refusé - Droits d'administrateur requis
+ *       401:
+ *         description: Non authentifié
+ *       500:
+ *         description: Erreur serveur
+ */
+// Get all users (Admin only)
+router.get("/users", authenticate, authController.getAllUsers);
+
+/**
+ * @swagger
+ * /auth/users/paginated:
+ *   get:
+ *     summary: Récupérer les utilisateurs avec pagination (Admin uniquement)
+ *     description: Récupère une liste paginée des utilisateurs. Par défaut, affiche 5 utilisateurs par page.
+ *     tags: [Authentication]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 1
+ *         description: Numéro de la page (commence à 1)
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           maximum: 50
+ *           default: 5
+ *         description: Nombre d'utilisateurs par page (max 50)
+ *     responses:
+ *       200:
+ *         description: Liste paginée des utilisateurs récupérée avec succès
+ *       403:
+ *         description: Accès refusé - Droits d'administrateur requis
+ *       401:
+ *         description: Non authentifié
+ *       500:
+ *         description: Erreur serveur
+ */
+// Get users with pagination (Admin only) - 5 users by default with "load more" functionality
+router.get("/users/paginated", authenticate, authController.getUsersWithPagination);
 
 module.exports = router;

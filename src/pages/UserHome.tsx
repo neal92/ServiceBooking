@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Clock, DollarSign, CheckCircle, Search, Calendar, ArrowRight, AlarmClock } from 'lucide-react';
+import { Clock, DollarSign, CheckCircle, Search, Calendar, ArrowRight, Image as ImageIcon } from 'lucide-react';
 import { Service, Category, Appointment } from '../types';
 import { serviceService, categoryService, appointmentService } from '../services/api';
 import { Link, useNavigate } from 'react-router-dom';
 import PageTransition from '../components/layout/PageTransition';
 import { useAuth } from '../contexts/AuthContext';
+import ImageLoader from '../components/ui/ImageLoader';
 
 const UserHome: React.FC = () => {
   const { user } = useAuth();
@@ -18,6 +19,7 @@ const UserHome: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [appointmentsLoading, setAppointmentsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [imageErrors, setImageErrors] = useState<{[key: number]: boolean}>({});
 
   useEffect(() => {
     const loadData = async () => {
@@ -208,7 +210,7 @@ const UserHome: React.FC = () => {
   };
   // Rediriger vers la page de rendez-vous avec un service présélectionné
   const handleServiceReservation = (serviceId: number) => {
-    navigate(`/appointments?serviceId=${serviceId}&action=new`);
+    navigate(`/app/appointments?serviceId=${serviceId}&action=new`);
   };
 
   // Fonction de débogage pour vérifier les rendez-vous
@@ -305,6 +307,29 @@ const UserHome: React.FC = () => {
                   className="h-2"
                   style={{ backgroundColor: getCategoryColor(service.categoryId) }}
                 ></div>
+                
+                {/* Image du service */}
+                <div className="relative h-48 bg-gray-100 dark:bg-gray-700">
+                  {service.image && !imageErrors[service.id] ? (
+                    <ImageLoader
+                      serviceId={service.id}
+                      imageName={service.image}
+                      useThumbnail={true}
+                      alt={service.name}
+                      className="w-full h-full object-cover"
+                      onError={() => {
+                        setImageErrors(prev => ({ ...prev, [service.id]: true }));
+                        console.log(`Erreur de chargement de l'image pour le service ${service.name}`);
+                      }}
+                    />
+                  ) : (
+                    /* Placeholder pour les services sans image ou en cas d'erreur */
+                    <div className="w-full h-full flex items-center justify-center">
+                      <ImageIcon className="w-12 h-12 text-gray-400 dark:text-gray-500" />
+                    </div>
+                  )}
+                </div>
+                
                 <div className="p-6">
                   <div className="flex justify-between items-start mb-3">
                     <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
@@ -465,7 +490,7 @@ const UserHome: React.FC = () => {
                                 onClick={(e) => {
                                   e.preventDefault();
                                   e.stopPropagation();
-                                  navigate(`/appointments`);
+                                  navigate(`/app/appointments`);
                                 }}
                               >
                                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-more-horizontal h-5 w-5">

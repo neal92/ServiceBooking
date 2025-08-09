@@ -91,13 +91,53 @@ const Profile = () => {
   const handleInfoSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    // Réinitialisez complètement le message de succès pour éviter toute confusion
-    // avec le message de succès du changement de mot de passe
     setSuccess('');
     setShowSuccessModal(false);
 
+    // Validation côté client avant envoi
+    const validationErrors = [];
+
+    if (!userInfo.firstName.trim()) {
+      validationErrors.push('Le prénom est requis');
+    }
+    if (!userInfo.lastName.trim()) {
+      validationErrors.push('Le nom est requis');
+    }
+    if (!userInfo.email.trim()) {
+      validationErrors.push('L\'email est requis');
+    }
+    if (userInfo.email && !userInfo.email.includes('@')) {
+      validationErrors.push('L\'email doit être valide');
+    }
+    if (userInfo.pseudo && userInfo.pseudo.trim().length > 0 && userInfo.pseudo.trim().length < 3) {
+      validationErrors.push('Le pseudo doit contenir au moins 3 caractères');
+    }
+    if (userInfo.pseudo && userInfo.pseudo.trim().length > 20) {
+      validationErrors.push('Le pseudo ne peut pas dépasser 20 caractères');
+    }
+    if (userInfo.pseudo && !/^[a-zA-Z0-9_.-]+$/.test(userInfo.pseudo.trim())) {
+      validationErrors.push('Le pseudo ne peut contenir que des lettres, chiffres, points, tirets et underscores');
+    }
+
+    if (validationErrors.length > 0) {
+      setError(validationErrors.join(', '));
+      return;
+    }
+
     try {
-      await updateUser(userInfo);      // Fermer d'abord le mode édition
+      // Nettoyer les données avant envoi
+      const cleanedData = {
+        firstName: userInfo.firstName.trim(),
+        lastName: userInfo.lastName.trim(),
+        email: userInfo.email.trim(),
+        pseudo: userInfo.pseudo.trim() || undefined, // Envoyer undefined si vide
+      };
+
+      console.log('Envoi des données nettoyées:', cleanedData);
+
+      await updateUser(cleanedData);      
+
+      // Fermer d'abord le mode édition
       setIsEditing(false);
 
       // Puis afficher la notification de succès
@@ -109,6 +149,7 @@ const Profile = () => {
         setShowSuccessModal(false);
       }, 3000);
     } catch (err: any) {
+      console.error('Erreur lors de la mise à jour:', err);
       setError(err.message || 'Erreur lors de la mise à jour des informations');
     }
   };
@@ -207,17 +248,34 @@ const Profile = () => {
                   }
                   // Cas 2: Avatar personnalisé (blob/data URL)
                   else if (avatarUrl.startsWith('blob:') || avatarUrl.startsWith('data:')) {
+                    console.log('🎨 Traitement d\'un avatar personnalisé (data URL):', avatarUrl.substring(0, 100) + '...');
+                    
                     let content;
                     if (avatarUrl.startsWith('blob:')) {
+                      console.log('📥 Récupération du contenu depuis blob URL...');
                       const response = await fetch(avatarUrl);
                       content = await response.text();
                     } else {
+                      console.log('📥 Décodage du contenu base64...');
                       const base64Content = avatarUrl.split(',')[1];
                       content = atob(base64Content);
                     }
+                    
+                    console.log('📄 Contenu SVG décodé:', {
+                      longueur: content.length,
+                      debut: content.substring(0, 200) + '...'
+                    });
+                    
                     const blob = new Blob([content], { type: 'image/svg+xml' });
                     const fileName = `initials-avatar-${Date.now()}.svg`;
                     const file = new File([blob], fileName, { type: 'image/svg+xml' });
+                    
+                    console.log('📤 Upload du fichier avatar:', {
+                      nom: file.name,
+                      type: file.type,
+                      taille: file.size
+                    });
+                    
                     await uploadAvatar(file);
                     showSuccess('Avatar personnalisé mis à jour avec succès');
                     setShowSuccessModal(true);

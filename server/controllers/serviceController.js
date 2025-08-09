@@ -1,6 +1,9 @@
 const Service = require('../models/service');
 const path = require('path');
 const fs = require('fs');
+const express = require('express');
+const multer = require('multer');
+const { processServiceImage, deleteServiceImages } = require('../utils/imageProcessor');
 
 // Get all services
 exports.getAllServices = async (req, res) => {
@@ -91,42 +94,77 @@ exports.createService = async (req, res) => {
         });
       }
       
-      // Validate file size (max 5MB)
-      if (imageFile.size > 5 * 1024 * 1024) {
+      // Validate file size (max 10MB avant redimensionnement)
+      if (imageFile.size > 10 * 1024 * 1024) {
         return res.status(400).json({ 
-          message: 'File size too large. Maximum size is 5MB.' 
+          message: 'File size too large. Maximum size is 10MB.' 
         });
       }
       
-      // Generate unique filename
-      const fileExtension = path.extname(imageFile.name);
-      imageName = `service_${Date.now()}_${Math.random().toString(36).substring(2, 15)}${fileExtension}`;
+      // Créer d'abord le service pour avoir un ID
+      const serviceId = await Service.create({ 
+        name, 
+        description, 
+        price, 
+        duration, 
+        categoryId,
+        image: null // Temporairement null
+      });
       
-      // Ensure upload directory exists
-      const uploadDir = path.join(__dirname, '..', 'public', 'images', 'services');
-      if (!fs.existsSync(uploadDir)) {
-        fs.mkdirSync(uploadDir, { recursive: true });
+      try {
+        // Traiter l'image avec redimensionnement
+        const uploadDir = path.join(__dirname, '..', 'public', 'images', 'services');
+        const imageResult = await processServiceImage(imageFile, serviceId, uploadDir);
+        
+        if (imageResult.success) {
+          // Mettre à jour le service avec le nom de l'image
+          const updateResult = await Service.update(serviceId, { image: imageResult.mainImage });
+          
+          // Vérifier que la mise à jour a bien fonctionné
+          const updatedService = await Service.getById(serviceId);
+          
+          const responseData = { 
+            message: 'Service created successfully with image', 
+            serviceId,
+            imageInfo: {
+              filename: imageResult.mainImage,
+              originalSize: imageFile.size,
+              processedSize: imageResult.processedImages.main.size,
+              compressionRatio: ((1 - imageResult.processedImages.main.size / imageFile.size) * 100).toFixed(1) + '%'
+            }
+          };
+          
+          return res.status(201).json(responseData);
+        }
+      } catch (imageError) {
+        console.error('Erreur traitement image:', imageError);
+        // Supprimer le service si l'image a échoué
+        await Service.delete(serviceId);
+        return res.status(500).json({ 
+          message: 'Error processing image: ' + imageError.message 
+        });
       }
+    } else {
+      // Pas d'image, création normale
+      const serviceId = await Service.create({ 
+        name, 
+        description, 
+        price, 
+        duration, 
+        categoryId,
+        image: imageName
+      });
       
-      // Save the file
-      const uploadPath = path.join(uploadDir, imageName);
-      await imageFile.mv(uploadPath);
+      const responseData = { 
+        message: 'Service created successfully', 
+        serviceId 
+      };
+      
+      return res.status(201).json(responseData);
     }
-    
-    const serviceId = await Service.create({ 
-      name, 
-      description, 
-      price, 
-      duration, 
-      categoryId,
-      image: imageName
-    });
-    
-    res.status(201).json({ 
-      message: 'Service created successfully', 
-      serviceId 
-    });
   } catch (error) {
+    console.error('💥 === ERREUR LORS DE LA CRÉATION ===');
+    console.error('❌ Erreur complète:', error);
     console.error('Error creating service:', error);
     res.status(500).json({ message: 'Server error while creating service' });
   }
@@ -158,35 +196,45 @@ exports.updateService = async (req, res) => {
         });
       }
       
-      // Validate file size (max 5MB)
-      if (imageFile.size > 5 * 1024 * 1024) {
+      // Validate file size (max 10MB avant redimensionnement)
+      if (imageFile.size > 10 * 1024 * 1024) {
         return res.status(400).json({ 
-          message: 'File size too large. Maximum size is 5MB.' 
+          message: 'File size too large. Maximum size is 10MB.' 
         });
       }
       
-      // Get current service to delete old image
+      // Get current service to delete old images
       const currentService = await Service.getById(id);
-      if (currentService && currentService.image) {
-        const oldImagePath = path.join(__dirname, '..', 'public', 'images', 'services', currentService.image);
-        if (fs.existsSync(oldImagePath)) {
-          fs.unlinkSync(oldImagePath);
+      if (!currentService) {
+        return res.status(404).json({ message: 'Service not found' });
+      }
+      
+      // Supprimer les anciennes images si elles existent
+      if (currentService.image) {
+        const uploadDir = path.join(__dirname, '..', 'public', 'images', 'services');
+        deleteServiceImages(currentService.image, uploadDir);
+      }
+      
+      try {
+        // Traiter la nouvelle image avec redimensionnement
+        const uploadDir = path.join(__dirname, '..', 'public', 'images', 'services');
+        const imageResult = await processServiceImage(imageFile, id, uploadDir);
+        
+        if (imageResult.success) {
+          imageName = imageResult.mainImage;
+          
+          console.log(`Image mise à jour pour le service ${id}:`, {
+            original: `${(imageFile.size / 1024 / 1024).toFixed(2)}MB`,
+            processed: `${(imageResult.processedImages.main.size / 1024 / 1024).toFixed(2)}MB`,
+            dimensions: imageResult.processedImages.main.dimensions
+          });
         }
+      } catch (imageError) {
+        console.error('Erreur traitement image:', imageError);
+        return res.status(500).json({ 
+          message: 'Error processing image: ' + imageError.message 
+        });
       }
-      
-      // Generate unique filename
-      const fileExtension = path.extname(imageFile.name);
-      imageName = `service_${Date.now()}_${Math.random().toString(36).substring(2, 15)}${fileExtension}`;
-      
-      // Ensure upload directory exists
-      const uploadDir = path.join(__dirname, '..', 'public', 'images', 'services');
-      if (!fs.existsSync(uploadDir)) {
-        fs.mkdirSync(uploadDir, { recursive: true });
-      }
-      
-      // Save the file
-      const uploadPath = path.join(uploadDir, imageName);
-      await imageFile.mv(uploadPath);
     }
     
     const updateData = { 
@@ -208,7 +256,15 @@ exports.updateService = async (req, res) => {
       return res.status(404).json({ message: 'Service not found or no changes made' });
     }
     
-    res.status(200).json({ message: 'Service updated successfully' });
+    const response = { message: 'Service updated successfully' };
+    
+    // Ajouter les infos d'image si une nouvelle a été uploadée
+    if (imageName) {
+      response.imageUpdated = true;
+      response.newImage = imageName;
+    }
+    
+    res.status(200).json(response);
   } catch (error) {
     console.error('Error updating service:', error);
     res.status(500).json({ message: 'Server error while updating service' });
@@ -219,6 +275,14 @@ exports.updateService = async (req, res) => {
 exports.deleteService = async (req, res) => {
   try {
     const { id } = req.params;
+    
+    // Récupérer le service pour supprimer ses images
+    const service = await Service.getById(id);
+    if (service && service.image) {
+      const uploadDir = path.join(__dirname, '..', 'public', 'images', 'services');
+      deleteServiceImages(service.image, uploadDir);
+    }
+    
     const success = await Service.delete(id);
     
     if (!success) {
@@ -286,5 +350,46 @@ exports.getServiceImage = async (req, res) => {
   } catch (error) {
     console.error('Error fetching service image:', error);
     res.status(500).json({ message: 'Server error while fetching service image' });
+  }
+};
+
+// Get service thumbnail
+exports.getServiceThumbnail = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Get service from database
+    const service = await Service.getById(id);
+    if (!service) {
+      return res.status(404).json({ message: 'Service not found' });
+    }
+    
+    // Check if service has an image
+    if (!service.image) {
+      return res.status(404).json({ message: 'No image found for this service' });
+    }
+    
+    // Generate thumbnail path from main image name
+    const baseName = service.image.replace('_main.', '_thumb.');
+    const thumbnailPath = path.join(__dirname, '..', 'public', 'images', 'services', baseName);
+    
+    // Check if thumbnail exists, fallback to main image
+    const imagePath = fs.existsSync(thumbnailPath) ? thumbnailPath : 
+                     path.join(__dirname, '..', 'public', 'images', 'services', service.image);
+    
+    if (!fs.existsSync(imagePath)) {
+      return res.status(404).json({ message: 'Image file not found on server' });
+    }
+    
+    // Set headers
+    res.setHeader('Content-Type', 'image/jpeg');
+    res.setHeader('Cache-Control', 'public, max-age=31536000'); // Cache for 1 year
+    
+    // Send thumbnail
+    res.sendFile(imagePath);
+    
+  } catch (error) {
+    console.error('Error fetching service thumbnail:', error);
+    res.status(500).json({ message: 'Server error while fetching service thumbnail' });
   }
 };

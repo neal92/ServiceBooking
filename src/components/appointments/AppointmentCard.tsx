@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
-  Clock, Calendar, User, Mail, Phone, 
+  Clock, Calendar, User, Mail, 
   MoreHorizontal, CheckCircle, AlertTriangle, 
   XCircle, Trash, Shield
 } from 'lucide-react';
@@ -50,7 +50,6 @@ const AppointmentCard = ({ appointment, onDelete, onStatusChange }: AppointmentC
   // Extract properties and check for existence
   const clientName = appointment.clientName || '';
   const clientEmail = appointment.clientEmail || '';
-  const clientPhone = appointment.clientPhone || '';
   const serviceName = appointment.serviceName || '';
   const date = appointment.date || '';
   const time = appointment.time || '';
@@ -338,12 +337,6 @@ const AppointmentCard = ({ appointment, onDelete, onStatusChange }: AppointmentC
                 <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
                   <Mail className="flex-shrink-0 mr-1.5 h-4 w-4 text-gray-400 dark:text-gray-500" aria-hidden="true" />
                   <p>{clientEmail}</p>
-                </div>
-              )}
-              {clientPhone && (
-                <div className="mt-1.5 flex items-center text-sm text-gray-500 dark:text-gray-400">
-                  <Phone className="flex-shrink-0 mr-1.5 h-4 w-4 text-gray-400 dark:text-gray-500" aria-hidden="true" />
-                  <p>{clientPhone}</p>
                 </div>
               )}
             </div>

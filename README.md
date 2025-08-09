@@ -49,6 +49,7 @@ L'application propose deux interfaces :
 - ✅ Organisation par catégories
 - ✅ Gestion des prix et durées
 - ✅ Description détaillée des services
+- ✅ Upload d'images pour les services
 
 ### 📂 Gestion des catégories
 - ✅ Création et organisation des catégories
@@ -447,32 +448,46 @@ GET /api/services
 ]
 ```
 
-#### Créer un service (Admin uniquement)
+#### Upload d'images de services
 ```http
 POST /api/services
 Authorization: Bearer <token>
-Content-Type: application/json
+Content-Type: multipart/form-data
 
 {
   "name": "Coupe Cheveux",
   "description": "Coupe personnalisée selon vos désirs",
   "price": 25.00,
   "duration": 30,
-  "categoryId": 1
+  "categoryId": 1,
+  "image": [fichier]
 }
 ```
 
-#### Mettre à jour un service
+#### Récupérer l'image d'un service
+```http
+GET /api/services/:id/image
+```
+
+#### Récupérer le thumbnail d'un service
+```http
+GET /api/services/:id/thumbnail
+```
+
+**Réponse** : Image binaire avec headers de cache optimisés
+
+#### Mettre à jour un service avec image
 ```http
 PUT /api/services/:id
 Authorization: Bearer <token>
-Content-Type: application/json
+Content-Type: multipart/form-data
 
 {
   "name": "Coupe + Shampoing",
   "description": "Coupe avec shampoing inclus",
   "price": 30.00,
-  "duration": 45
+  "duration": 45,
+  "image": [fichier]
 }
 ```
 
@@ -679,10 +694,14 @@ body('password')
 ```
 
 ### Upload de fichiers
+- **Services** : Images avec redimensionnement automatique (400x300px + thumbnail 150x150px)
+  - Formats : SVG, JPG, PNG, GIF, WebP (max 10MB avant compression)
+  - Optimisation : Compression automatique et conversion JPEG
+  - Stockage : `/server/public/images/services/` avec versions multiples
 - **Avatars** : Support SVG, JPG, PNG (max 5MB)
-- **Stockage** : `/server/public/uploads/`
-- **Sécurité** : Validation MIME type
-- **Optimisation** : Redimensionnement automatique
+- **Stockage** : `/server/public/uploads/` (avatars)
+- **Sécurité** : Validation MIME type, taille et traitement sécurisé
+- **Performance** : Génération automatique de thumbnails pour un chargement rapide
 
 ### Filtrage et recherche
 - **Temps réel** : Filtrage instantané

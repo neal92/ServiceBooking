@@ -129,15 +129,9 @@ const Register = () => {
 
   // Regex validations
   const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  const PASSWORD_REGEX = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6,}$/;
+  const PASSWORD_REGEX = /^(?=.*[A-Za-z])(?=.*\d).{6,}$/; // Au moins une lettre, un chiffre, 6 caractères minimum (accepte tous caractères)
   const NAME_REGEX = /^[A-Za-zÀ-ÖØ-öø-ÿ\s']{2,}$/;
   const PSEUDO_REGEX = /^[a-z0-9_]{3,20}$/;
-
-  // Redirection si l'utilisateur est déjà connecté
-  if (user) {
-    navigate('/app');
-    return null;
-  }
 
   // Variants pour les animations
   const slideVariants = {
@@ -261,16 +255,30 @@ const Register = () => {
   };
 
   const validatePassword = (value: string) => {
-    if (!PASSWORD_REGEX.test(value)) {
-      setPasswordError('Le mot de passe doit contenir au moins 6 caractères, avec au moins une lettre et un chiffre');
+    if (!value || value.length < 6) {
+      setPasswordError('Le mot de passe doit contenir au moins 6 caractères');
       setIsComplete(false);
       return false;
     }
+    
+    if (!/(?=.*[A-Za-z])/.test(value)) {
+      setPasswordError('Le mot de passe doit contenir au moins une lettre');
+      setIsComplete(false);
+      return false;
+    }
+    
+    if (!/(?=.*\d)/.test(value)) {
+      setPasswordError('Le mot de passe doit contenir au moins un chiffre');
+      setIsComplete(false);
+      return false;
+    }
+    
     if (confirmPassword && value !== confirmPassword) {
       setPasswordError('Les mots de passe ne correspondent pas');
       setIsComplete(false);
       return false;
     }
+    
     setPasswordError('');
 
     if (currentStep === steps.length - 1 && confirmPassword && confirmPassword === value) {
@@ -288,7 +296,8 @@ const Register = () => {
     }
     setPasswordError('');
 
-    if (currentStep === steps.length - 1 && PASSWORD_REGEX.test(password)) {
+    // Vérifier si le mot de passe principal est valide avant d'activer le bouton
+    if (currentStep === steps.length - 1 && password && PASSWORD_REGEX.test(password)) {
       setIsComplete(true);
     }
 
@@ -397,6 +406,12 @@ const Register = () => {
       }
     }
   }, [currentStep, password, confirmPassword, steps.length]);
+
+  // Redirection si l'utilisateur est déjà connecté
+  if (user) {
+    navigate('/app');
+    return null;
+  }
 
   // Fonction pour soumettre le formulaire
   const handleSubmit = async () => {
@@ -633,7 +648,7 @@ const Register = () => {
                     validatePassword(e.target.value);
                   }}
                   className="w-full pl-10 pr-10 py-1.5 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-                  placeholder="Minimum 6 caractères"
+                  placeholder="Au moins 6 caractères, 1 lettre et 1 chiffre"
                 />
                 <button
                   type="button"
@@ -643,6 +658,30 @@ const Register = () => {
                   {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
               </div>
+              
+              {/* Indicateurs de validation du mot de passe */}
+              {password && (
+                <div className="mt-2 space-y-1">
+                  <div className="flex items-center text-xs">
+                    <div className={`w-2 h-2 rounded-full mr-2 ${password.length >= 6 ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                    <span className={password.length >= 6 ? 'text-green-600' : 'text-red-600'}>
+                      Au moins 6 caractères
+                    </span>
+                  </div>
+                  <div className="flex items-center text-xs">
+                    <div className={`w-2 h-2 rounded-full mr-2 ${/(?=.*[A-Za-z])/.test(password) ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                    <span className={/(?=.*[A-Za-z])/.test(password) ? 'text-green-600' : 'text-red-600'}>
+                      Au moins une lettre
+                    </span>
+                  </div>
+                  <div className="flex items-center text-xs">
+                    <div className={`w-2 h-2 rounded-full mr-2 ${/(?=.*\d)/.test(password) ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                    <span className={/(?=.*\d)/.test(password) ? 'text-green-600' : 'text-red-600'}>
+                      Au moins un chiffre
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
 
             <div>

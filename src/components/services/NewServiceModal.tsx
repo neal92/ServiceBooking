@@ -3,13 +3,13 @@ import { X } from 'lucide-react';
 import { Service, Category } from '../../types';
 import { serviceService, categoryService } from '../../services/api';
 import ModalPortal from '../layout/ModalPortal';
-// import ImageUpload from '../ui/ImageUpload';  // Temporairement commenté pour éviter l'erreur
+import ImageUpload from '../ui/ImageUpload';
 
 interface NewServiceModalProps {
   isOpen: boolean;
   onClose: () => void;
   service?: Service | null;
-  onSuccess?: (message: string) => void; // Callback when operation is successful
+  onSuccess?: (message: string, serviceId?: string) => void; // Callback when operation is successful
 }
 
 const NewServiceModal = ({ isOpen, onClose, service, onSuccess }: NewServiceModalProps) => {
@@ -18,7 +18,8 @@ const NewServiceModal = ({ isOpen, onClose, service, onSuccess }: NewServiceModa
   const [price, setPrice] = useState('');
   const [duration, setDuration] = useState('60');
   const [categoryId, setCategoryId] = useState('');
-  // const [selectedImage, setSelectedImage] = useState<File | null>(null);  // Temporairement commenté
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [existingImageUrl, setExistingImageUrl] = useState<string | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -39,14 +40,22 @@ const NewServiceModal = ({ isOpen, onClose, service, onSuccess }: NewServiceModa
       setPrice(service.price.toString());
       setDuration(service.duration.toString());
       setCategoryId(service.categoryId.toString());
-      // setSelectedImage(null); // Reset image for editing - Temporairement commenté
+      setSelectedImage(null); // Reset image for editing - user will need to upload new one if they want to change it
+      
+      // Définir l'URL de l'image existante si elle existe
+      if (service.image) {
+        setExistingImageUrl(`/api/services/${service.id}/image?t=${Date.now()}`);
+      } else {
+        setExistingImageUrl(null);
+      }
     } else {
       setName('');
       setDescription('');
       setPrice('');
       setDuration('60');
       setCategoryId('');
-      // setSelectedImage(null);  // Temporairement commenté
+      setSelectedImage(null);
+      setExistingImageUrl(null);
     }
   }, [service, isOpen]);
 
@@ -67,31 +76,62 @@ const NewServiceModal = ({ isOpen, onClose, service, onSuccess }: NewServiceModa
     setIsSubmitting(true);
     setError('');
 
+    console.log('🚀 === FRONTEND - DÉBUT SOUMISSION ===');
+    console.log('📝 État selectedImage:', selectedImage);
+    console.log('📝 Type de selectedImage:', typeof selectedImage);
+    console.log('📝 selectedImage instanceof File:', selectedImage instanceof File);
+
     try {
-      const serviceData = {
+      // Préparer les données de base du service
+      const baseServiceData = {
         name,
         description,
         price: parseFloat(price),
         duration: parseInt(duration),
         categoryId: parseInt(categoryId)
-        // image: selectedImage || undefined  // Temporairement commenté
       };
 
+      // Ajouter l'image si fournie
+      const serviceDataWithImage = selectedImage 
+        ? { ...baseServiceData, image: selectedImage }
+        : baseServiceData;
+
+      console.log('📤 Données envoyées au backend:', {
+        ...serviceDataWithImage,
+        image: selectedImage ? `File: ${selectedImage.name} (${selectedImage.size} bytes)` : 'Pas d\'image'
+      });
+
       let successMsg = '';
+      let serviceId: string | undefined;
+      
       if (service && service.id) {
-        await serviceService.update(service.id.toString(), serviceData);
+        await serviceService.update(service.id.toString(), serviceDataWithImage);
         successMsg = 'Service modifié avec succès';
+        serviceId = service.id.toString();
       } else {
-        await serviceService.create(serviceData);
+        const result = await serviceService.create(serviceDataWithImage);
         successMsg = 'Service créé avec succès';
+        serviceId = result.serviceId;
       }
       
       // Fermer la modale
       onClose();
       
-      // Appeler le callback onSuccess avec le message
+      // Réinitialiser l'état du modal
+      if (!service) { // Seulement pour les nouveaux services
+        setName('');
+        setDescription('');
+        setPrice('');
+        setDuration('60');
+        setCategoryId('');
+        setSelectedImage(null);
+        setExistingImageUrl(null);
+        setError('');
+      }
+      
+      // Appeler le callback onSuccess avec le message et l'ID du service
       if (onSuccess) {
-        onSuccess(successMsg);
+        onSuccess(successMsg, serviceId);
       }
     } catch (err) {
       console.error("Error saving service:", err);
@@ -250,18 +290,38 @@ const NewServiceModal = ({ isOpen, onClose, service, onSuccess }: NewServiceModa
                   <label className="block text-base font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Image du service
                   </label>
-                  {/* <ImageUpload
-                    onImageChange={setSelectedImage}
-                    currentImage={service?.image}
-                    placeholder="Ajouter une image pour ce service"
-                    imageType="services"
-                    enableResize={true}
-                  /> */}
-                  <div className="p-4 border-2 border-dashed border-gray-300 rounded-lg text-center">
-                    <p className="text-gray-500">Upload d'image temporairement désactivé</p>
-                  </div>
+                  
+                  {/* Afficher l'image existante si on modifie un service */}
+                  {service && existingImageUrl && !selectedImage && (
+                    <div className="mb-4 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                      <p className="text-sm text-blue-800 dark:text-blue-200 mb-3">
+                        Image actuelle du service :
+                      </p>
+                      <div className="relative inline-block">
+                        <img
+                          src={existingImageUrl}
+                          alt={service.name}
+                          className="h-32 w-auto rounded-lg shadow-md object-cover"
+                          onError={() => setExistingImageUrl(null)}
+                        />
+                      </div>
+                      <p className="text-xs text-blue-600 dark:text-blue-300 mt-2">
+                        Uploadez une nouvelle image pour la remplacer
+                      </p>
+                    </div>
+                  )}
+                  
+                  <ImageUpload
+                    value={selectedImage}
+                    onChange={setSelectedImage}
+                    accept="image/*"
+                    maxSize={5}
+                    preview={true}
+                    className="w-full"
+                    allowManualResize={true}
+                  />
                   <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-                    L'image apparaîtra sur la carte du service. Formats acceptés : JPG, PNG, GIF, WebP (max 5MB)
+                    Redimensionnement automatique ou manuel disponible. L'image sera optimisée pour le web. Formats acceptés : JPG, PNG, GIF, WebP (max 10MB)
                   </p>
                 </div>
               </div>

@@ -17,6 +17,7 @@ import Calendar from './pages/Calendar';
 import NotFound from './pages/NotFound';
 import Profile from './pages/Profile';
 import Landing from './pages/Landing';
+import BookService from './pages/BookService';
 
 function App() {
   return (
@@ -26,6 +27,7 @@ function App() {
           <Routes>
             {/* Page d'accueil publique */}
             <Route path="/" element={<Landing />} />
+            <Route path="/book" element={<BookService />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/app" element={

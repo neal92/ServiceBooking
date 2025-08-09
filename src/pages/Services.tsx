@@ -1,4 +1,3 @@
-import * as React from 'react';
 import { useState, useEffect } from 'react';
 import { PlusCircle, Search, ShoppingBag, Trash } from 'lucide-react';
 import ServiceCard from '../components/services/ServiceCard';
@@ -19,6 +18,7 @@ const Services = () => {
   const [editingService, setEditingService] = useState<Service | null>(null);
   const [showSuccessToast, setShowSuccessToast] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
+  const [refreshImages, setRefreshImages] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -72,13 +72,43 @@ const Services = () => {
   };
   
   // Gérer le succès des opérations (création/modification)
-  const handleOperationSuccess = (message: string) => {
+  const handleOperationSuccess = (message: string, serviceId?: string) => {
+    console.log('Service operation success:', { message, serviceId });
+    
     // Rafraîchir les données en arrière-plan
     fetchData();
+    
+    // Forcer le rafraîchissement des images pendant 15 secondes pour être sûr
+    setRefreshImages(true);
+    setTimeout(() => setRefreshImages(false), 15000);
     
     // Afficher le message de succès
     setSuccessMessage(message);
     setShowSuccessToast(true);
+    
+    // Si on a un serviceId (nouveau service créé), faire des rafraîchissements plus agressifs
+    if (serviceId) {
+      // Délais échelonnés pour que le serveur traite l'image
+      setTimeout(() => {
+        console.log('Premier rafraîchissement après création service:', serviceId);
+        fetchData();
+      }, 1500);
+      
+      setTimeout(() => {
+        console.log('Deuxième rafraîchissement après création service:', serviceId);
+        fetchData();
+      }, 3000);
+      
+      setTimeout(() => {
+        console.log('Troisième rafraîchissement après création service:', serviceId);
+        fetchData();
+      }, 6000);
+    } else {
+      // Pour les modifications, un seul rafraîchissement supplémentaire
+      setTimeout(() => {
+        fetchData();
+      }, 2000);
+    }
   };
 
   const handleCancelDelete = () => {
@@ -94,8 +124,7 @@ const Services = () => {
   const handleCloseModal = () => {
     setEditingService(null);
     setIsModalOpen(false);
-    // Refresh services after modal close
-    fetchData();
+    // Ne pas refetch ici, car cela se fait déjà dans handleOperationSuccess
   };
   
   // S'assurer que tous les services ont des valeurs valides
@@ -236,13 +265,14 @@ const Services = () => {
                     </h3>
                   </div>
                 </div>
-                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                   {filteredServices.map((service) => (
                     <ServiceCard 
                       key={service.id} 
                       service={service} 
                       onEdit={() => handleEditService(service)} 
-                      onDelete={() => handleDeleteClick(service)} 
+                      onDelete={() => handleDeleteClick(service)}
+                      forceImageRefresh={refreshImages}
                     />
                   ))}
                 </div>

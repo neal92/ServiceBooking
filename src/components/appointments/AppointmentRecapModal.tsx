@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Calendar, Clock, User, Mail, Phone, CheckCircle, AlertTriangle, XCircle, Pencil, Trash } from 'lucide-react';
+import { X, Calendar, Clock, User, Mail, CheckCircle, AlertTriangle, XCircle, Pencil, Trash } from 'lucide-react';
 import { Appointment } from '../../types';
 import ModalPortal from '../layout/ModalPortal';
 import NewAppointmentModal from './NewAppointmentModal';
@@ -203,14 +203,6 @@ const AppointmentRecapModal: React.FC<AppointmentRecapModalProps> = ({ isOpen, o
                     <Mail className="flex-shrink-0 mr-3 h-5 w-5 text-blue-500 dark:text-blue-400 mt-0.5" aria-hidden="true" />
                     <div>
                       <p className="text-gray-800 dark:text-white">{appointment.clientEmail}</p>
-                    </div>
-                  </div>
-                )}
-                {appointment.clientPhone && (
-                  <div className="flex items-start">
-                    <Phone className="flex-shrink-0 mr-3 h-5 w-5 text-blue-500 dark:text-blue-400 mt-0.5" aria-hidden="true" />
-                    <div>
-                      <p className="text-gray-800 dark:text-white">{appointment.clientPhone}</p>
                     </div>
                   </div>
                 )}

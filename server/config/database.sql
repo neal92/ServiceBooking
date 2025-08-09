@@ -14,6 +14,8 @@ CREATE TABLE IF NOT EXISTS users (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     avatar VARCHAR(255),
+    avatarColor VARCHAR(7) NULL COMMENT 'Couleur de l\'avatar personnalisé (format hex, ex: #3b82f6)',
+    avatarInitials VARCHAR(3) NULL COMMENT 'Initiales de l\'avatar personnalisé (ex: AB)',
     isPresetAvatar BOOLEAN DEFAULT FALSE 
 );
 
@@ -108,3 +110,18 @@ INSERT INTO appointments (clientName, clientEmail, clientPhone, serviceId, date,
 -- Insert admin user (password: admin123)
 INSERT INTO users (firstName, lastName, email, pseudo, password, role) VALUES
 ('Admin', 'User', 'admin@example.com', 'admin', '$2b$10$96Qr8PnqJCXTt1uGMTGvIOLKLY.5O9XpZpPGC8cbtCOlcVg2xi1Iy', 'admin');
+
+
+---VUES 
+
+CREATE VIEW user_rendezvous_count AS
+SELECT 
+  u.id,
+  u.firstName,
+  u.lastName,
+  u.email,
+  COUNT(a.id) AS total_rendezvous
+FROM users u
+LEFT JOIN appointments a ON a.clientEmail = u.email AND a.status = 'completed'
+GROUP BY u.id;
+
