@@ -66,12 +66,14 @@ const appointmentsRoutes = require("./routes/appointments");
 const servicesRoutes = require("./routes/services");
 const categoriesRoutes = require("./routes/categories");
 const authRoutes = require("./routes/auth");
+const notificationsRoutes = require("./routes/notifications");
 
 console.log("Setting up API routes");
 app.use("/api/appointments", appointmentsRoutes);
 app.use("/api/services", servicesRoutes);
 app.use("/api/categories", categoriesRoutes);
 app.use("/api/auth", authRoutes);
+app.use("/api/notifications", notificationsRoutes);
 
 // Basic route for testing
 app.get("/", (req, res) => {

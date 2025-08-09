@@ -4,7 +4,6 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Calendar, Clock, Users, Shield, Check, Menu, X, Star, UserCheck, PhoneCall, Moon, Sun } from 'lucide-react';
 import RegisterModal from '../components/auth/RegisterModal';
 import { useTheme } from '../contexts/ThemeContext';
-import { motion } from 'framer-motion';
 
 const Landing: React.FC = () => {
   const navigate = useNavigate();
@@ -81,7 +80,7 @@ const Landing: React.FC = () => {
               <a href="#fonctionnalites" className="text-sm font-medium text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200">Fonctionnalités</a>
               <a href="#temoignages" className="text-sm font-medium text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200">Témoignages</a>
               <a href="#tarifs" className="text-sm font-medium text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200">Tarifs</a>
-              <Link to="/book" className="text-sm font-medium text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 transition-colors duration-200">Réserver</Link>              <button
+              <button
                 onClick={toggleDarkMode}
                 className="text-sm p-2 rounded-full text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-200"
                 aria-label={darkMode ? "Passer au mode clair" : "Passer au mode sombre"}
@@ -157,13 +156,7 @@ const Landing: React.FC = () => {
               >
                 Tarifs
               </a>
-              <Link
-                to="/book"
-                className="block p-2 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-gray-700 rounded-md font-medium"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Réserver une prestation
-              </Link>              <button
+              <button
                 onClick={() => {
                   toggleDarkMode();
                   setIsMenuOpen(false);
@@ -238,12 +231,6 @@ const Landing: React.FC = () => {
               >
                 Essayer gratuitement
               </button>
-                <Link
-                  to="/book"
-                  className="px-6 py-3 bg-green-600 hover:bg-green-700 border border-green-600 rounded-lg text-white font-medium transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 text-center"
-                >
-                  Réserver une prestation
-                </Link>
                 <button
                   onClick={handleLoginClick}
                   className="px-6 py-3 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-800 dark:text-white font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-500 focus:ring-offset-2"

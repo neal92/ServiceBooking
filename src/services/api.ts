@@ -321,8 +321,41 @@ export const appointmentService = {
   },
 };
 
+// Notification service
+export const notificationService = {
+  // Récupérer les notifications de l'utilisateur connecté
+  async getAll(params: { page?: number; limit?: number; unreadOnly?: boolean } = {}) {
+    const queryParams = new URLSearchParams();
+    if (params.page) queryParams.append('page', params.page.toString());
+    if (params.limit) queryParams.append('limit', params.limit.toString());
+    if (params.unreadOnly) queryParams.append('unreadOnly', params.unreadOnly.toString());
+
+    const response = await apiClient.get(`/notifications?${queryParams.toString()}`);
+    return response.data;
+  },
+
+  // Marquer une notification comme lue
+  async markAsRead(notificationId: number) {
+    const response = await apiClient.patch(`/notifications/${notificationId}/read`);
+    return response.data;
+  },
+
+  // Marquer toutes les notifications comme lues
+  async markAllAsRead() {
+    const response = await apiClient.patch('/notifications/mark-all-read');
+    return response.data;
+  },
+
+  // Supprimer une notification
+  async delete(notificationId: number) {
+    const response = await apiClient.delete(`/notifications/${notificationId}`);
+    return response.data;
+  }
+};
+
 export default {
   categories: categoryService,
   services: serviceService,
-  appointments: appointmentService
+  appointments: appointmentService,
+  notifications: notificationService
 };

@@ -59,3 +59,21 @@ export interface UploadAvatarResponse {
   avatarColor?: string;
   avatarInitials?: string;
 }
+
+export interface Notification {
+  id: number;
+  user_id: number;
+  type: 'appointment' | 'service' | 'category' | 'user' | 'system' | 'reminder';
+  title: string;
+  message: string;
+  related_id: number | null;
+  related_type: string | null;
+  created_by: number | null;
+  is_read: boolean;
+  created_at: string;
+  read_at: string | null;
+  // Données utilisateur de celui qui a créé la notification
+  firstName?: string;
+  lastName?: string;
+  avatar?: string;
+}

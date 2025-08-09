@@ -4,6 +4,7 @@ const fs = require('fs');
 const express = require('express');
 const multer = require('multer');
 const { processServiceImage, deleteServiceImages } = require('../utils/imageProcessor');
+const notificationController = require('./notificationController');
 
 // Get all services
 exports.getAllServices = async (req, res) => {
@@ -134,6 +135,25 @@ exports.createService = async (req, res) => {
             }
           };
           
+          // Créer des notifications pour tous les utilisateurs
+          try {
+            console.log('🔔 Tentative de création des notifications (avec image)...');
+            console.log('Service data:', { id: serviceId, name });
+            console.log('User:', req.user ? req.user.id : 'AUCUN');
+            
+            await notificationController.createServiceNotificationForAll(
+              { id: serviceId, name },
+              'created',
+              req.user ? req.user.id : null
+            );
+            
+            console.log('✅ Notifications créées avec succès (avec image)');
+          } catch (notifError) {
+            console.error('❌ Erreur lors de la création des notifications:', notifError);
+            console.error('Stack:', notifError.stack);
+            // Ne pas faire échouer la création du service pour une erreur de notification
+          }
+          
           return res.status(201).json(responseData);
         }
       } catch (imageError) {
@@ -159,6 +179,25 @@ exports.createService = async (req, res) => {
         message: 'Service created successfully', 
         serviceId 
       };
+      
+      // Créer des notifications pour tous les utilisateurs
+      try {
+        console.log('🔔 Tentative de création des notifications...');
+        console.log('Service data:', { id: serviceId, name });
+        console.log('User:', req.user ? req.user.id : 'AUCUN');
+        
+        await notificationController.createServiceNotificationForAll(
+          { id: serviceId, name },
+          'created',
+          req.user ? req.user.id : null
+        );
+        
+        console.log('✅ Notifications créées avec succès');
+      } catch (notifError) {
+        console.error('❌ Erreur lors de la création des notifications:', notifError);
+        console.error('Stack:', notifError.stack);
+        // Ne pas faire échouer la création du service pour une erreur de notification
+      }
       
       return res.status(201).json(responseData);
     }
@@ -264,6 +303,18 @@ exports.updateService = async (req, res) => {
       response.newImage = imageName;
     }
     
+    // Créer des notifications pour tous les utilisateurs
+    try {
+      await notificationController.createServiceNotificationForAll(
+        { id, name },
+        'updated',
+        req.user ? req.user.id : null
+      );
+    } catch (notifError) {
+      console.error('Erreur lors de la création des notifications:', notifError);
+      // Ne pas faire échouer la mise à jour du service pour une erreur de notification
+    }
+    
     res.status(200).json(response);
   } catch (error) {
     console.error('Error updating service:', error);
@@ -276,9 +327,14 @@ exports.deleteService = async (req, res) => {
   try {
     const { id } = req.params;
     
-    // Récupérer le service pour supprimer ses images
+    // Récupérer le service pour supprimer ses images et créer les notifications
     const service = await Service.getById(id);
-    if (service && service.image) {
+    if (!service) {
+      return res.status(404).json({ message: 'Service not found' });
+    }
+    
+    // Supprimer les images si elles existent
+    if (service.image) {
       const uploadDir = path.join(__dirname, '..', 'public', 'images', 'services');
       deleteServiceImages(service.image, uploadDir);
     }
@@ -287,6 +343,18 @@ exports.deleteService = async (req, res) => {
     
     if (!success) {
       return res.status(404).json({ message: 'Service not found' });
+    }
+    
+    // Créer des notifications pour tous les utilisateurs
+    try {
+      await notificationController.createServiceNotificationForAll(
+        { id, name: service.name },
+        'deleted',
+        req.user ? req.user.id : null
+      );
+    } catch (notifError) {
+      console.error('Erreur lors de la création des notifications:', notifError);
+      // Ne pas faire échouer la suppression du service pour une erreur de notification
     }
     
     res.status(200).json({ message: 'Service deleted successfully' });

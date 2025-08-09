@@ -40,7 +40,10 @@ const Profile = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState(''); const [success, setSuccess] = useState('');
   const [showSuccessToast, setShowSuccessToast] = useState(false);
+  const [showErrorToast, setShowErrorToast] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
 
   const [passwordErrors, setPasswordErrors] = useState({
     current: '',
@@ -86,6 +89,35 @@ const Profile = () => {
     setSuccessMessage(message);
     setShowSuccessToast(true);
     setSuccess(message);
+  };
+
+  // Helper to show an error message in toast and modal
+  const showError = (message: string) => {
+    console.log('🚨 showError appelé avec:', message);
+    
+    // Alert immédiat pour être sûr que ça fonctionne
+    window.alert(`❌ ERREUR: ${message}`);
+    
+    setErrorMessage(message);
+    setShowErrorToast(true);
+    setShowErrorModal(true);
+    setError(message);
+    console.log('🚨 États mis à jour:', {
+      errorMessage: message,
+      showErrorToast: true,
+      showErrorModal: true
+    });
+  };
+
+  // Helper pour afficher le succès avec une popup
+  const showSuccessWithAlert = (message: string) => {
+    console.log('✅ showSuccessWithAlert appelé avec:', message);
+    
+    // Alert immédiat pour le succès
+    window.alert(`✅ SUCCÈS: ${message}`);
+    
+    // Aussi afficher le toast normal
+    showSuccess(message);
   };
 
   const handleInfoSubmit = async (e: React.FormEvent) => {
@@ -190,11 +222,17 @@ const Profile = () => {
       setConfirmPassword('');
       setIsEditingPassword(false);
       
-      // Afficher le message de succès
-      showSuccess('Mot de passe modifié avec succès');
+      // Afficher le message de succès avec popup
+      showSuccessWithAlert('Mot de passe modifié avec succès');
     } catch (err: any) {
       console.error('Profile: Erreur lors du changement de mot de passe:', err);
-      if (err.message.includes('mot de passe actuel')) {
+      console.error('Profile: Message d\'erreur exact:', err.message);
+      console.error('Profile: Type d\'erreur:', typeof err.message);
+      
+      // Afficher la modal d'erreur pour tous les cas d'erreur de mot de passe
+      showError(err.message || 'Erreur lors du changement de mot de passe');
+      
+      if (err.message && err.message.includes('mot de passe actuel')) {
         setPasswordErrors(prev => ({ ...prev, current: 'Le mot de passe actuel est incorrect' }));
       } else {
         setError(err.message || 'Erreur lors du changement de mot de passe');
@@ -574,13 +612,45 @@ const Profile = () => {
       />
       {/* Notification d'erreur */}
       <ErrorToast
-        show={!!error || !!passwordErrors.current}
-        message={error || passwordErrors.current || "Une erreur s'est produite"}
+        show={showErrorToast}
+        message={errorMessage}
         duration={5000}
-        onClose={() => {
-          setError('');
-        }}
+        onClose={() => setShowErrorToast(false)}
       />
+
+      {/* Modal d'erreur (plus visible) */}
+      {(() => {
+        console.log('🔍 Vérification modal d\'erreur:', {
+          showErrorModal,
+          errorMessage
+        });
+        return showErrorModal;
+      })() && (
+        <div className="fixed inset-0 z-[10000] overflow-y-auto bg-black bg-opacity-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg max-w-md w-full p-6 shadow-xl">
+            <div className="flex items-center mb-4">
+              <div className="flex-shrink-0 w-10 h-10 bg-red-100 dark:bg-red-900 rounded-full flex items-center justify-center">
+                <svg className="w-6 h-6 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <h3 className="ml-3 text-lg font-medium text-gray-900 dark:text-white">Erreur</h3>
+            </div>
+            <p className="text-gray-600 dark:text-gray-300 mb-6">{errorMessage}</p>
+            <div className="flex justify-end">
+              <button
+                onClick={() => {
+                  console.log('🚨 Fermeture modal d\'erreur');
+                  setShowErrorModal(false);
+                }}
+                className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-red-500"
+              >
+                Fermer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </PageTransition>
   );
 }

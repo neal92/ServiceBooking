@@ -68,24 +68,33 @@ INSERT INTO categories (name, description) VALUES
 
 CREATE TABLE notifications (
   id INT AUTO_INCREMENT PRIMARY KEY,
-  user_id INT NOT NULL,
   type ENUM('appointment', 'service', 'category', 'user', 'system', 'reminder') NOT NULL,
   title VARCHAR(255) NOT NULL,
   message TEXT NOT NULL,
   related_id INT NULL,
   related_type VARCHAR(50) NULL,
   created_by INT NULL,
-  is_read BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  read_at TIMESTAMP NULL,
   
-  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
   FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL,
   
-  INDEX idx_user_read (user_id, is_read),
   INDEX idx_created_at (created_at),
   INDEX idx_type (type)
 );
+
+CREATE TABLE notification_users (
+    id INT NOT NULL AUTO_INCREMENT,
+    notification_id INT NOT NULL,
+    user_id INT NOT NULL,
+    is_read TINYINT(1) DEFAULT 0,
+    read_at TIMESTAMP NULL DEFAULT NULL,
+    PRIMARY KEY (id),
+    KEY idx_notification (notification_id),
+    KEY idx_user (user_id),
+    CONSTRAINT fk_notification_users_notification FOREIGN KEY (notification_id) REFERENCES notifications(id) ON DELETE CASCADE,
+    CONSTRAINT fk_notification_users_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
 
 -- Insert some sample services
 INSERT INTO services (name, description, price, duration, categoryId) VALUES

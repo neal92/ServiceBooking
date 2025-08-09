@@ -1,11 +1,12 @@
 import * as React from 'react';
 import { useState, useEffect, useRef } from 'react';
-import { Menu, Bell, Sun, Moon, LogOut } from 'lucide-react';
+import { Menu, Sun, Moon, LogOut } from 'lucide-react';
 import { getFullMediaUrl } from '../../utils/config';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { getPageTitle } from '../../utils/pageTitles';
+import NotificationDropdown from '../NotificationDropdown';
 
 interface HeaderProps {
   openSidebar: () => void;
@@ -64,13 +65,7 @@ const Header = ({ openSidebar }: HeaderProps) => {
           </button>
 
           {/* Notification button */}
-          <button
-            type="button"
-            className="bg-white dark:bg-gray-700 p-1.5 rounded-full text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-          >
-            <span className="sr-only">View notifications</span>
-            <Bell className="h-5 w-5" aria-hidden="true" />
-          </button>
+          <NotificationDropdown />
 
           {/* User menu */}
           <div className="relative" ref={menuRef}>
