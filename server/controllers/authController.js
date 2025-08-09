@@ -273,6 +273,9 @@ exports.login = async (req, res) => {
         role: user.role,
         phone: user.phone,
         avatar: user.avatar,
+        avatarColor: user.avatarColor,
+        avatarInitials: user.avatarInitials,
+        isPresetAvatar: user.isPresetAvatar,
       },
       token,
     });
@@ -289,16 +292,37 @@ exports.login = async (req, res) => {
  */
 exports.getCurrentUser = async (req, res) => {
   try {
+    console.log("🔍 getCurrentUser - req.user:", req.user);
+    
     // L'utilisateur est déjà attaché à la requête par le middleware d'authentification
-    const userId = req.user.id;
+    const userId = req.user?.id;
+    console.log("🔍 getCurrentUser - userId extrait:", userId);
+
+    if (!userId) {
+      console.error("❌ getCurrentUser - Pas d'userId dans req.user");
+      return res.status(401).json({ message: "Token d'authentification invalide." });
+    }
 
     // Récupérer les détails complets de l'utilisateur
+    console.log("🔍 getCurrentUser - Recherche utilisateur avec ID:", userId);
     const user = await User.findById(userId);
+    console.log("🔍 getCurrentUser - Utilisateur trouvé:", user ? 
+      {
+        id: user.id, 
+        firstName: user.firstName, 
+        lastName: user.lastName, 
+        email: user.email,
+        avatarColor: user.avatarColor,
+        avatarInitials: user.avatarInitials
+      } : null
+    );
+    
     if (!user) {
+      console.error("❌ getCurrentUser - Utilisateur non trouvé pour ID:", userId);
       return res.status(404).json({ message: "Utilisateur non trouvé." });
     }
 
-    res.json({
+    const responseData = {
       user: {
         id: user.id,
         firstName: user.firstName,
@@ -308,10 +332,16 @@ exports.getCurrentUser = async (req, res) => {
         role: user.role,
         phone: user.phone,
         avatar: user.avatar,
+        avatarColor: user.avatarColor,
+        avatarInitials: user.avatarInitials,
+        isPresetAvatar: user.isPresetAvatar,
       },
-    });
+    };
+    
+    console.log("✅ getCurrentUser - Réponse envoyée:", responseData);
+    res.json(responseData);
   } catch (error) {
-    console.error("Erreur lors de la récupération de l'utilisateur:", error);
+    console.error("❌ getCurrentUser - Erreur:", error);
     res.status(500).json({
       message:
         "Une erreur est survenue lors de la récupération des données utilisateur.",
@@ -439,6 +469,9 @@ exports.updateProfile = async (req, res) => {
         pseudo: updatedUser.pseudo,
         role: updatedUser.role,
         avatar: updatedUser.avatar,
+        avatarColor: updatedUser.avatarColor,
+        avatarInitials: updatedUser.avatarInitials,
+        isPresetAvatar: updatedUser.isPresetAvatar,
       },
     });
   } catch (error) {
@@ -583,76 +616,93 @@ exports.uploadAvatar = async (req, res) => {
         .json({ message: "Seules les images sont autorisées." });
     }
 
-    // Générer un nom de fichier unique
-    const filename = `avatar_${userId}_${Date.now()}${require("path").extname(
-      avatar.name
-    )}`;
-    const uploadPath = require("path").join(
-      __dirname,
-      "../public/uploads/",
-      filename
-    );
+    // Détecter si c'est un avatar prédéfini (nom de fichier commence par "avatar" et finit par ".svg")
+    const isPresetAvatar = avatar.name.startsWith('avatar') && avatar.name.endsWith('.svg');
+    console.log('Type d\'avatar détecté:', isPresetAvatar ? 'Prédéfini' : 'Personnalisé');
+    console.log('Nom du fichier:', avatar.name);
 
-    // Déplacer le fichier téléchargé vers le dossier de destination
-    await avatar.mv(uploadPath);
-
-    // Extraire les métadonnées SVG si c'est un fichier SVG
+    let avatarUrl;
     let avatarColor = null;
     let avatarInitials = null;
 
-    if (avatar.mimetype === "image/svg+xml" || filename.endsWith('.svg')) {
-      try {
-        const fs = require('fs');
-        const svgContent = fs.readFileSync(uploadPath, 'utf8');
-        
-        // Extraire la couleur des métadonnées
-        const colorMatch = svgContent.match(/<metadata>\s*<color>(.*?)<\/color>/s);
-        if (colorMatch) {
-          avatarColor = colorMatch[1].trim();
-          console.log('Couleur extraite du SVG:', avatarColor);
-        }
-        
-        // Extraire les initiales des métadonnées
-        const initialsMatch = svgContent.match(/<initials>(.*?)<\/initials>/s);
-        if (initialsMatch) {
-          avatarInitials = initialsMatch[1].trim();
-          console.log('Initiales extraites du SVG:', avatarInitials);
-        }
+    if (isPresetAvatar) {
+      // Pour les avatars prédéfinis, utiliser le chemin statique
+      avatarUrl = `/avatars/${avatar.name}`;
+      console.log('Avatar prédéfini - URL:', avatarUrl);
+      
+      // Ne pas extraire de métadonnées pour les avatars prédéfinis
+      // Les avatars prédéfinis n'ont pas de couleur/initiales personnalisées
+    } else {
+      // Pour les avatars personnalisés, procéder normalement
+      // Générer un nom de fichier unique
+      const filename = `avatar_${userId}_${Date.now()}${require("path").extname(
+        avatar.name
+      )}`;
+      const uploadPath = require("path").join(
+        __dirname,
+        "../public/uploads/",
+        filename
+      );
 
-        // Si pas de métadonnées, essayer d'extraire depuis le contenu
-        if (!avatarInitials) {
-          const textMatch = svgContent.match(/<text[^>]*>([^<]+)<\/text>/);
-          if (textMatch) {
-            avatarInitials = textMatch[1].trim();
+      // Déplacer le fichier téléchargé vers le dossier de destination
+      await avatar.mv(uploadPath);
+      avatarUrl = `/uploads/${filename}`;
+
+      // Extraire les métadonnées SVG si c'est un fichier SVG personnalisé
+      if (avatar.mimetype === "image/svg+xml" || filename.endsWith('.svg')) {
+        try {
+          const fs = require('fs');
+          const svgContent = fs.readFileSync(uploadPath, 'utf8');
+          
+          // Extraire la couleur des métadonnées
+          const colorMatch = svgContent.match(/<metadata>\s*<color>(.*?)<\/color>/s);
+          if (colorMatch) {
+            avatarColor = colorMatch[1].trim();
+            console.log('Couleur extraite du SVG:', avatarColor);
           }
-        }
-
-        if (!avatarColor) {
-          const fillMatch = svgContent.match(/fill="([^"]+)"/);
-          if (fillMatch && fillMatch[1] !== "white") {
-            avatarColor = fillMatch[1];
+          
+          // Extraire les initiales des métadonnées
+          const initialsMatch = svgContent.match(/<initials>(.*?)<\/initials>/s);
+          if (initialsMatch) {
+            avatarInitials = initialsMatch[1].trim();
+            console.log('Initiales extraites du SVG:', avatarInitials);
           }
-        }
 
-      } catch (svgError) {
-        console.error("Erreur lors de l'extraction des métadonnées SVG:", svgError);
+          // Si pas de métadonnées, essayer d'extraire depuis le contenu
+          if (!avatarInitials) {
+            const textMatch = svgContent.match(/<text[^>]*>([^<]+)<\/text>/);
+            if (textMatch) {
+              avatarInitials = textMatch[1].trim();
+            }
+          }
+
+          if (!avatarColor) {
+            const fillMatch = svgContent.match(/fill="([^"]+)"/);
+            if (fillMatch && fillMatch[1] !== "white") {
+              avatarColor = fillMatch[1];
+            }
+          }
+
+        } catch (svgError) {
+          console.error("Erreur lors de l'extraction des métadonnées SVG:", svgError);
+        }
       }
     }
 
     // Mettre à jour l'avatar de l'utilisateur dans la base de données avec les métadonnées
-    const avatarUrl = `/uploads/${filename}`;
     const updateData = { 
       avatar: avatarUrl, 
-      isPresetAvatar: false,
+      isPresetAvatar: isPresetAvatar,
       avatarColor: avatarColor,
       avatarInitials: avatarInitials
     };
     
     await User.update(userId, updateData);
 
-    console.log('Avatar mis à jour avec métadonnées:', {
+    console.log('Avatar mis à jour:', {
       userId,
       avatarUrl,
+      isPresetAvatar,
       avatarColor,
       avatarInitials
     });
@@ -661,7 +711,8 @@ exports.uploadAvatar = async (req, res) => {
       message: "Avatar téléchargé avec succès.",
       avatarUrl: avatarUrl,
       avatarColor: avatarColor,
-      avatarInitials: avatarInitials
+      avatarInitials: avatarInitials,
+      isPresetAvatar: isPresetAvatar
     });
   } catch (error) {
     console.error("Erreur lors du téléchargement de l'avatar:", error);

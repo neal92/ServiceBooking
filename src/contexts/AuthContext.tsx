@@ -1,17 +1,6 @@
 import React, { createContext, useState, useContext, ReactNode, useEffect, useCallback } from 'react';
 import authService from '../services/auth';
-
-interface User {
-  id: number;
-  firstName: string;
-  lastName: string;
-  email: string;
-  role: string;
-  avatar?: string;
-  pseudo?: string;
-  avatarColor?: string;
-  avatarInitials?: string;
-}
+import { User } from '../types';
 
 interface AuthContextType {
   user: User | null;
@@ -478,39 +467,44 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     try {
       const response = await authService.uploadAvatar(file);
-      console.log('Upload réussi, URL reçue:', response.avatarUrl);
+      console.log('Upload réussi, réponse:', response);
 
-      if (user) {
-        // Détermine si c'est un avatar prédéfini
-        const isPresetAvatar = file.name.match(/^avatar\d+\.svg$/) ? true : false;
+      // Rafraîchir directement les données utilisateur depuis le serveur
+      // sans passer par updateUser pour éviter d'écraser les métadonnées
+      try {
+        const updatedUserData = await authService.getCurrentUser();
+        if (updatedUserData) {
+          console.log('Nouvelles données utilisateur après upload avatar:', {
+            avatar: updatedUserData.avatar,
+            avatarColor: updatedUserData.avatarColor,
+            avatarInitials: updatedUserData.avatarInitials,
+            isPresetAvatar: updatedUserData.isPresetAvatar
+          });
 
-        // Mettre à jour le profil utilisateur complet pour s'assurer que tout est cohérent
-        await updateUser({
-          firstName: user.firstName,
-          lastName: user.lastName,
-          email: user.email,
-          avatar: response.avatarUrl,
-          isPresetAvatar
-        });
+          // Mettre à jour l'état utilisateur avec les données les plus récentes
+          setUser(updatedUserData);
 
-        // Force un rechargement des données utilisateur depuis le serveur pour s'assurer que tout est à jour
-        try {
-          const updatedUserData = await authService.getCurrentUser();
-          if (updatedUserData) {
-            // Mettre à jour l'état utilisateur avec les données les plus récentes
-            setUser(updatedUserData);
+          // Mettre à jour l'utilisateur dans le localStorage
+          localStorage.setItem('user', JSON.stringify(updatedUserData));
 
-            // Mettre à jour l'utilisateur dans le localStorage
-            localStorage.setItem('user', JSON.stringify(updatedUserData));
+          // Dispatcher un événement pour informer les autres composants
+          const event = new Event('userUpdated');
+          window.dispatchEvent(event);
 
-            // Dispatcher un événement pour informer les autres composants
-            const event = new Event('userUpdated');
-            window.dispatchEvent(event);
-
-            console.log('Données utilisateur complètement rafraîchies après changement d\'avatar');
-          }
-        } catch (refreshError) {
-          console.error('Erreur lors du rafraîchissement des données utilisateur:', refreshError);
+          console.log('✅ Données utilisateur complètement rafraîchies après changement d\'avatar');
+        }
+      } catch (refreshError) {
+        console.error('❌ Erreur lors du rafraîchissement des données utilisateur:', refreshError);
+        // En cas d'erreur de rafraîchissement, essayer au moins de mettre à jour l'avatar
+        if (user && response.avatarUrl) {
+          const updatedUser = {
+            ...user,
+            avatar: response.avatarUrl,
+            avatarColor: response.avatarColor || user.avatarColor,
+            avatarInitials: response.avatarInitials || user.avatarInitials
+          };
+          setUser(updatedUser);
+          localStorage.setItem('user', JSON.stringify(updatedUser));
         }
       }
     } catch (err: any) {

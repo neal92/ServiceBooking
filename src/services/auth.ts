@@ -1,17 +1,5 @@
-import axios from "axios";
-
-interface User {
-  id: number;
-  firstName: string;
-  lastName: string;
-  email: string;
-  role: string;
-  avatar?: string;
-  pseudo?: string;
-  telephone?: string; // Renommé pour correspondre au backend
-  avatarColor?: string;
-  avatarInitials?: string;
-}
+import axios from 'axios';
+import { User, UploadAvatarResponse } from '../types';
 
 interface RegisterData {
   firstName: string;
@@ -47,10 +35,6 @@ interface ProfileUpdateData {
 interface PasswordChangeData {
   currentPassword: string;
   newPassword: string;
-}
-
-interface UploadAvatarResponse {
-  avatarUrl: string;
 }
 
 interface PseudoCheckResponse {
@@ -373,8 +357,9 @@ const authService = {
   },
 
   getCurrentUser: async (): Promise<User> => {
-    const response = await apiClient.get<User>("/auth/me");
-    return response.data;
+    const response = await apiClient.get<{user: User}>("/auth/me");
+    console.log("🔍 getCurrentUser - Réponse complète du serveur:", response.data);
+    return response.data.user;
   },
 
   updateProfile: async (

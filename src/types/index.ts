@@ -45,6 +45,17 @@ export interface User {
   firstName: string;
   lastName: string;
   role: string;
+  pseudo?: string;
+  phone?: string;
   avatar?: string;
+  avatarColor?: string;
+  avatarInitials?: string;
   isPresetAvatar?: boolean;
+}
+
+export interface UploadAvatarResponse {
+  message: string;
+  avatarUrl: string;
+  avatarColor?: string;
+  avatarInitials?: string;
 }
