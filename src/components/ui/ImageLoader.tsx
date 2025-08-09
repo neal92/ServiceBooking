@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 
 interface ImageLoaderProps {
   serviceId: number;
@@ -24,6 +24,10 @@ const ImageLoader: React.FC<ImageLoaderProps> = ({
   const [hasError, setHasError] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
 
+  // Debug : log à chaque rendu
+  React.useEffect(() => {
+    console.log('[ImageLoader] serviceId:', serviceId, 'imageName:', imageName, 'imageUrl:', imageUrl);
+  }, [serviceId, imageName, imageUrl]);
   useEffect(() => {
     if (!imageName) {
       setImageUrl(null);

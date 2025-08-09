@@ -224,7 +224,7 @@ const Calendar: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Calendrier principal */}
           <div className="lg:col-span-2">
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden calendar-fade-in">
+            <div className="bg-white dark:bg-gray-900 dark:border dark:border-gray-700 rounded-lg shadow-md overflow-hidden calendar-fade-in">
               {/* Navigation du mois */}
               <div className="calendar-header">
                 <div className="month-navigation">
@@ -253,42 +253,52 @@ const Calendar: React.FC = () => {
                 {dayNames.map((day) => (
                   <div
                     key={day}
-                    className="calendar-day-header"
+                    className="calendar-day-header bg-gray-100 dark:bg-gray-900 text-gray-700 dark:text-gray-300 border-b border-gray-200 dark:border-gray-700"
                   >
                     {day}
                   </div>
                 ))}
               </div>
-
-              {/* Grille du calendrier */}
-              <div className="calendar-grid">
+              <div className="calendar-grid bg-gray-50 dark:bg-gray-900">
                 {calendarDays.map((date, index) => (
                   <div
                     key={index}
-                    className={date ? getDayStatus(date) : 'calendar-day'}
+                    className={date ? getDayStatus(date) + ' bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 flex flex-col justify-between items-center min-h-[90px] h-[90px]' : 'calendar-day bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 flex flex-col justify-between items-center min-h-[90px] h-[90px]'}
                     onClick={() => date && setSelectedDate(date)}
                   >
                     {date && (
                       <>
-                        <div className="p-2">
+                        <div className="p-2 w-full flex justify-center">
                           <span className="text-sm font-medium text-gray-900 dark:text-white">
                             {date.getDate()}
                           </span>
                         </div>
-                        
                         {/* Indicateurs de rendez-vous */}
-                        <div className="px-1 pb-1">
+                        <div className="px-1 pb-1 w-full flex flex-col items-center">
                           {(() => {
                             const dayAppointments = getAppointmentsForDate(date);
-                            console.log(`🔎 Rendu du jour ${date.getDate()}/${date.getMonth()+1}: ${dayAppointments.length} rendez-vous`);
                             return dayAppointments.slice(0, 2).map((appointment, idx) => {
                               const service = services.find(s => s.id === appointment.serviceId);
-                              console.log(`🔎 Rendu appointment ${idx}:`, appointment);
-                              
+                              let statusBg = '';
+                              let statusText = '';
+                              switch (appointment.status) {
+                                case 'pending':
+                                  statusBg = 'bg-yellow-400 dark:bg-yellow-500'; statusText = 'text-yellow-900 dark:text-yellow-100'; break;
+                                case 'confirmed':
+                                  statusBg = 'bg-green-400 dark:bg-green-600'; statusText = 'text-green-900 dark:text-green-100'; break;
+                                case 'in-progress':
+                                  statusBg = 'bg-orange-400 dark:bg-orange-500'; statusText = 'text-orange-900 dark:text-orange-100'; break;
+                                case 'completed':
+                                  statusBg = 'bg-blue-400 dark:bg-blue-600'; statusText = 'text-blue-900 dark:text-blue-100'; break;
+                                case 'cancelled':
+                                  statusBg = 'bg-red-400 dark:bg-red-600'; statusText = 'text-red-900 dark:text-red-100'; break;
+                                default:
+                                  statusBg = 'bg-gray-100 dark:bg-gray-800'; statusText = 'text-gray-700 dark:text-gray-300';
+                              }
                               return (
                                 <div
                                   key={idx}
-                                  className={`appointment-indicator ${appointment.status}`}
+                                  className={`appointment-indicator ${appointment.status} ${statusBg} ${statusText} w-full text-center`}
                                   title={`${appointment.time} - ${service?.name || 'Service'}`}
                                 >
                                   {appointment.time} {service?.name?.substring(0, 10)}
@@ -296,9 +306,8 @@ const Calendar: React.FC = () => {
                               );
                             });
                           })()}
-                          
                           {getAppointmentsForDate(date).length > 2 && (
-                            <div className="text-xs text-gray-500 dark:text-gray-400 px-1">
+                            <div className="text-xs text-gray-500 dark:text-gray-400 px-1 w-full text-center">
                               +{getAppointmentsForDate(date).length - 2} autres
                             </div>
                           )}
@@ -313,7 +322,7 @@ const Calendar: React.FC = () => {
 
           {/* Panneau latéral - détails de la date sélectionnée */}
           <div className="lg:col-span-1">
-            <div className="calendar-sidebar">
+            <div className="calendar-sidebar bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700">
               <div className="sidebar-header">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                   {selectedDate 
@@ -406,7 +415,7 @@ const Calendar: React.FC = () => {
             </div>
 
             {/* Légende */}
-            <div className="mt-6 bg-white dark:bg-gray-800 rounded-lg shadow-md p-4">
+            <div className="mt-6 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-md p-4">
               <h4 className="font-semibold text-gray-900 dark:text-white mb-3">Légende</h4>
               <div className="space-y-2 text-sm">
                 <div className="legend-item">
