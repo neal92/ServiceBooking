@@ -231,10 +231,12 @@ const UserHome: React.FC = () => {
   return (
     <PageTransition>
       <div className="container mx-auto px-4 py-8">
-        <div className="text-center mb-12">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-            Nos prestations
-          </h1>
+        <div className="flex flex-col items-center mb-12">
+          <div className="flex items-center justify-center gap-3 mb-2">
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+              Nos prestations
+            </h1>
+          </div>
           <p className="text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
             Découvrez nos services de qualité et prenez rendez-vous en quelques clics.
           </p>

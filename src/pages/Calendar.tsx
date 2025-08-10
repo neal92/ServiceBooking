@@ -224,13 +224,13 @@ const Calendar: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Calendrier principal */}
           <div className="lg:col-span-2">
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden calendar-fade-in">
+            <div className="bg-white dark:bg-gray-900 rounded-lg shadow-md overflow-hidden calendar-fade-in">
               {/* Navigation du mois */}
-              <div className="calendar-header">
+              <div className="calendar-header bg-white dark:bg-gray-900">
                 <div className="month-navigation">
                   <button
                     onClick={previousMonth}
-                    className="month-nav-button"
+                    className="month-nav-button dark:hover:bg-gray-800"
                   >
                     <ChevronLeft className="h-5 w-5 text-gray-600 dark:text-gray-300" />
                   </button>
@@ -241,7 +241,7 @@ const Calendar: React.FC = () => {
                   
                   <button
                     onClick={nextMonth}
-                    className="month-nav-button"
+                    className="month-nav-button dark:hover:bg-gray-800"
                   >
                     <ChevronRight className="h-5 w-5 text-gray-600 dark:text-gray-300" />
                   </button>
@@ -253,7 +253,7 @@ const Calendar: React.FC = () => {
                 {dayNames.map((day) => (
                   <div
                     key={day}
-                    className="calendar-day-header"
+                    className="calendar-day-header bg-gray-100 dark:bg-gray-900 text-gray-700 dark:text-gray-300 border-b border-gray-200 dark:border-gray-700"
                   >
                     {day}
                   </div>
@@ -261,11 +261,11 @@ const Calendar: React.FC = () => {
               </div>
 
               {/* Grille du calendrier */}
-              <div className="calendar-grid">
+              <div className="calendar-grid bg-gray-50 dark:bg-gray-900">
                 {calendarDays.map((date, index) => (
                   <div
                     key={index}
-                    className={date ? getDayStatus(date) : 'calendar-day'}
+                    className={date ? getDayStatus(date) + ' bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 flex flex-col justify-between items-center min-h-[90px] h-[90px]' : 'calendar-day bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 flex flex-col justify-between items-center min-h-[90px] h-[90px]'}
                     onClick={() => date && setSelectedDate(date)}
                   >
                     {date && (
@@ -280,23 +280,27 @@ const Calendar: React.FC = () => {
                         <div className="px-1 pb-1">
                           {(() => {
                             const dayAppointments = getAppointmentsForDate(date);
-                            console.log(`🔎 Rendu du jour ${date.getDate()}/${date.getMonth()+1}: ${dayAppointments.length} rendez-vous`);
                             return dayAppointments.slice(0, 2).map((appointment, idx) => {
                               const service = services.find(s => s.id === appointment.serviceId);
-                              console.log(`🔎 Rendu appointment ${idx}:`, appointment);
-                              
                               return (
                                 <div
                                   key={idx}
-                                  className={`appointment-indicator ${appointment.status}`}
+                                  className={`appointment-indicator ${appointment.status} flex items-center space-x-1`}
                                   title={`${appointment.time} - ${service?.name || 'Service'}`}
                                 >
-                                  {appointment.time} {service?.name?.substring(0, 10)}
+                                  {service?.image && (
+                                    <img
+                                      src={service.image}
+                                      alt={service.name}
+                                      className="w-5 h-5 rounded-full border border-gray-200 dark:border-gray-700 mr-1"
+                                      style={{ objectFit: 'cover' }}
+                                    />
+                                  )}
+                                  <span>{appointment.time} {service?.name?.substring(0, 10)}</span>
                                 </div>
                               );
                             });
                           })()}
-                          
                           {getAppointmentsForDate(date).length > 2 && (
                             <div className="text-xs text-gray-500 dark:text-gray-400 px-1">
                               +{getAppointmentsForDate(date).length - 2} autres
@@ -314,7 +318,7 @@ const Calendar: React.FC = () => {
           {/* Panneau latéral - détails de la date sélectionnée */}
           <div className="lg:col-span-1">
             <div className="calendar-sidebar">
-              <div className="sidebar-header">
+              <div className="sidebar-header calendar-date-section--fixed-dark">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                   {selectedDate 
                     ? `${selectedDate.getDate()} ${monthNames[selectedDate.getMonth()]}`
@@ -346,7 +350,17 @@ const Calendar: React.FC = () => {
                           <div key={appointment.id} className="appointment-card">
                             <div className="flex items-center justify-between mb-2">
                               <span className="font-medium text-gray-900 dark:text-white">
-                                {service?.name || 'Service inconnu'}
+                                <span className="flex items-center space-x-2">
+                                  {service?.image && (
+                                    <img
+                                      src={service.image}
+                                      alt={service.name}
+                                      className="w-8 h-8 rounded-full border border-gray-200 dark:border-gray-700 mr-2"
+                                      style={{ objectFit: 'cover' }}
+                                    />
+                                  )}
+                                  <span>{service?.name || 'Service inconnu'}</span>
+                                </span>
                               </span>
                               <span className={`status-badge ${statusColors[appointment.status]}`}>
                                 {appointment.status === 'pending' && 'En attente'}

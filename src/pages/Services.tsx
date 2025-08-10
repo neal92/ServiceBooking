@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { PlusCircle, Search, ShoppingBag, Trash } from 'lucide-react';
 import ServiceCard from '../components/services/ServiceCard';
 import NewServiceModal from '../components/services/NewServiceModal';

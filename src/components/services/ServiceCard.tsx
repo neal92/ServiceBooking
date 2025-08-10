@@ -1,3 +1,4 @@
+import React from 'react';
 import { Edit, Trash, Clock, Tag, Calendar as CalendarIcon, Image as ImageIcon } from 'lucide-react';
 import { Service } from '../../types';
 import { useState } from 'react';
@@ -13,6 +14,9 @@ interface ServiceCardProps {
 
 const ServiceCard = ({ service, onEdit, onDelete, useThumbnail = false, forceImageRefresh = false }: ServiceCardProps) => {
   const [showImageError, setShowImageError] = useState(false);
+
+  // Debug: log de l'image reçue
+  console.log('[ServiceCard] service.image:', service.image);
 
   return (
     <div className="bg-white dark:bg-gray-800 overflow-hidden shadow-sm rounded-lg border border-gray-100 dark:border-gray-700 transition-all hover:shadow-md hover:-translate-y-0.5 duration-200">

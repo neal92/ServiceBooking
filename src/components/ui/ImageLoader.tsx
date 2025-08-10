@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 
 interface ImageLoaderProps {
   serviceId: number;
@@ -28,6 +28,17 @@ const ImageLoader: React.FC<ImageLoaderProps> = ({
     if (!imageName) {
       setImageUrl(null);
       setIsLoading(false);
+      return;
+    }
+
+    // Si imageName est une URL absolue ou commence par /images/, utiliser directement
+    if (
+      imageName.startsWith('http') ||
+      imageName.startsWith('/images/')
+    ) {
+      setImageUrl(imageName);
+      setIsLoading(false);
+      setHasError(false);
       return;
     }
 
