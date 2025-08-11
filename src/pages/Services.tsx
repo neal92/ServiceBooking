@@ -1,5 +1,9 @@
+<<<<<<< HEAD
 import React from 'react';
 import { useState, useEffect } from 'react';
+=======
+import React, { useState, useEffect } from 'react';
+>>>>>>> b2574a067919e19c8ca6ef77eeba1d9f3ef66a7c
 import { PlusCircle, Search, ShoppingBag, Trash } from 'lucide-react';
 import ServiceCard from '../components/services/ServiceCard';
 import NewServiceModal from '../components/services/NewServiceModal';

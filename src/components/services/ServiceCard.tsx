@@ -17,6 +17,9 @@ const ServiceCard = ({ service, onEdit, onDelete, useThumbnail = false, forceIma
   // Debug : log du nom d'image
   console.log('ServiceCard image:', service.image);
 
+  // Debug: log de l'image reçue
+  console.log('[ServiceCard] service.image:', service.image);
+
   return (
     <div className="bg-white dark:bg-gray-800 overflow-hidden shadow-sm rounded-lg border border-gray-100 dark:border-gray-700 transition-all hover:shadow-md hover:-translate-y-0.5 duration-200">
       {/* Image du service - hauteur réduite */}

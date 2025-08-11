@@ -35,6 +35,17 @@ const ImageLoader: React.FC<ImageLoaderProps> = ({
       return;
     }
 
+    // Si imageName est une URL absolue ou commence par /images/, utiliser directement
+    if (
+      imageName.startsWith('http') ||
+      imageName.startsWith('/images/')
+    ) {
+      setImageUrl(imageName);
+      setIsLoading(false);
+      setHasError(false);
+      return;
+    }
+
     // Ne pas utiliser d'URLs blob
     if (imageName.startsWith('blob:')) {
       buildApiUrl();

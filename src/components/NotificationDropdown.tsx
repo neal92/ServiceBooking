@@ -52,14 +52,7 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ className =
     event.stopPropagation();
     try {
       await notificationService.markAsRead(notificationId);
-      setNotifications(prev => 
-        prev.map(notif => 
-          notif.id === notificationId 
-            ? { ...notif, is_read: true, read_at: new Date().toISOString() }
-            : notif
-        )
-      );
-      setUnreadCount(prev => Math.max(0, prev - 1));
+      await loadNotifications(); // Recharge la liste et le badge
     } catch (error) {
       console.error('Erreur lors du marquage comme lu:', error);
     }
@@ -69,10 +62,7 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ className =
   const handleMarkAllAsRead = async () => {
     try {
       await notificationService.markAllAsRead();
-      setNotifications(prev => 
-        prev.map(notif => ({ ...notif, is_read: true, read_at: new Date().toISOString() }))
-      );
-      setUnreadCount(0);
+      await loadNotifications(); // Recharge la liste et le badge
     } catch (error) {
       console.error('Erreur lors du marquage de toutes comme lues:', error);
     }
@@ -83,11 +73,7 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ className =
     event.stopPropagation();
     try {
       await notificationService.delete(notificationId);
-      const notificationToDelete = notifications.find(n => n.id === notificationId);
-      setNotifications(prev => prev.filter(notif => notif.id !== notificationId));
-      if (notificationToDelete && !notificationToDelete.is_read) {
-        setUnreadCount(prev => Math.max(0, prev - 1));
-      }
+      await loadNotifications(); // Recharge la liste et le badge
     } catch (error) {
       console.error('Erreur lors de la suppression:', error);
     }
@@ -123,10 +109,10 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ className =
 
   return (
     <div className={`relative ${className}`} ref={dropdownRef}>
-      {/* Bouton de notification */}
+      {/* Bouton de notification avec badge façon iOS */}
       <button
         type="button"
-        className="relative bg-white dark:bg-gray-700 p-1.5 rounded-full text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+        className="relative bg-white dark:bg-gray-700 p-1.5 rounded-full text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 flex items-center"
         onClick={() => {
           setIsOpen(!isOpen);
           if (!isOpen) {
@@ -136,11 +122,10 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ className =
       >
         <span className="sr-only">Voir les notifications</span>
         <Bell className="h-5 w-5" aria-hidden="true" />
-        
-        {/* Badge de compteur */}
         {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 h-5 w-5 bg-red-500 text-white text-xs font-medium rounded-full flex items-center justify-center">
-            {unreadCount > 9 ? '9+' : unreadCount}
+          <span className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-[13px] font-extrabold shadow-xl border-2 border-white dark:border-gray-900"
+            style={{zIndex:2, boxShadow:'0 2px 8px rgba(0,0,0,0.18)'}}>
+            {unreadCount > 99 ? '99+' : unreadCount}
           </span>
         )}
       </button>
