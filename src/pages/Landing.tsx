@@ -12,8 +12,8 @@ const Landing: React.FC = () => {
   const { darkMode, toggleDarkMode } = useTheme();
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  // Simuler le nombre de notifications non lues
-  const [notificationCount, setNotificationCount] = useState(3); // à remplacer par la vraie valeur
+  // Mock user object, replace with real context or props
+  const user = { role: 'admin' };
 
   // Gérer le scroll pour changer l'apparence de la navbar
   useEffect(() => {
@@ -39,6 +39,7 @@ const Landing: React.FC = () => {
   const handleRegisterClient = () => navigate('/register', { state: { userType: 'client' } });
   const handleRegisterProfessional = () => navigate('/register', { state: { userType: 'professional' } });
 
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-blue-50 dark:from-gray-900 dark:to-gray-800">
       {/* Modal d'inscription */}
@@ -49,253 +50,107 @@ const Landing: React.FC = () => {
         onProfessional={handleRegisterProfessional}
       />
 
-      {/* Navbar */}
-      <nav
-        className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${isScrolled
-          ? 'bg-white/95 dark:bg-gray-900/95 shadow-md backdrop-blur-sm py-2'
-          : 'bg-transparent py-4'
-          }`}
-      >
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center">
-            <Link to="/" className="flex items-center space-x-2">
-              <span className="h-10 w-10 bg-gradient-to-br from-blue-500 to-blue-700 rounded-full flex items-center justify-center">
-                <Calendar className="h-6 w-6 text-white" />
-              </span>
-              <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent dark:from-blue-400 dark:to-blue-600">
-                ServiceBooking
-              </span>
-            </Link>
+      {/* HERO HEADER SECTION - Planity style */}
+      <header className="relative h-[100vh] min-h-[600px] flex flex-col justify-between items-center overflow-hidden">
+        {/* Background image */}
+        <div className="absolute inset-0 w-full h-full bg-[url('/images/slides/slide-4.jpg')] bg-cover bg-center" />
+        {/* Overlay for readability */}
+        <div className="absolute inset-0 bg-black/40 z-10" />
 
-            {/* Menu pour mobile */}
-            <div className="md:hidden">
-              <button
-                onClick={() => setIsMenuOpen(!isMenuOpen)}
-                className="text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 focus:outline-none"
-              >
-                {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
-              </button>
-            </div>
-
-            {/* Menu pour desktop */}
-            <div className="hidden md:flex items-center space-x-8">
-              <a href="#fonctionnalites" className="text-sm font-medium text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200">Fonctionnalités</a>
-              <a href="#temoignages" className="text-sm font-medium text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200">Témoignages</a>
-              <a href="#tarifs" className="text-sm font-medium text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200">Tarifs</a>
-              <button
-                onClick={toggleDarkMode}
-                className="text-sm p-2 rounded-full text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-200"
-                aria-label={darkMode ? "Passer au mode clair" : "Passer au mode sombre"}
-              >
-                {darkMode ? <Sun size={18} /> : <Moon size={18} />}
-              </button>
-
-              {/* ...bouton Essayer... */}
-              <div className="relative">
-                <button
-                  onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                  onBlur={() => setTimeout(() => setIsDropdownOpen(false), 200)}
-                  className="flex items-center space-x-1 px-4 py-2 rounded-md bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white text-sm font-medium transition duration-300 hover:shadow-lg"
-                >
-                  <span>Essayer</span>
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className={`h-4 w-4 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`}
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </button>
-
-                {isDropdownOpen && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg py-1 z-10 ring-1 ring-black ring-opacity-5 transition-all duration-300 ease-in-out animate-fadeIn">
-                    <button
-                      onClick={() => {
-                        handleLoginClick();
-                        setIsDropdownOpen(false);
-                      }}
-                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-blue-50 dark:hover:bg-gray-700"
-                    >
-                      Connexion
-                    </button>
-                    <button
-                      onClick={() => {
-                        handleRegisterClick();
-                        setIsDropdownOpen(false);
-                      }}
-                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-blue-50 dark:hover:bg-gray-700"
-                    >
-                      Inscription
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
+        {/* Navbar */}
+        <nav className="w-full flex justify-between items-center px-8 py-6 absolute top-0 left-0 z-40">
+          <div className="flex items-center space-x-2">
+            <span className="h-8 w-8 bg-blue-600 rounded-full flex items-center justify-center">
+              <Calendar className="h-5 w-5 text-white" />
+            </span>
+            <span className="text-lg font-bold text-white">ServiceBooking</span>
           </div>
-        </div>
-
-        {/* Menu mobile */}
-        {isMenuOpen && (
-          <div className="md:hidden bg-white dark:bg-gray-800 shadow-xl animate-fadeIn">
-            <div className="px-4 py-2 space-y-2">
+          <ul className="hidden md:flex items-center space-x-8">
+            <li>
               <a
-                href="#fonctionnalites"
-                className="block p-2 text-gray-700 dark:text-gray-200 hover:bg-blue-50 dark:hover:bg-gray-700 rounded-md"
-                onClick={() => setIsMenuOpen(false)}
+                href="#"
+                className="text-white/90 hover:text-green-400 font-medium transition-colors"
+                onClick={e => { e.preventDefault(); handleLoginClick(); }}
               >
-                Fonctionnalités
+                Coiffeur
               </a>
+            </li>
+            <li>
               <a
-                href="#temoignages"
-                className="block p-2 text-gray-700 dark:text-gray-200 hover:bg-blue-50 dark:hover:bg-gray-700 rounded-md"
-                onClick={() => setIsMenuOpen(false)}
+                href="#"
+                className="text-white/90 hover:text-green-400 font-medium transition-colors"
+                onClick={e => { e.preventDefault(); handleLoginClick(); }}
               >
-                Témoignages
+                Barbier
               </a>
+            </li>
+            <li>
               <a
-                href="#tarifs"
-                className="block p-2 text-gray-700 dark:text-gray-200 hover:bg-blue-50 dark:hover:bg-gray-700 rounded-md"
-                onClick={() => setIsMenuOpen(false)}
+                href="#"
+                className="text-white/90 hover:text-green-400 font-medium transition-colors"
+                onClick={e => { e.preventDefault(); handleLoginClick(); }}
               >
-                Tarifs
+                Manucure
               </a>
-              <div className="flex items-center space-x-2">
-                <button
-                  onClick={() => {
-                    toggleDarkMode();
-                    setIsMenuOpen(false);
-                  }}
-                  className="flex items-center w-full text-left p-2 text-gray-700 dark:text-gray-200 hover:bg-blue-50 dark:hover:bg-gray-700 rounded-md"
-                >
-                  {darkMode ? <Sun size={18} className="mr-2" /> : <Moon size={18} className="mr-2" />}
-                  {darkMode ? "Mode clair" : "Mode sombre"}
-                </button>
-                {/* Icône notification + badge mobile */}
-                <div className="relative flex items-center">
-                  <button
-                    className="relative focus:outline-none"
-                    aria-label={`Vous avez ${notificationCount} notifications`}
-                    tabIndex={0}
-                  >
-                    <span className="inline-block">
-                      <svg className="h-6 w-6 text-gray-700 dark:text-gray-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                      </svg>
-                    </span>
-                    {notificationCount > 0 && (
-                      <span className="absolute -top-2 -right-3 bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold shadow-lg border-2 border-white dark:border-gray-900" style={{zIndex:2}}>
-                        {notificationCount}
-                      </span>
-                    )}
-                  </button>
-                </div>
-              </div>
-              <div className="mt-2">
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setIsDropdownOpen(!isDropdownOpen);
-                  }}
-                  className="flex items-center w-full justify-between p-2 text-gray-700 dark:text-gray-200 hover:bg-blue-50 dark:hover:bg-gray-700 rounded-md bg-gradient-to-r from-blue-600 to-blue-700 text-white"
-                >
-                  <span>Essayer</span>
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className={`h-4 w-4 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`}
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </button>
-
-                {isDropdownOpen && (
-                  <div className="mt-1 bg-white dark:bg-gray-700 rounded-md shadow-inner overflow-hidden animate-fadeIn">
-                    <button
-                      onClick={() => {
-                        handleLoginClick();
-                        setIsMenuOpen(false);
-                        setIsDropdownOpen(false);
-                      }}
-                      className="block w-full text-left p-2 pl-4 text-gray-700 dark:text-gray-200 hover:bg-blue-50 dark:hover:bg-gray-600"
-                    >
-                      Connexion
-                    </button>
-                    <button
-                      onClick={() => {
-                        handleRegisterClick();
-                        setIsMenuOpen(false);
-                        setIsDropdownOpen(false);
-                      }}
-                      className="block w-full text-left p-2 pl-4 text-gray-700 dark:text-gray-200 hover:bg-blue-50 dark:hover:bg-gray-600"
-                    >
-                      Inscription
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
+            </li>
+            <li>
+              <a
+                href="#"
+                className="text-white/90 hover:text-green-400 font-medium transition-colors"
+                onClick={e => { e.preventDefault(); handleLoginClick(); }}
+              >
+                Institut de beauté
+              </a>
+            </li>
+          </ul>
+          <div className="flex items-center space-x-3">
+            <button
+              className="px-4 py-2 rounded-md bg-white text-blue-900 font-semibold shadow hover:bg-blue-50 transition"
+              onClick={() => navigate('/register', { state: { userType: 'professional' } })}
+            >
+              Je suis un professionnel 
+            </button>
+            <button
+              className="px-4 py-2 rounded-md bg-blue-600 text-white font-semibold shadow hover:bg-blue-700 transition"
+              onClick={handleLoginClick}
+            >
+              Mon compte
+            </button>
+            <button
+              onClick={toggleDarkMode}
+              className="p-2 rounded-full bg-white/20 hover:bg-white/30 text-white flex items-center justify-center transition-colors z-30"
+              aria-label={darkMode ? 'Passer au mode clair' : 'Passer au mode sombre'}
+              style={{ position: 'relative', zIndex: 30 }}
+            >
+              {darkMode ? <Sun size={20} /> : <Moon size={20} />}
+            </button>
           </div>
-        )}
-      </nav>
+        </nav>
 
-  <section className="pt-28 md:pt-32 pb-12 md:pb-20">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col md:flex-row md:items-center">
-            <div className="md:w-1/2 mb-10 md:mb-0">
-              <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 dark:text-white leading-tight animate-fadeIn">
-                Simplifiez la gestion de vos <span className="text-blue-600 dark:text-blue-400">rendez-vous</span>
-              </h1>
-              <p className="mt-4 text-lg md:text-xl text-gray-600 dark:text-gray-300 animate-fadeIn animation-delay-200">
-                ServiceBooking est une solution complète qui permet aux professionnels de gérer facilement leurs rendez-vous, clients et services.
-              </p>
-              <div className="mt-8 flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4 animate-fadeIn animation-delay-300">                <button
-                onClick={() => setIsRegisterModalOpen(true)}
-                className="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg text-white font-medium shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-              >
-                Essayer gratuitement
-              </button>
-                <button
-                  onClick={handleLoginClick}
-                  className="px-6 py-3 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-800 dark:text-white font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-500 focus:ring-offset-2"
-                >
-                  En savoir plus
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
- {/* Section Partenaires */}
-      <section className="py-8 bg-gray-50 dark:bg-gray-800/50">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <p className="text-center text-sm text-gray-500 dark:text-gray-400 mb-6">
-            Nous vous proposons un espace personalisable pour les professionelles en mettant en avant vos services dans différente secteur d'acitivité.
+        {/* Central Content */}
+        <div className="relative z-30 flex flex-col items-center justify-center h-full w-full text-center pt-32">
+          <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white leading-tight animate-fadeIn">
+            Simplifiez la gestion de vos <span className="text-blue-300">rendez-vous</span>
+          </h1>
+          <p className="mt-4 text-lg md:text-xl text-white/90 animate-fadeIn animation-delay-200 max-w-2xl mx-auto">
+            ServiceBooking est une solution complète qui permet aux professionnels de gérer facilement leurs rendez-vous, clients et services.
           </p>
-          <div className="flex flex-wrap justify-center items-center gap-8 md:gap-12 opacity-70 grayscale">
-            <div className="h-8 flex items-center">
-              <div className="text-xl font-bold text-gray-400">Company 1</div>
-            </div>
-            <div className="h-8 flex items-center">
-              <div className="text-xl font-bold text-gray-400">Company 2</div>
-            </div>
-            <div className="h-8 flex items-center">
-              <div className="text-xl font-bold text-gray-400">Company 3</div>
-            </div>
-            <div className="h-8 flex items-center">
-              <div className="text-xl font-bold text-gray-400">Company 4</div>
-            </div>
-            <div className="h-8 flex items-center">
-              <div className="text-xl font-bold text-gray-400">Company 5</div>
-            </div>
+          <div className="mt-8 flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4 animate-fadeIn animation-delay-300 justify-center">
+            <button
+              onClick={() => setIsRegisterModalOpen(true)}
+              className="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg text-white font-medium shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            >
+              Essayer gratuitement
+            </button>
+            <button
+              onClick={handleLoginClick}
+              className="px-6 py-3 bg-white/90 border border-gray-300 rounded-lg text-blue-900 font-medium hover:bg-gray-50 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2"
+            >
+              En savoir plus
+            </button>
           </div>
         </div>
-      </section>
-
+      </header>
 
       {/* Section Fonctionnalités */}
       <section id="fonctionnalites" className="py-16 md:py-24 bg-white dark:bg-gray-900">
@@ -391,11 +246,42 @@ const Landing: React.FC = () => {
         </div>
       </section>
 
+    
+    {/*
+    Section Partenaires
+      <section className="py-8 bg-gray-50 dark:bg-gray-800/50">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <p className="text-center text-sm text-gray-500 dark:text-gray-400 mb-6">
+            Nous vous proposons un espace personalisable pour les professionelles en mettant en avant vos services dans différente secteur d'acitivité.
+          </p>
+          <div className="flex flex-wrap justify-center items-center gap-8 md:gap-12 opacity-70 grayscale">
+            <div className="h-8 flex items-center">
+              <div className="text-xl font-bold text-gray-400">Company 1</div>
+            </div>
+            <div className="h-8 flex items-center">
+              <div className="text-xl font-bold text-gray-400">Company 2</div>
+            </div>
+            <div className="h-8 flex items-center">
+              <div className="text-xl font-bold text-gray-400">Company 3</div>
+            </div>
+            <div className="h-8 flex items-center">
+              <div className="text-xl font-bold text-gray-400">Company 4</div>
+            </div>
+            <div className="h-8 flex items-center">
+              <div className="text-xl font-bold text-gray-400">Company 5</div>
+            </div>
+          </div>
+        </div>
+      </section>
+    */}
+
   <section className="py-16 bg-gray-50 dark:bg-gray-800/50">
     <div className="container mx-auto px-4 sm:px-6 lg:px-8 space-y-16">
 
       {/* Interface Web */}
       <div className="flex flex-col md:flex-row items-center bg-white dark:bg-gray-900 rounded-xl shadow-lg overflow-hidden">
+
+
         {/* Image gauche */}
         <div className="md:w-1/2 w-full">
           <img
@@ -404,7 +290,6 @@ const Landing: React.FC = () => {
             className="w-full h-full object-cover"
           />
         </div>
-
         {/* Texte droite */}
         <div className="md:w-1/2 w-full p-8">
           <h3 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-4">
@@ -647,67 +532,67 @@ const Landing: React.FC = () => {
 
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-gray-300 py-12 md:py-16">
+      <footer className="bg-gray-100 dark:bg-gray-950 text-gray-700 dark:text-gray-200 py-12 md:py-16 transition-colors">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 md:gap-12">
             <div className="lg:col-span-2">
               <div className="flex items-center space-x-2 mb-4">
-                <span className="h-8 w-8 bg-blue-600 rounded-full flex items-center justify-center">
+                <span className="h-8 w-8 bg-blue-600 dark:bg-blue-700 rounded-full flex items-center justify-center">
                   <Calendar className="h-5 w-5 text-white" />
                 </span>
-                <span className="text-lg font-bold text-white">ServiceBooking</span>
+                <span className="text-lg font-bold text-blue-900 dark:text-white">ServiceBooking</span>
               </div>
-              <p className="text-gray-400 mb-4">
+              <p className="text-gray-500 dark:text-gray-400 mb-4">
                 La solution complète pour la gestion de rendez-vous des professionnels du bien-être, de la beauté et des services.
               </p>
             </div>
 
             <div>
-              <h3 className="text-white font-medium mb-4">Produit</h3>
+              <h3 className="text-blue-900 dark:text-white font-medium mb-4">Produit</h3>
               <ul className="space-y-2">
-                <li><a href="#fonctionnalites" className="text-gray-400 hover:text-white transition-colors">Fonctionnalités</a></li>
-                <li><a href="#temoignages" className="text-gray-400 hover:text-white transition-colors">Témoignages</a></li>
-                <li><a href="#tarifs" className="text-gray-400 hover:text-white transition-colors">Tarifs</a></li>
+                <li><a href="#fonctionnalites" className="text-gray-500 dark:text-gray-400 hover:text-blue-700 dark:hover:text-blue-400 transition-colors">Fonctionnalités</a></li>
+                <li><a href="#temoignages" className="text-gray-500 dark:text-gray-400 hover:text-blue-700 dark:hover:text-blue-400 transition-colors">Témoignages</a></li>
+                <li><a href="#tarifs" className="text-gray-500 dark:text-gray-400 hover:text-blue-700 dark:hover:text-blue-400 transition-colors">Tarifs</a></li>
               </ul>
             </div>
 
             <div>
-              <h3 className="text-white font-medium mb-4">Support</h3>
+              <h3 className="text-blue-900 dark:text-white font-medium mb-4">Support</h3>
               <ul className="space-y-2">
-                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Centre d'aide</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Documentation</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Contact</a></li>
+                <li><a href="#" className="text-gray-500 dark:text-gray-400 hover:text-blue-700 dark:hover:text-blue-400 transition-colors">Centre d'aide</a></li>
+                <li><a href="#" className="text-gray-500 dark:text-gray-400 hover:text-blue-700 dark:hover:text-blue-400 transition-colors">Documentation</a></li>
+                <li><a href="#" className="text-gray-500 dark:text-gray-400 hover:text-blue-700 dark:hover:text-blue-400 transition-colors">Contact</a></li>
               </ul>
             </div>
 
             <div>
-              <h3 className="text-white font-medium mb-4">Légal</h3>
+              <h3 className="text-blue-900 dark:text-white font-medium mb-4">Légal</h3>
               <ul className="space-y-2">
-                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Confidentialité</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Conditions</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">RGPD</a></li>
+                <li><a href="#" className="text-gray-500 dark:text-gray-400 hover:text-blue-700 dark:hover:text-blue-400 transition-colors">Confidentialité</a></li>
+                <li><a href="#" className="text-gray-500 dark:text-gray-400 hover:text-blue-700 dark:hover:text-blue-400 transition-colors">Conditions</a></li>
+                <li><a href="#" className="text-gray-500 dark:text-gray-400 hover:text-blue-700 dark:hover:text-blue-400 transition-colors">RGPD</a></li>
               </ul>
             </div>
           </div>
           
-          <div className="border-t border-gray-800 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center">
-            <p className="text-sm text-gray-400">
+          <div className="border-t border-gray-300 dark:border-gray-700 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center">
+            <p className="text-sm text-gray-500 dark:text-gray-400">
               © {new Date().getFullYear()} ServiceBooking. Tous droits réservés.
             </p>
             <div className="mt-4 md:mt-0 flex space-x-4">
-              <a href="#" className="text-gray-400 hover:text-white transition-colors">
+              <a href="#" className="text-gray-500 dark:text-gray-400 hover:text-blue-700 dark:hover:text-blue-400 transition-colors">
                 <span className="sr-only">Instagram</span>
                 <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
                   <path fillRule="evenodd" d="M12.315 2c1.345 0 2.65.05 3.91.14 1.26.1 2.37.33 3.31.66.9.33 1.66.77 2.42 1.53.76.76 1.2 1.52 1.53 2.42.33.94.56 2.05.66 3.31.1 1.26.15 2.565.15 3.91s-.05 2.65-.15 3.91c-.1 1.26-.33 2.37-.66 3.31-.33.9-.77 1.66-1.53 2.42-.76.76-1.52 1.2-2.42 1.53-.94.33-2.05.56-3.31.66-1.26.1-2.565.15-3.91.15s-2.65-.05-3.91-.15c-1.26-.1-2.37-.33-3.31-.66-.9-.33-1.66-.77-2.42-1.53-.76-.76-1.2-1.52-1.53-2.42-.33-.94-.56-2.05-.66-3.31-.1-1.26-.15-2.565-.15-3.91s.05-2.65.15-3.91c.1-1.26.33-2.37.66-3.31.33-.9.77-1.66 1.53-2.42.76-.76 1.52-1.2 2.42-1.53.94-.33 2.05-.56 3.31-.66 1.26-.1 2.565-.15 3.91-.15zm0 2.15c-2.67 0-3.005.01-4.06.06-1.03.04-1.59.22-1.96.37a3.25 3.25 0 00-1.33.86c-.4.4-.65.85-.86 1.33-.15.37-.33.92-.37 1.96-.05 1.055-.06 1.39-.06 4.06 0 2.67.01 3.005.06 4.06.04 1.03.22 1.59.37 1.96.2.48.46.93.86 1.33.4.4.85.65 1.33.86.37.15.92.33 1.96.37 1.055.05 1.39.06 4.06.06 2.67 0 3.005-.01 4.06-.06 1.03-.04 1.59-.22 1.96-.37.48-.2.93-.46 1.33-.86.4-.4.65-.85.86-1.33.15-.37.33-.92.37-1.96.05-1.055.06-1.39.06-4.06 0-2.67-.01-3.005-.06-4.06-.04-1.03-.22-1.59-.37-1.96a3.25 3.25 0 00-.86-1.33 3.25 3.25 0 00-1.33-.86c-.37-.15-.92-.33-1.96-.37-1.055-.05-1.39-.06-4.06-.06zm0 3.65a5.2 5.2 0 110 10.4 5.2 5.2 0 010-10.4zm0 8.6a3.4 3.4 0 100-6.8 3.4 3.4 0 000 6.8zm6.45-9.9a1.2 1.2 0 110 2.4 1.2 1.2 0 010-2.4z" clipRule="evenodd" />
                 </svg>
               </a>
-              <a href="#" className="text-gray-400 hover:text-white transition-colors">
+              <a href="#" className="text-gray-500 dark:text-gray-400 hover:text-blue-700 dark:hover:text-blue-400 transition-colors">
                 <span className="sr-only">Twitter</span>
                 <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M8.29 20.251c7.547 0 11.675-6.253 11.675-11.675 0-.178 0-.355-.012-.53A8.348 8.348 0 0022 5.92a8.19 8.19 0 01-2.357.646 4.118 4.118 0 001.804-2.27 8.224 8.224 0 01-2.605.996 4.107 4.107 0 00-6.993 3.743 11.65 11.65 0 01-8.457-4.287 4.106 4.106 0 001.27 5.477A4.072 4.072 0 012.8 9.713v.052a4.105 4.105 0 003.292 4.022 4.095 4.095 0 01-1.853.07 4.108 4.108 0 003.834 2.85A8.233 8.233 0 012 18.407a11.616 11.616 0 006.29 1.84" />
                 </svg>
               </a>
-              <a href="#" className="text-gray-400 hover:text-white transition-colors">
+              <a href="#" className="text-gray-500 dark:text-gray-400 hover:text-blue-700 dark:hover:text-blue-400 transition-colors">
                 <span className="sr-only">LinkedIn</span>
                 <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" />
