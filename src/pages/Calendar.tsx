@@ -384,7 +384,7 @@ const Calendar: React.FC = () => {
                       })}
 
                       <Link
-                        to="/app/appointments"
+                        to="/app/appointments?tab=upcoming"
                         className="inline-flex items-center justify-center w-full px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
                       >
                         <Eye className="mr-2 h-4 w-4" />

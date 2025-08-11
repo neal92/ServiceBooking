@@ -4,6 +4,9 @@ import { Service, Category, Appointment } from '../types';
 import { serviceService, categoryService, appointmentService } from '../services/api';
 import { Link, useNavigate } from 'react-router-dom';
 import PageTransition from '../components/layout/PageTransition';
+// If the file exists in another directory, update the path accordingly, for example:
+import ServiceDetailModal from './ServiceDetailModal';
+// Or, if the file is missing, create 'ServiceDetailModal.tsx' in the './' directory.
 import { useAuth } from '../contexts/AuthContext';
 import ImageLoader from '../components/ui/ImageLoader';
 
@@ -20,6 +23,7 @@ const UserHome: React.FC = () => {
   const [appointmentsLoading, setAppointmentsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [imageErrors, setImageErrors] = useState<{[key: number]: boolean}>({});
+  const [selectedService, setSelectedService] = useState<Service | null>(null);
 
   useEffect(() => {
     const loadData = async () => {
@@ -309,15 +313,16 @@ const UserHome: React.FC = () => {
             {filteredServices.map((service) => (
               <div
                 key={service.id}
-                className="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden transition-all hover:scale-[1.025] hover:shadow-2xl border border-gray-100 dark:border-gray-700 group"
+                className="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden transition-all hover:scale-[1.025] hover:shadow-2xl border border-gray-100 dark:border-gray-700 group cursor-pointer"
+                onClick={() => setSelectedService(service)}
               >
                 {/* Image du service */}
-                <div className="relative h-48 bg-gradient-to-br from-gray-100 via-gray-200 to-gray-300 dark:from-gray-700 dark:via-gray-800 dark:to-gray-900">
+                <div className="relative h-64 md:h-72 lg:h-80 bg-gradient-to-br from-gray-100 via-gray-200 to-gray-300 dark:from-gray-700 dark:via-gray-800 dark:to-gray-900">
                   {service.image && !imageErrors[service.id] ? (
                     <ImageLoader
                       serviceId={service.id}
                       imageName={service.image}
-                      useThumbnail={true}
+                      useThumbnail={false}
                       alt={service.name}
                       className="w-full h-full object-cover rounded-t-xl group-hover:scale-105 transition-transform duration-300"
                       onError={() => {
@@ -331,26 +336,35 @@ const UserHome: React.FC = () => {
                     </div>
                   )}
                   {/* Badge catégorie */}
-                  <span className="absolute top-3 left-3 px-3 py-1 rounded-full text-xs font-semibold bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 shadow">
+                  <span className="absolute top-3 right-3 px-3 py-1 rounded-full text-xs font-medium bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 shadow">
                     {categories.find(cat => cat.id === service.categoryId)?.name || 'Non catégorisé'}
                   </span>
                 </div>
-                <div className="p-5">
-                  <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2 truncate">
-                    {service.name}
-                  </h3>
-                  <p className="text-gray-600 dark:text-gray-400 mb-3 line-clamp-3">
+                <div className="p-6">
+                  <div className="flex justify-between items-start mb-3">
+                    <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+                      {service.name}
+                    </h3>
+                    <span
+                      className="inline-block px-3 py-1 rounded-full text-sm font-medium bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300"
+                    >
+                      {categories.find(cat => cat.id === service.categoryId)?.name || 'Non catégorisé'}
+                    </span>
+                  </div>
+
+                  <p className="text-gray-600 dark:text-gray-400 mb-4 line-clamp-3">
                     {service.description}
                   </p>
-                  <div className="flex items-center justify-between mt-4">
+
+                  <div className="flex items-center justify-between mt-6">
                     <div className="flex items-center space-x-4">
                       <div className="flex items-center text-gray-500 dark:text-gray-400">
                         <Clock className="h-4 w-4 mr-1" />
                         <span>{formatDuration(service.duration)}</span>
                       </div>
-                      <div className="flex items-center text-gray-500 dark:text-gray-400">
-                        <span>{service.price} €</span>
-                      </div>
+                        <span className="inline-flex items-center px-3 py-1 rounded-full bg-teal-100 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300 font-bold text-base shadow">
+                          {service.price} €
+                        </span>
                     </div>
                     <button
                       onClick={() => handleServiceReservation(service.id)}
@@ -372,7 +386,7 @@ const UserHome: React.FC = () => {
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
               Vos prochains rendez-vous
             </h2>
-            <Link to="/app/appointments" className="text-blue-600 dark:text-blue-400 flex items-center hover:underline">
+            <Link to="/app/appointments?tab=upcoming" className="text-blue-600 dark:text-blue-400 flex items-center hover:underline">
               Voir tous <ArrowRight className="h-4 w-4 ml-1" />
             </Link>
           </div>
@@ -389,7 +403,7 @@ const UserHome: React.FC = () => {
                 Vous n'avez pas encore de rendez-vous programmés.
               </p>
               <Link
-                to="/app/appointments"
+                to="/app/appointments?tab=upcoming"
                 className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
               >
                 <CheckCircle className="h-4 w-4 mr-2" />
@@ -514,6 +528,15 @@ const UserHome: React.FC = () => {
         <div className="border-t border-gray-200 dark:border-gray-700 my-12"></div>
 
       </div>
+      {selectedService && (
+        <ServiceDetailModal
+          service={selectedService}
+          onClose={() => setSelectedService(null)}
+          onReserve={(service) => {
+            navigate(`/app/appointments?serviceId=${service.id}&action=new`);
+          }}
+        />
+      )}
     </PageTransition>
   );
 };

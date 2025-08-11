@@ -18,6 +18,7 @@ import NotFound from './pages/NotFound';
 import Profile from './pages/Profile';
 import Landing from './pages/Landing';
 import BookService from './pages/BookService';
+import ServiceDetail from './pages/ServiceDetail';
 import AdminUsersPage from './pages/AdminUsersPage';
 
 function App() {
@@ -29,6 +30,7 @@ function App() {
             {/* Page d'accueil publique */}
             <Route path="/" element={<Landing />} />
             <Route path="/book" element={<BookService />} />
+            <Route path="/service/:id" element={<ServiceDetail />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/app" element={

@@ -1,5 +1,4 @@
-import * as React from 'react';
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from 'react-router-dom';
 import { Calendar, Clock, Users, Shield, Check, Menu, X, Star, UserCheck, PhoneCall, Moon, Sun } from 'lucide-react';
 import RegisterModal from '../components/auth/RegisterModal';
@@ -11,6 +10,28 @@ const Landing: React.FC = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const { darkMode, toggleDarkMode } = useTheme();
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
+
+  // Animation on scroll
+  const heroRef = useRef<HTMLDivElement>(null);
+  const featuresRef = useRef<HTMLDivElement>(null);
+  const [heroVisible, setHeroVisible] = useState(false);
+  const [featuresVisible, setFeaturesVisible] = useState(false);
+
+  useEffect(() => {
+    const observerOptions = { threshold: 0.2 };
+    const heroObs = new window.IntersectionObserver((entries) => {
+      entries.forEach((entry) => setHeroVisible(entry.isIntersecting));
+    }, observerOptions);
+    const featuresObs = new window.IntersectionObserver((entries) => {
+      entries.forEach((entry) => setFeaturesVisible(entry.isIntersecting));
+    }, observerOptions);
+    if (heroRef.current) heroObs.observe(heroRef.current);
+    if (featuresRef.current) featuresObs.observe(featuresRef.current);
+    return () => {
+      if (heroRef.current) heroObs.unobserve(heroRef.current);
+      if (featuresRef.current) featuresObs.unobserve(featuresRef.current);
+    };
+  }, []);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   // Mock user object, replace with real context or props
   const user = { role: 'admin' };
@@ -41,7 +62,15 @@ const Landing: React.FC = () => {
 
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white to-blue-50 dark:from-gray-900 dark:to-gray-800">
+    <div className="min-h-screen bg-gradient-to-b from-white to-blue-50 dark:from-gray-900 dark:to-gray-800 scroll-animate visible">
+      <style>{`
+        .animate-fadeIn { animation: fadeIn 1s ease; }
+        .animate-slideUp { animation: slideUp 1s cubic-bezier(.4,2,.2,1); }
+        .scroll-animate { opacity: 0; transform: translateY(40px); transition: opacity 0.8s, transform 0.8s; }
+        .scroll-animate.visible { opacity: 1; transform: translateY(0); }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(40px); } to { opacity: 1; transform: translateY(0); } }
+      `}</style>
       {/* Modal d'inscription */}
       <RegisterModal
         isOpen={isRegisterModalOpen}
@@ -51,25 +80,25 @@ const Landing: React.FC = () => {
       />
 
       {/* HERO HEADER SECTION - Planity style */}
-      <header className="relative h-[100vh] min-h-[600px] flex flex-col justify-between items-center overflow-hidden">
+      <header className="relative h-[100vh] min-h-[600px] flex flex-col justify-between items-center overflow-hidden scroll-animate visible">
         {/* Background image */}
-        <div className="absolute inset-0 w-full h-full bg-[url('/images/slides/slide-4.jpg')] bg-cover bg-center" />
+        <div className="absolute inset-0 w-full h-full bg-[url('/images/slides/slide-4.jpg')] bg-cover bg-center scroll-animate visible" />
         {/* Overlay for readability */}
-        <div className="absolute inset-0 bg-black/40 z-10" />
+        <div className="absolute inset-0 bg-black/40 z-10 scroll-animate visible" />
 
         {/* Navbar */}
-        <nav className="w-full flex justify-between items-center px-8 py-6 absolute top-0 left-0 z-40">
-          <div className="flex items-center space-x-2">
-            <span className="h-8 w-8 bg-blue-600 rounded-full flex items-center justify-center">
-              <Calendar className="h-5 w-5 text-white" />
+        <nav className="w-full flex flex-col md:flex-row justify-between items-center px-4 md:px-8 py-4 md:py-6 absolute top-0 left-0 z-40 scroll-animate visible">
+          <div className="flex items-center space-x-2 scroll-animate visible">
+            <span className="h-8 w-8 bg-blue-600 rounded-full flex items-center justify-center scroll-animate visible">
+              <Calendar className="h-5 w-5 text-white scroll-animate visible" />
             </span>
-            <span className="text-lg font-bold text-white">ServiceBooking</span>
+            <span className="text-lg font-bold text-white scroll-animate visible">ServiceBooking</span>
           </div>
-          <ul className="hidden md:flex items-center space-x-8">
+          <ul className="hidden md:flex items-center space-x-4 md:space-x-8 scroll-animate visible">
             <li>
               <a
                 href="#"
-                className="text-white/90 hover:text-green-400 font-medium transition-colors"
+                className="text-white/90 hover:text-green-400 font-medium transition-colors scroll-animate visible"
                 onClick={e => { e.preventDefault(); handleLoginClick(); }}
               >
                 Coiffeur
@@ -78,7 +107,7 @@ const Landing: React.FC = () => {
             <li>
               <a
                 href="#"
-                className="text-white/90 hover:text-green-400 font-medium transition-colors"
+                className="text-white/90 hover:text-green-400 font-medium transition-colors scroll-animate visible"
                 onClick={e => { e.preventDefault(); handleLoginClick(); }}
               >
                 Barbier
@@ -87,7 +116,7 @@ const Landing: React.FC = () => {
             <li>
               <a
                 href="#"
-                className="text-white/90 hover:text-green-400 font-medium transition-colors"
+                className="text-white/90 hover:text-green-400 font-medium transition-colors scroll-animate visible"
                 onClick={e => { e.preventDefault(); handleLoginClick(); }}
               >
                 Manucure
@@ -96,29 +125,29 @@ const Landing: React.FC = () => {
             <li>
               <a
                 href="#"
-                className="text-white/90 hover:text-green-400 font-medium transition-colors"
+                className="text-white/90 hover:text-green-400 font-medium transition-colors scroll-animate visible"
                 onClick={e => { e.preventDefault(); handleLoginClick(); }}
               >
                 Institut de beauté
               </a>
             </li>
           </ul>
-          <div className="flex items-center space-x-3">
+          <div className="flex flex-col md:flex-row items-center space-y-2 md:space-y-0 md:space-x-3 scroll-animate visible">
             <button
-              className="px-4 py-2 rounded-md bg-white text-blue-900 font-semibold shadow hover:bg-blue-50 transition"
+              className="px-4 py-2 rounded-md bg-white text-blue-900 font-semibold shadow hover:bg-blue-50 transition scroll-animate visible"
               onClick={() => navigate('/register', { state: { userType: 'professional' } })}
             >
               Je suis un professionnel 
             </button>
             <button
-              className="px-4 py-2 rounded-md bg-blue-600 text-white font-semibold shadow hover:bg-blue-700 transition"
+              className="px-4 py-2 rounded-md bg-blue-600 text-white font-semibold shadow hover:bg-blue-700 transition scroll-animate visible"
               onClick={handleLoginClick}
             >
               Mon compte
             </button>
             <button
               onClick={toggleDarkMode}
-              className="p-2 rounded-full bg-white/20 hover:bg-white/30 text-white flex items-center justify-center transition-colors z-30"
+              className="p-2 rounded-full bg-white/20 hover:bg-white/30 text-white flex items-center justify-center transition-colors z-30 scroll-animate visible"
               aria-label={darkMode ? 'Passer au mode clair' : 'Passer au mode sombre'}
               style={{ position: 'relative', zIndex: 30 }}
             >
@@ -128,23 +157,23 @@ const Landing: React.FC = () => {
         </nav>
 
         {/* Central Content */}
-        <div className="relative z-30 flex flex-col items-center justify-center h-full w-full text-center pt-32">
-          <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white leading-tight animate-fadeIn">
-            Simplifiez la gestion de vos <span className="text-blue-300">rendez-vous</span>
+        <div ref={heroRef} className={`relative z-30 flex flex-col items-center justify-center h-full w-full text-center pt-20 md:pt-32 px-4 scroll-animate${heroVisible ? ' visible' : ''}`}> 
+          <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white leading-tight animate-fadeIn animate-slideUp scroll-animate visible">
+            Simplifiez la gestion de vos <span className="text-blue-300 scroll-animate visible">rendez-vous</span>
           </h1>
-          <p className="mt-4 text-lg md:text-xl text-white/90 animate-fadeIn animation-delay-200 max-w-2xl mx-auto">
+          <p className="mt-4 text-base sm:text-lg md:text-xl text-white/90 animate-fadeIn animate-slideUp animation-delay-200 max-w-2xl mx-auto scroll-animate visible">
             ServiceBooking est une solution complète qui permet aux professionnels de gérer facilement leurs rendez-vous, clients et services.
           </p>
-          <div className="mt-8 flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4 animate-fadeIn animation-delay-300 justify-center">
+          <div className="mt-8 flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4 animate-fadeIn animate-slideUp animation-delay-300 justify-center scroll-animate visible">
             <button
               onClick={() => setIsRegisterModalOpen(true)}
-              className="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg text-white font-medium shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              className="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg text-white font-medium shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 animate-fadeIn animate-slideUp scroll-animate visible"
             >
               Essayer gratuitement
             </button>
             <button
               onClick={handleLoginClick}
-              className="px-6 py-3 bg-white/90 border border-gray-300 rounded-lg text-blue-900 font-medium hover:bg-gray-50 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2"
+              className="px-6 py-3 bg-white/90 border border-gray-300 rounded-lg text-blue-900 font-medium hover:bg-gray-50 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2 animate-fadeIn animate-slideUp scroll-animate visible"
             >
               En savoir plus
             </button>
@@ -153,40 +182,40 @@ const Landing: React.FC = () => {
       </header>
 
       {/* Section Fonctionnalités */}
-      <section id="fonctionnalites" className="py-16 md:py-24 bg-white dark:bg-gray-900">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-3xl mx-auto mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white">
+      <section id="fonctionnalites" className="py-12 sm:py-16 md:py-24 bg-white dark:bg-gray-900 scroll-animate visible">
+        <div className="container mx-auto px-2 sm:px-4 lg:px-8 scroll-animate visible">
+          <div className="text-center max-w-3xl mx-auto mb-10 sm:mb-16 scroll-animate visible">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 dark:text-white scroll-animate visible">
               Fonctionnalités complètes pour les professionnels
             </h2>
-            <p className="mt-4 text-lg text-gray-600 dark:text-gray-300">
+            <p className="mt-4 text-base sm:text-lg text-gray-600 dark:text-gray-300 scroll-animate visible">
               Tout ce dont vous avez besoin pour gérer efficacement votre activité
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-12">
+          <div ref={featuresRef} className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 lg:gap-12 scroll-animate${featuresVisible ? ' visible' : ''}`}> 
             {/* Carte 1 */}
-            <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-6 shadow-lg hover:shadow-xl transition-shadow animate-fadeIn">
-              <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center mb-6">
-                <Calendar className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+            <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-4 sm:p-6 shadow-lg hover:shadow-xl transition-shadow animate-fadeIn scroll-animate visible">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center mb-4 sm:mb-6 scroll-animate visible">
+                <Calendar className="w-6 h-6 text-blue-600 dark:text-blue-400 scroll-animate visible" />
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">
+              <h3 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white mb-2 sm:mb-3 scroll-animate visible">
                 Gestion de calendrier
               </h3>
-              <p className="text-gray-600 dark:text-gray-300">
+              <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300 scroll-animate visible">
                 Visualisez et gérez tous vos rendez-vous sur une interface intuitive. Contrôlez vos disponibilités et évitez les conflits d'horaire.
               </p>
             </div>
 
             {/* Carte 2 */}
-            <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-6 shadow-lg hover:shadow-xl transition-shadow animate-fadeIn animation-delay-100">
-              <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center mb-6">
-                <Users className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+            <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-6 shadow-lg hover:shadow-xl transition-shadow animate-fadeIn animation-delay-100 scroll-animate visible">
+              <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center mb-6 scroll-animate visible">
+                <Users className="w-6 h-6 text-blue-600 dark:text-blue-400 scroll-animate visible" />
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-3 scroll-animate visible">
                 Messagerie instantanée
               </h3>
-              <p className="text-gray-600 dark:text-gray-300">
+              <p className="text-gray-600 dark:text-gray-300 scroll-animate visible">
                 Centralisez les informations de vos clients avec un chat en ligne sécurisé. Communiquez facilement avec vos clients pour confirmer ou modifier les rendez-vous.
               </p>
             </div>
