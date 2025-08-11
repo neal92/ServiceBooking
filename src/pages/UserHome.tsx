@@ -231,15 +231,21 @@ const UserHome: React.FC = () => {
   return (
     <PageTransition>
       <div className="container mx-auto px-4 py-8">
-        <div className="flex flex-col items-center mb-12">
-          <div className="flex items-center justify-center gap-3 mb-2">
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-              Nos prestations
-            </h1>
+        <div className="flex flex-col mb-12">
+          {/* Message de bienvenue en haut à gauche */}
+          {user?.firstName && (
+            <h1 className="mb-4 text-3xl font-bold text-White-700 dark:text-white-300">Bienvenue {user.firstName} !</h1>
+          )}
+          <div className="flex flex-col items-center">
+            <div className="flex items-center justify-center gap-3 mb-2">
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+                Nos prestations
+              </h1>
+            </div>
+            <p className="text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+              Découvrez nos services de qualité et prenez rendez-vous en quelques clics.
+            </p>
           </div>
-          <p className="text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-            Découvrez nos services de qualité et prenez rendez-vous en quelques clics.
-          </p>
         </div>
 
         {/* Barre de recherche et filtres */}
@@ -303,69 +309,52 @@ const UserHome: React.FC = () => {
             {filteredServices.map((service) => (
               <div
                 key={service.id}
-                className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden transition-all hover:shadow-lg"
+                className="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden transition-all hover:scale-[1.025] hover:shadow-2xl border border-gray-100 dark:border-gray-700 group"
               >
-                <div
-                  className="h-2"
-                  style={{ backgroundColor: getCategoryColor(service.categoryId) }}
-                ></div>
-                
                 {/* Image du service */}
-                <div className="relative h-48 bg-gray-100 dark:bg-gray-700">
+                <div className="relative h-48 bg-gradient-to-br from-gray-100 via-gray-200 to-gray-300 dark:from-gray-700 dark:via-gray-800 dark:to-gray-900">
                   {service.image && !imageErrors[service.id] ? (
                     <ImageLoader
                       serviceId={service.id}
                       imageName={service.image}
                       useThumbnail={true}
                       alt={service.name}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-cover rounded-t-xl group-hover:scale-105 transition-transform duration-300"
                       onError={() => {
                         setImageErrors(prev => ({ ...prev, [service.id]: true }));
                         console.log(`Erreur de chargement de l'image pour le service ${service.name}`);
                       }}
                     />
                   ) : (
-                    /* Placeholder pour les services sans image ou en cas d'erreur */
                     <div className="w-full h-full flex items-center justify-center">
-                      <ImageIcon className="w-12 h-12 text-gray-400 dark:text-gray-500" />
+                      <ImageIcon className="w-14 h-14 text-gray-400 dark:text-gray-500" />
                     </div>
                   )}
+                  {/* Badge catégorie */}
+                  <span className="absolute top-3 left-3 px-3 py-1 rounded-full text-xs font-semibold bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 shadow">
+                    {categories.find(cat => cat.id === service.categoryId)?.name || 'Non catégorisé'}
+                  </span>
                 </div>
-                
-                <div className="p-6">
-                  <div className="flex justify-between items-start mb-3">
-                    <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
-                      {service.name}
-                    </h3>
-                    <span
-                      className="inline-block px-3 py-1 rounded-full text-sm font-medium"
-                      style={{
-                        backgroundColor: `${getCategoryColor(service.categoryId)}20`,
-                        color: getCategoryColor(service.categoryId)
-                      }}
-                    >
-                      {categories.find(cat => cat.id === service.categoryId)?.name || 'Non catégorisé'}
-                    </span>
-                  </div>
-
-                  <p className="text-gray-600 dark:text-gray-400 mb-4 line-clamp-3">
+                <div className="p-5">
+                  <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2 truncate">
+                    {service.name}
+                  </h3>
+                  <p className="text-gray-600 dark:text-gray-400 mb-3 line-clamp-3">
                     {service.description}
                   </p>
-
-                  <div className="flex items-center justify-between mt-6">
+                  <div className="flex items-center justify-between mt-4">
                     <div className="flex items-center space-x-4">
-                      <div className="flex items-center text-gray-600 dark:text-gray-400">
+                      <div className="flex items-center text-gray-500 dark:text-gray-400">
                         <Clock className="h-4 w-4 mr-1" />
                         <span>{formatDuration(service.duration)}</span>
                       </div>
-                      <div className="flex items-center text-gray-600 dark:text-gray-400">
-                        <DollarSign className="h-4 w-4 mr-1" />
+                      <div className="flex items-center text-gray-500 dark:text-gray-400">
                         <span>{service.price} €</span>
                       </div>
                     </div>
                     <button
                       onClick={() => handleServiceReservation(service.id)}
-                      className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                      className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold shadow hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all"
                     >
                       <CheckCircle className="h-4 w-4 mr-2" />
                       Réserver

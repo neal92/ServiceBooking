@@ -299,4 +299,44 @@ router.get("/users", authenticate, authController.getAllUsers);
 // Get users with pagination (Admin only) - 5 users by default with "load more" functionality
 router.get("/users/paginated", authenticate, authController.getUsersWithPagination);
 
+// Réinitialiser le mot de passe d'un utilisateur (admin)
+router.post('/reset-password', authenticate, async (req, res) => {
+  // Vérifie que l'utilisateur est admin
+  if (!req.user || req.user.role !== 'admin') {
+    return res.status(403).json({ message: 'Accès interdit' });
+  }
+  const { email, newPassword } = req.body;
+  if (!email || !newPassword) {
+    return res.status(400).json({ message: 'Email et nouveau mot de passe requis' });
+  }
+  try {
+    const ok = await require('../models/user').updatePasswordByEmail(email, newPassword);
+    if (ok) {
+      return res.json({ success: true, message: 'Mot de passe réinitialisé' });
+    } else {
+      return res.status(404).json({ success: false, message: 'Utilisateur non trouvé' });
+    }
+  } catch (error) {
+    return res.status(500).json({ success: false, message: 'Erreur lors de la réinitialisation' });
+  }
+});
+
+// Supprimer un utilisateur (admin)
+router.delete('/users/:id', authenticate, async (req, res) => {
+  if (!req.user || req.user.role !== 'admin') {
+    return res.status(403).json({ message: 'Accès interdit' });
+  }
+  const userId = req.params.id;
+  try {
+    const [result] = await require('../config/db').query('DELETE FROM users WHERE id = ?', [userId]);
+    if (result.affectedRows > 0) {
+      return res.json({ success: true, message: 'Utilisateur supprimé' });
+    } else {
+      return res.status(404).json({ success: false, message: 'Utilisateur non trouvé' });
+    }
+  } catch (error) {
+    return res.status(500).json({ success: false, message: 'Erreur lors de la suppression' });
+  }
+});
+
 module.exports = router;

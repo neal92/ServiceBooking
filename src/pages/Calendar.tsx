@@ -303,14 +303,6 @@ const Calendar: React.FC = () => {
                                   className={`appointment-indicator ${appointment.status} ${statusBg} ${statusText} w-full text-center`}
                                   title={`${appointment.time} - ${service?.name || 'Service'}`}
                                 >
-                                  {service?.image && (
-                                    <img
-                                      src={service.image}
-                                      alt={service.name}
-                                      className="w-5 h-5 rounded-full border border-gray-200 dark:border-gray-700 mr-1"
-                                      style={{ objectFit: 'cover' }}
-                                    />
-                                  )}
                                   <span>{appointment.time} {service?.name?.substring(0, 10)}</span>
                                 </div>
                               );
@@ -366,24 +358,16 @@ const Calendar: React.FC = () => {
                             <div className="flex items-center justify-between mb-2">
                               <span className="font-medium text-gray-900 dark:text-white">
                                 <span className="flex items-center space-x-2">
-                                  {service?.image && (
-                                    <img
-                                      src={service.image}
-                                      alt={service.name}
-                                      className="w-8 h-8 rounded-full border border-gray-200 dark:border-gray-700 mr-2"
-                                      style={{ objectFit: 'cover' }}
-                                    />
-                                  )}
                                   <span>{service?.name || 'Service inconnu'}</span>
                                 </span>
                               </span>
-                              <span className={`status-badge ${statusColors[appointment.status]}`}>
-                                {appointment.status === 'pending' && 'En attente'}
-                                {appointment.status === 'confirmed' && 'Confirmé'}
-                                {appointment.status === 'in-progress' && 'En cours'}
-                                {appointment.status === 'completed' && 'Terminé'}
-                                {appointment.status === 'cancelled' && 'Annulé'}
-                              </span>
+                              <span className={`status-badge ${statusColors[appointment.status]}`}>{
+                                appointment.status === 'pending' ? 'En attente' :
+                                appointment.status === 'confirmed' ? 'Confirmé' :
+                                appointment.status === 'in-progress' ? 'En cours' :
+                                appointment.status === 'completed' ? 'Terminé' :
+                                appointment.status === 'cancelled' ? 'Annulé' : ''
+                              }</span>
                             </div>
 
                             <div className="flex items-center text-sm text-gray-600 dark:text-gray-400 mb-1">

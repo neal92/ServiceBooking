@@ -45,10 +45,7 @@ const Header = ({ openSidebar }: HeaderProps) => {
         <span className="sr-only">Ouvrir la navigation</span>
         <Menu className="h-6 w-6" aria-hidden="true" />
       </button>
-      <div className="flex-1 px-4 flex justify-between">
-        <div className="flex-1 flex items-center">
-          <h1 className="text-xl sm:text-2xl font-semibold text-blue-600 dark:text-blue-400">{pageTitle}</h1>
-        </div>
+      <div className="flex-1 px-4 flex justify-end">
         <div className="ml-4 flex items-center md:ml-6 space-x-2 sm:space-x-3">
           {/* Theme toggle button */}
           <button

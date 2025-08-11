@@ -166,6 +166,7 @@ const Login = () => {
       setFormError("Le mot de passe est obligatoire");
       return;
     }
+    console.log('[Login] Mot de passe envoyé à l’API:', password);
     await login(email, password);
   };
 

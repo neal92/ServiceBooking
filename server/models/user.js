@@ -177,77 +177,28 @@ class User {
 
   // Create a new user
   static async create(userData) {
-    try {
-      console.log(`Hashing password for user: ${userData.email}`);
-      const salt = await bcrypt.genSalt(10);
-      const hashedPassword = await bcrypt.hash(userData.password, salt);
+    // Ne pas re-hasher le mot de passe, il est déjà hashé dans le contrôleur
+    const pseudo =
+      userData.pseudo ||
+      userData.firstName.toLowerCase().replace(/\s+/g, "_");
+    console.log(
+      `Inserting new user into database: ${
+        userData.email
+      }, pseudo: ${pseudo}, role: ${userData.role || "user"}`
+    );
 
-      // Utiliser le pseudo fourni ou en générer un basé sur le prénom
-      const pseudo =
-        userData.pseudo ||
-        userData.firstName.toLowerCase().replace(/\s+/g, "_");
-      console.log(
-        `Inserting new user into database: ${
-          userData.email
-        }, pseudo: ${pseudo}, role: ${userData.role || "user"}`
-      );
-
-      const [result] = await db.query(
-        "INSERT INTO users (firstName, lastName, email, pseudo, password, role) VALUES (?, ?, ?, ?, ?, ?)",
-        [
-          userData.firstName,
-          userData.lastName,
-          userData.email,
-          pseudo,
-          hashedPassword,
-          userData.role || "user",
-        ]
-      );
-
-      console.log(`User created with ID: ${result.insertId}`);
-
-      // Récupérer l'utilisateur complet après création pour le retourner
-      const [userRows] = await db.query("SELECT * FROM users WHERE id = ?", [
-        result.insertId,
-      ]);
-      if (userRows.length > 0) {
-        // Exclure le mot de passe hashé
-        const user = userRows[0];
-        delete user.password;
-        console.log("Returning complete user object after creation");
-        return user;
-      }
-
-      return {
-        id: result.insertId,
-        firstName: userData.firstName,
-        lastName: userData.lastName,
-        email: userData.email,
-        pseudo: pseudo,
-        role: userData.role || "user",
-      };
-    } catch (error) {
-      console.error("Error creating user:", error);
-      if (error.code === "ER_DUP_ENTRY") {
-        // Déterminer quel champ est en doublon pour donner un message précis
-        if (error.sqlMessage && error.sqlMessage.includes("email")) {
-          console.error("Duplicate email entry found in database");
-          throw new Error("Cette adresse email est déjà utilisée.");
-        } else if (error.sqlMessage && error.sqlMessage.includes("pseudo")) {
-          console.error("Duplicate pseudo found in database");
-          throw new Error("Ce pseudo est déjà utilisé.");
-        } else {
-          console.error("Duplicate entry found in database");
-          throw new Error("Un utilisateur avec ces informations existe déjà.");
-        }
-      } else if (error.code === "ER_NO_SUCH_TABLE") {
-        console.error("Users table does not exist in database");
-        throw new Error("Erreur de configuration de la base de données.");
-      } else if (error.sqlMessage) {
-        console.error("SQL error message:", error.sqlMessage);
-      }
-      throw error;
-    }
+    const [result] = await db.query(
+      "INSERT INTO users (firstName, lastName, email, pseudo, password, role) VALUES (?, ?, ?, ?, ?, ?)",
+      [
+        userData.firstName,
+        userData.lastName,
+        userData.email,
+        pseudo,
+        userData.password,
+        userData.role || "user",
+      ]
+    );
+    return { id: result.insertId, ...userData };
   }
   // Verify password
   static async verifyPassword(plainPassword, hashedPassword) {
@@ -404,6 +355,17 @@ class User {
       console.error("Error changing password:", error);
       throw error;
     }
+  }
+
+  // Ajoute une méthode pour mettre à jour le mot de passe d'un utilisateur
+  static async updatePasswordByEmail(email, newPassword) {
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+    const [result] = await db.execute(
+      'UPDATE users SET password = ? WHERE email = ?',
+      [hashedPassword, email]
+    );
+    return result.affectedRows > 0;
   }
 }
 

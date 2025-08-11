@@ -15,7 +15,7 @@ exports.register = async (req, res) => {
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const {
+    let {
       firstName,
       lastName,
       email: rawEmail,
@@ -24,6 +24,10 @@ exports.register = async (req, res) => {
       role = "user",
       phone,
     } = req.body;
+    // Si lastName est vide, null ou non fourni, on force à null
+    if (!lastName || typeof lastName !== 'string' || lastName.trim() === '') {
+      lastName = null;
+    }
     
     // Nettoyer l'email, le pseudo et le mot de passe (supprimer les espaces avant et après)
     const email = rawEmail.trim();
@@ -72,7 +76,7 @@ exports.register = async (req, res) => {
     // Créer l'utilisateur
     const newUser = await User.create({
       firstName,
-      lastName: lastName || "",
+      lastName,
       email,
       password: hashedPassword,
       pseudo: pseudo || null,
