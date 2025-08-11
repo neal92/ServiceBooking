@@ -18,6 +18,7 @@ import NotFound from './pages/NotFound';
 import Profile from './pages/Profile';
 import Landing from './pages/Landing';
 import BookService from './pages/BookService';
+import AdminUsersPage from './pages/AdminUsersPage';
 
 function App() {
   return (
@@ -51,6 +52,11 @@ function App() {
               <Route path="categories" element={
                 <AdminRoute>
                   <Categories />
+                </AdminRoute>
+              } />
+              <Route path="gestionusers" element={
+                <AdminRoute>
+                  <AdminUsersPage />
                 </AdminRoute>
               } />
 

@@ -19,15 +19,16 @@ exports.register = async (req, res) => {
       firstName,
       lastName,
       email: rawEmail,
-      password,
+      password: rawPassword,
       pseudo: rawPseudo,
       role = "user",
       phone,
     } = req.body;
     
-    // Nettoyer l'email et le pseudo (supprimer les espaces avant et après)
+    // Nettoyer l'email, le pseudo et le mot de passe (supprimer les espaces avant et après)
     const email = rawEmail.trim();
     const pseudo = rawPseudo ? rawPseudo.trim() : rawPseudo;
+    const password = typeof rawPassword === 'string' ? rawPassword.trim() : rawPassword;
 
     // Log pour débogage
     console.log("Données d'inscription reçues:", {
@@ -204,7 +205,8 @@ exports.login = async (req, res) => {
       console.log('- hash (début):', user.password.substring(0, 10) + '...');
       
       const startTime = Date.now();
-      const isPasswordValid = await bcrypt.compare(password, user.password);
+      const passwordToCheck = typeof password === 'string' ? password.trim() : password;
+      const isPasswordValid = await bcrypt.compare(passwordToCheck, user.password);
       const duration = Date.now() - startTime;
       
       console.log(`Résultat de bcrypt.compare: ${isPasswordValid ? 'TRUE (Valide)' : 'FALSE (Invalide)'}`);

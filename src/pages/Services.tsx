@@ -1,9 +1,4 @@
-<<<<<<< HEAD
-import React from 'react';
-import { useState, useEffect } from 'react';
-=======
-import React, { useState, useEffect } from 'react';
->>>>>>> b2574a067919e19c8ca6ef77eeba1d9f3ef66a7c
+import React, { useState, useEffect } from 'react'
 import { PlusCircle, Search, ShoppingBag, Trash } from 'lucide-react';
 import ServiceCard from '../components/services/ServiceCard';
 import NewServiceModal from '../components/services/NewServiceModal';
@@ -259,7 +254,8 @@ const Services = () => {
                   </div>
                 )}
               </div>
-            ) : (              <div className="bg-white dark:bg-gray-800 shadow-lg rounded-xl border border-gray-100 dark:border-gray-700 p-6">
+            ) : (
+              <div className="bg-white dark:bg-gray-800 shadow-lg rounded-xl border border-gray-100 dark:border-gray-700 p-6">
                 <div className="mb-4 flex items-center justify-between">
                   <div className="flex items-center">
                     <span className="inline-flex items-center justify-center px-3 py-1 text-sm font-medium leading-none text-center bg-teal-100 dark:bg-teal-900/30 text-teal-800 dark:text-teal-300 rounded-full mr-3">

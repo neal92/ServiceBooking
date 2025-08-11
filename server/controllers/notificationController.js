@@ -16,8 +16,8 @@ const notificationController = {
 
   async getUserNotifications(req, res) {
     try {
-      const notifications = await Notification.getUserNotifications(req.user.id, req.query);
-      res.json({ success: true, notifications });
+      const { notifications, unreadCount } = await Notification.getUserNotifications(req.user.id, req.query);
+      res.json({ success: true, notifications, unreadCount });
     } catch (error) {
       res.status(500).json({ success: false, message: 'Erreur lors de la récupération des notifications' });
     }

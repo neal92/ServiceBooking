@@ -69,10 +69,16 @@ const Notification = {
     query += ` ORDER BY n.created_at DESC LIMIT ${safeLimit} OFFSET ${offset}`;
     try {
       const [notifications] = await db.execute(query, queryParams);
-      return notifications;
+      // Ajoute le comptage des non lues
+      const [countRows] = await db.execute(
+        'SELECT COUNT(*) as unreadCount FROM notification_users WHERE user_id = ? AND is_read = 0',
+        [userId]
+      );
+      const unreadCount = countRows[0]?.unreadCount ?? 0;
+      return { notifications, unreadCount };
     } catch (error) {
       console.error('Erreur SQL getUserNotifications:', error);
-      return [];
+      return { notifications: [], unreadCount: 0 };
     }
   },
 

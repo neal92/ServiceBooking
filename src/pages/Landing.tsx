@@ -285,7 +285,7 @@ const Landing: React.FC = () => {
         {/* Image gauche */}
         <div className="md:w-1/2 w-full">
           <img
-            src="/images/interface-web.png" // remplace par ton visuel
+            src={darkMode ? "/images/interface-web.png" : "/images/interface-web-blanc.png"}
             alt="Interface web"
             className="w-full h-full object-cover"
           />

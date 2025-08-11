@@ -122,6 +122,7 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ className =
       >
         <span className="sr-only">Voir les notifications</span>
         <Bell className="h-5 w-5" aria-hidden="true" />
+        {(() => { console.log('[NotificationDropdown] unreadCount:', unreadCount); return null; })()}
         {unreadCount > 0 && (
           <span className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-[13px] font-extrabold shadow-xl border-2 border-white dark:border-gray-900"
             style={{zIndex:2, boxShadow:'0 2px 8px rgba(0,0,0,0.18)'}}>
