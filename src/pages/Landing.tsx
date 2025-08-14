@@ -98,7 +98,7 @@ const Landing: React.FC = () => {
             <li>
               <a
                 href="#"
-                className="text-white/90 hover:text-green-400 font-medium transition-colors scroll-animate visible"
+                className="text-white/90 hover:text-blue-400 font-medium transition-colors scroll-animate visible"
                 onClick={e => { e.preventDefault(); handleLoginClick(); }}
               >
                 Coiffeur
@@ -107,7 +107,7 @@ const Landing: React.FC = () => {
             <li>
               <a
                 href="#"
-                className="text-white/90 hover:text-green-400 font-medium transition-colors scroll-animate visible"
+                className="text-white/90 hover:text-blue-400 font-medium transition-colors scroll-animate visible"
                 onClick={e => { e.preventDefault(); handleLoginClick(); }}
               >
                 Barbier
@@ -116,7 +116,7 @@ const Landing: React.FC = () => {
             <li>
               <a
                 href="#"
-                className="text-white/90 hover:text-green-400 font-medium transition-colors scroll-animate visible"
+                className="text-white/90 hover:text-blue-400 font-medium transition-colors scroll-animate visible"
                 onClick={e => { e.preventDefault(); handleLoginClick(); }}
               >
                 Manucure
@@ -125,7 +125,7 @@ const Landing: React.FC = () => {
             <li>
               <a
                 href="#"
-                className="text-white/90 hover:text-green-400 font-medium transition-colors scroll-animate visible"
+                className="text-white/90 hover:text-blue-400 font-medium transition-colors scroll-animate visible"
                 onClick={e => { e.preventDefault(); handleLoginClick(); }}
               >
                 Institut de beauté

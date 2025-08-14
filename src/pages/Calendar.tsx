@@ -10,6 +10,7 @@ import {
   Eye
 } from 'lucide-react';
 import PageTransition from '../components/layout/PageTransition';
+import { useTheme } from '../contexts/ThemeContext';
 import { Link } from 'react-router-dom';
 import { Appointment, Service } from '../types';
 import { appointmentService, serviceService } from '../services/api';
@@ -18,6 +19,7 @@ import '../calendar-styles.css';
 
 const Calendar: React.FC = () => {
   const { user } = useAuth();
+  const { darkMode } = useTheme();
   const isAdmin = user?.role === 'admin';
 
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -325,7 +327,9 @@ const Calendar: React.FC = () => {
 
           {/* Panneau latéral - détails de la date sélectionnée */}
           <div className="lg:col-span-1">
-            <div className="calendar-sidebar bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700">
+            <div
+              className={`calendar-sidebar border border-gray-200 dark:border-gray-700${!selectedDate ? (darkMode ? ' calendar-date-section--fixed-dark bg-gray-900 text-white' : ' calendar-date-section--fixed-light bg-white text-gray-900') : (darkMode ? ' dark:bg-gray-900 dark:text-white' : ' bg-white text-gray-900')}`}
+            >
               <div className="sidebar-header">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                   {selectedDate
