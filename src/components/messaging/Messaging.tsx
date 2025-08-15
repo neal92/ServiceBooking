@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { User } from '../../types';
 import { messagingService } from '../../services/api/messagingService';
+import { getSocket } from '../../utils/socket';
 
 interface Message {
   id: string;
@@ -25,11 +26,40 @@ const Messaging: React.FC<MessagingProps> = ({ usersList }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  // adminUser et recipients sont déclarés AVANT tous les hooks pour éviter ReferenceError
+  const recipients: User[] = user?.role === 'admin'
+    ? usersList.filter(u => u.role !== 'admin')
+    : usersList.filter(u => u.role === 'admin');
+
+  const adminUser: User | undefined = user?.role !== 'admin'
+    ? usersList.find(u => u.role === 'admin')
+    : undefined;
+
   // Fetch messages from API
   useEffect(() => {
     if (!user || !selectedUserId) return;
     messagingService.getMessages(String(user.id), selectedUserId).then(setMessages);
   }, [user, selectedUserId]);
+
+  // Socket.io: écoute les nouveaux messages (adminUser garanti initialisé)
+  useEffect(() => {
+    if (!user || !selectedUserId) return;
+    let toId: string;
+    if (user?.role === 'admin') {
+      toId = selectedUserId;
+    } else {
+      toId = adminUser ? String(adminUser.id) : '1';
+    }
+    const socket = getSocket();
+    socket.on('messageReceived', (message) => {
+      if ((message.from === String(user.id) && message.to === String(toId)) || (message.from === String(toId) && message.to === String(user.id))) {
+        setMessages((prev) => [...prev, message]);
+      }
+    });
+    return () => {
+      socket.off('messageReceived');
+    };
+  }, [user, selectedUserId, adminUser]);
 
   // Scroll to bottom on new message
   useEffect(() => {
@@ -47,36 +77,36 @@ const Messaging: React.FC<MessagingProps> = ({ usersList }) => {
     setUnread(unreadCount);
   }, [messages, user]);
 
-  // Get possible recipients
+  // (Déjà déclaré en haut, ne pas redéclarer)
 
-  let recipients: User[] = [];
-  let adminUser: User | undefined = undefined;
-  if (user?.role === 'admin') {
-    recipients = usersList.filter(u => u.role !== 'admin');
-  } else {
-    recipients = usersList.filter(u => u.role === 'admin');
-    adminUser = recipients[0];
-    // Sélectionne automatiquement l'admin si pas déjà sélectionné
-    React.useEffect(() => {
-      if (adminUser && selectedUserId !== String(adminUser.id)) {
-        setSelectedUserId(String(adminUser.id));
-      }
-    }, [adminUser]);
-  }
+  // Sélectionne automatiquement l'admin si pas déjà sélectionné
+  useEffect(() => {
+    if (adminUser && selectedUserId !== String(adminUser.id)) {
+      setSelectedUserId(String(adminUser.id));
+    }
+  }, [adminUser]);
 
   // Handle send
   const handleSend = async () => {
     if (!input.trim() || (!selectedUserId && !adminUser && user?.role === 'admin')) return;
-    // Fallback pour l'id admin si non trouvé
     let fallbackAdminId = '';
     if (user?.role !== 'admin' && (!adminUser || !adminUser.id)) {
       const foundAdmin = usersList.find(u => u.role === 'admin');
       fallbackAdminId = foundAdmin ? String(foundAdmin.id) : '1';
     }
     const toId = user?.role === 'admin' ? selectedUserId : (adminUser?.id || fallbackAdminId);
+    // Envoie le message via l'API (pour persistance)
     await messagingService.sendMessage(String(user!.id), String(toId), input);
-    const updated = await messagingService.getMessages(String(user!.id), String(toId));
-    setMessages(updated);
+    // Envoie le message via socket.io (pour temps réel)
+    const socket = getSocket();
+    socket.emit('newMessage', {
+      from: String(user!.id),
+      to: String(toId),
+      text: input,
+      timestamp: Date.now(),
+      read: false,
+      id: Math.random().toString(36).substr(2, 9) // id temporaire
+    });
     setInput('');
   };
 
@@ -125,30 +155,42 @@ const Messaging: React.FC<MessagingProps> = ({ usersList }) => {
                   onClick={() => setSelectedUserId(String(u.id))}>
                   <img src={u.avatar || '/public/avatars/avatar1.svg'} alt="avatar" className="w-12 h-12 rounded-full border" />
                   <div className="flex-1">
-                    <span className="font-medium text-lg text-gray-800 dark:text-gray-100">{unread[u.id] > 0 && <span className="inline-block w-2 h-2 bg-blue-500 rounded-full mr-2"></span>}{u.pseudo}</span>
+                    <span className="font-medium text-lg text-gray-800 dark:text-gray-100">
+                      {u.pseudo}
+                      {unread[u.id] > 0 && (
+                        <span className="ml-2 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-blue-600 rounded-full">
+                          {unread[u.id]}
+                        </span>
+                      )}
+                    </span>
                     <div className="text-xs text-gray-500 dark:text-gray-400">{u.email}</div>
+                    {/* Date du dernier message supprimée */}
                   </div>
                 </div>
               ))}
           </>
         ) : (
-          adminUser && adminUser.id && user?.role !== 'admin' && adminUser.role === 'admin' ? (
-            <div className="flex items-center gap-3 p-4 rounded-lg bg-blue-100 dark:bg-gray-700">
-              <img src={adminUser.avatar || '/public/avatars/avatar1.svg'} alt="avatar" className="w-14 h-14 rounded-full border" />
-              <div className="flex-1">
-                <span className="font-semibold text-xl text-gray-800 dark:text-gray-100">{adminUser.firstName}</span>
-                <div className="text-xs text-gray-500 dark:text-gray-400">{adminUser.email}</div>
-              </div>
+          <>
+            <div className="px-4 pt-2 pb-2">
+              <div className="text-lg font-bold text-blue-700 dark:text-blue-300 mb-2">Conversations</div>
             </div>
-          ) : (
-            <div className="flex items-center gap-3 p-4 rounded-lg bg-blue-100 dark:bg-gray-700">
-              <img src="/public/avatars/avatar1.svg" alt="avatar" className="w-14 h-14 rounded-full border" />
-              <div className="flex-1">
-                <span className="font-semibold text-xl text-gray-800 dark:text-gray-100">Administrateur</span>
-                <div className="text-xs text-gray-500 dark:text-gray-400">admin@example.com</div>
+            {adminUser && (
+              <div className="flex flex-col items-center gap-2 p-4 bg-blue-50 dark:bg-gray-700 rounded-lg mb-4 mt-32">
+                {adminUser.avatar && adminUser.avatar !== '' ? (
+                  <img src={adminUser.avatar} alt="avatar" className="w-16 h-16 rounded-full border-2 border-blue-400" />
+                ) : adminUser.avatarInitials ? (
+                  <div className="w-16 h-16 rounded-full border-2 border-blue-400 flex items-center justify-center bg-blue-200 text-blue-800 text-2xl font-bold">
+                    {adminUser.avatarInitials}
+                  </div>
+                ) : (
+                  <img src="/public/avatars/avatar1.svg" alt="avatar" className="w-16 h-16 rounded-full border-2 border-blue-400" />
+                )}
+                <span className="font-semibold text-lg text-blue-800 dark:text-blue-200">{adminUser.pseudo}</span>
+                <span className="text-xs bg-blue-200 text-blue-800 px-2 py-1 rounded-full">Prestataire</span>
+                <span className="text-xs text-gray-500 dark:text-gray-400 mt-2">Vous ne pouvez discuter qu'avec le prestataire.</span>
               </div>
-            </div>
-          )
+            )}
+          </>
         )}
       </div>
       {/* Zone de messages */}
@@ -157,14 +199,29 @@ const Messaging: React.FC<MessagingProps> = ({ usersList }) => {
           {chatMessages.length === 0 ? (
             <div className="text-center text-gray-400 mt-10">Aucun message</div>
           ) : (
-            chatMessages.map(msg => (
-              <div key={msg.id} className={`mb-2 flex ${msg.from === String(user?.id) ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-[70%] px-3 py-2 rounded-lg shadow text-sm ${msg.from === String(user?.id) ? 'bg-blue-500 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-100'}`}>
-                  {msg.text}
-                  <div className="text-[10px] text-right mt-1 opacity-60">{new Date(msg.timestamp).toLocaleTimeString()}</div>
-                </div>
-              </div>
-            ))
+            (() => {
+              let lastDate = '';
+              return chatMessages.map((msg, idx) => {
+                const msgDate = new Date(msg.timestamp).toLocaleDateString();
+                const showDate = msgDate !== lastDate;
+                lastDate = msgDate;
+                return (
+                  <React.Fragment key={msg.id}>
+                    {showDate && (
+                      <div className="w-full flex justify-center mb-2">
+                        <span className="text-xs font-semibold text-gray-500 bg-gray-100 dark:bg-gray-800 rounded px-3 py-1">{msgDate}</span>
+                      </div>
+                    )}
+                    <div className={`mb-2 flex flex-col ${msg.from === String(user?.id) ? 'items-end' : 'items-start'}`}>
+                      <span className="text-xs text-gray-500 mb-1">{new Date(msg.timestamp).toLocaleTimeString()}</span>
+                      <div className={`max-w-[70%] px-3 py-2 rounded-lg shadow text-sm ${msg.from === String(user?.id) ? 'bg-blue-500 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-100'}`}>
+                        {msg.text}
+                      </div>
+                    </div>
+                  </React.Fragment>
+                );
+              });
+            })()
           )}
           <div ref={messagesEndRef} />
         </div>
@@ -175,6 +232,12 @@ const Messaging: React.FC<MessagingProps> = ({ usersList }) => {
             placeholder="Écrire un message..."
             value={input}
             onChange={e => setInput(e.target.value)}
+            onKeyDown={e => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                handleSend();
+              }
+            }}
             disabled={user?.role === 'admin' ? !selectedUserId : !adminUser}
           />
           <button
