@@ -180,18 +180,23 @@ class User {
     // Ne pas re-hasher le mot de passe, il est déjà hashé dans le contrôleur
     const pseudo =
       userData.pseudo ||
-      userData.firstName.toLowerCase().replace(/\s+/g, "_");
+      (userData.firstName ? userData.firstName.toLowerCase().replace(/\s+/g, "_") : null);
+    // Correction: lastName doit être null si vide, non fourni ou non string
+    let lastName = userData.lastName;
+    if (!lastName || typeof lastName !== 'string' || lastName.trim() === '') {
+      lastName = null;
+    }
     console.log(
       `Inserting new user into database: ${
         userData.email
-      }, pseudo: ${pseudo}, role: ${userData.role || "user"}`
+      }, pseudo: ${pseudo}, role: ${userData.role || "user"}, lastName: ${lastName}`
     );
 
     const [result] = await db.query(
       "INSERT INTO users (firstName, lastName, email, pseudo, password, role) VALUES (?, ?, ?, ?, ?, ?)",
       [
         userData.firstName,
-        userData.lastName,
+        lastName,
         userData.email,
         pseudo,
         userData.password,

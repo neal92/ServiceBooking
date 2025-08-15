@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import Messaging from '../messaging/Messaging';
 import { X, AlertTriangle } from 'lucide-react';
-import { Appointment, Service } from '../../types';
+import { Appointment, Service, User } from '../../types';
 import { serviceService, appointmentService } from '../../services/api';
 import ModalPortal from '../layout/ModalPortal';
 import { useAuth } from '../../contexts/AuthContext';
@@ -29,7 +30,7 @@ const NewAppointmentModal: React.FC<NewAppointmentModalProps> = ({
 }) => {
   // Récupérer les informations de l'utilisateur connecté
   const { user } = useAuth();
-  
+
   const [serviceId, setServiceId] = useState(selectedServiceId || '');
   const [clientName, setClientName] = useState('');
   const [clientEmail, setClientEmail] = useState('');
@@ -37,7 +38,29 @@ const NewAppointmentModal: React.FC<NewAppointmentModalProps> = ({
   const [time, setTime] = useState('');
   const [notes, setNotes] = useState('');
   const [services, setServices] = useState<Service[]>(initialServices || []);
-  const [isSubmitting, setIsSubmitting] = useState(false);  const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState('');
+  // Add usersList state for dropdown
+  const [usersList, setUsersList] = useState<User[]>([]);
+  const [showMessaging, setShowMessaging] = useState(false);
+
+  useEffect(() => {
+    // Fetch users for dropdown
+    async function fetchUsers() {
+      try {
+        const token = localStorage.getItem('token');
+        const response = await fetch('/api/auth/users', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const data = await response.json();
+        const userList = Array.isArray(data) ? data : data.users || [];
+        setUsersList(userList);
+      } catch (err) {
+        // Optionally handle error
+      }
+    }
+    fetchUsers();
+  }, []);
   const [isLoading, setIsLoading] = useState(false);
   const [validatedServices, setValidatedServices] = useState<Service[]>([]);  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   // Fetch services when modal opens if no services were provided
@@ -297,6 +320,23 @@ const NewAppointmentModal: React.FC<NewAppointmentModalProps> = ({
 
   return (
     <>
+      <button
+        className="fixed bottom-8 right-8 z-50 bg-blue-600 text-white px-4 py-2 rounded-full shadow-lg hover:bg-blue-700 transition-all"
+        onClick={() => setShowMessaging(true)}
+        style={{ position: 'fixed', bottom: 32, right: 32 }}
+      >
+        Messagerie
+      </button>
+      {showMessaging && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+          <div className="relative w-full max-w-md mx-auto">
+            <div className="absolute top-2 right-2">
+              <button className="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white rounded-full px-3 py-1" onClick={() => setShowMessaging(false)}>Fermer</button>
+            </div>
+            <Messaging usersList={usersList} />
+          </div>
+        </div>
+      )}
       <ModalPortal isOpen={isOpen}>
         <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto modal-backdrop animate-fadeIn">
           {/* Overlay semi-transparent */}
@@ -364,22 +404,42 @@ const NewAppointmentModal: React.FC<NewAppointmentModalProps> = ({
                     </select>
                   </div>                  <div className="sm:col-span-6">
                     <label htmlFor="clientName" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                      Nom du client
+                      Prénom du client
                     </label>
                     <div className="mt-1">
-                      <input
-                        type="text"
-                        name="clientName"
-                        id="clientName"
-                        value={clientName}
-                        onChange={(e) => setClientName(e.target.value)}                        className={`shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full text-base py-3 px-4 border-gray-300 dark:border-gray-600 ${
-                          user && user.role && user.role !== 'admin' ? 'bg-gray-100 dark:bg-gray-600' : 'dark:bg-gray-700'
-                        } dark:text-white rounded-md`}
-                        required
-                        readOnly={Boolean(user && user.role && user.role !== 'admin')}
-                      />                      {user && user.role && user.role !== 'admin' && (
+                      {user && user.role === 'admin' ? (
+                        <select
+                          name="clientName"
+                          id="clientName"
+                          value={clientName}
+                          onChange={e => {
+                            const selectedName = e.target.value;
+                            setClientName(selectedName);
+                            // Find user by firstName
+                            const selectedUser = usersList.find(u => `${u.firstName} ${u.lastName}` === selectedName);
+                            setClientEmail(selectedUser ? selectedUser.email : '');
+                          }}
+                          className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full text-base py-3 px-4 border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md"
+                          required
+                        >
+                          <option value="">Sélectionnez un client</option>
+                          {usersList && usersList.filter(u => u.role !== 'admin').map(u => (
+                            <option key={u.id} value={`${u.firstName} ${u.lastName}`}>{u.firstName} {u.lastName}</option>
+                          ))}
+                        </select>
+                      ) : (
+                        <input
+                          type="text"
+                          name="clientName"
+                          id="clientName"
+                          value={user && user.firstName ? user.firstName : clientName}
+                          readOnly
+                          className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full text-base py-3 px-4 border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md bg-gray-100 dark:bg-gray-600"
+                        />
+                      )}
+                      {user && user.role && user.role !== 'admin' && (
                         <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                          Ce champ est automatiquement rempli avec vos informations
+                          Ce champ est automatiquement rempli avec votre prénom
                         </p>
                       )}
                     </div>

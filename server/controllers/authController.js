@@ -24,7 +24,7 @@ exports.register = async (req, res) => {
       role = "user",
       phone,
     } = req.body;
-    // Si lastName est vide, null ou non fourni, on force à null
+    // Si lastName est vide, null ou non fourni, on force à null et on ne duplique pas le prénom
     if (!lastName || typeof lastName !== 'string' || lastName.trim() === '') {
       lastName = null;
     }

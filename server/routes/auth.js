@@ -2,6 +2,9 @@ const express = require("express");
 const router = express.Router();
 const { body } = require("express-validator");
 const authController = require("../controllers/authController");
+const adminController = require("../controllers/adminController");
+// Route publique pour récupérer les utilisateurs admin
+router.get('/users/admins', adminController.getAdminUsers);
 const pseudoController = require("../controllers/pseudoController");
 const { authenticate } = require("../middleware/auth");
 
