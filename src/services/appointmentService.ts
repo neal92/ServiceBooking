@@ -60,7 +60,7 @@ export const updateAppointment = async (id: number, appointmentData: Partial<App
 };
 
 // Fonction pour mettre à jour le statut d'un rendez-vous
-export const updateAppointmentStatus = async (id: number, status: 'pending' | 'confirmed' | 'cancelled' | 'completed'): Promise<void> => {
+export const updateAppointmentStatus = async (id: number, status: 'pending' | 'confirmed' | 'in-progress' | 'cancelled' | 'completed'): Promise<void> => {
   try {
     await appointmentService.updateStatus(id.toString(), status);
   } catch (error) {

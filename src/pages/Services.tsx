@@ -58,12 +58,13 @@ const Services = () => {
         await serviceService.delete(serviceToDelete.id.toString());
         setIsDeleteModalOpen(false);
         setServiceToDelete(null);
-        // Refresh services after deletion
-        await fetchData();
-        
-        // Afficher la notification de succès
-        setSuccessMessage('Service supprimé avec succès');
-        setShowSuccessToast(true);
+  // Refresh services and images after deletion
+  await fetchData();
+  setRefreshImages(true);
+  setSuccessMessage('Service supprimé avec succès');
+  setShowSuccessToast(true);
+  // Désactive le refresh d'image après un court délai
+  setTimeout(() => setRefreshImages(false), 1500);
       } catch (err) {
         console.error("Error deleting service:", err);
         setError('Failed to delete service');
@@ -71,44 +72,25 @@ const Services = () => {
     }
   };
   
-  // Gérer le succès des opérations (création/modification)
+  // Gérer le succès des opérations (création/modification) - version optimisée
+  let imageRefreshTimeout: NodeJS.Timeout | null = null;
   const handleOperationSuccess = (message: string, serviceId?: string) => {
     console.log('Service operation success:', { message, serviceId });
-    
-    // Rafraîchir les données en arrière-plan
-    fetchData();
-    
-    // Forcer le rafraîchissement des images pendant 15 secondes pour être sûr
+    fetchData(); // Immediate refresh
     setRefreshImages(true);
-    setTimeout(() => setRefreshImages(false), 15000);
-    
-    // Afficher le message de succès
     setSuccessMessage(message);
     setShowSuccessToast(true);
-    
-    // Si on a un serviceId (nouveau service créé), faire des rafraîchissements plus agressifs
-    if (serviceId) {
-      // Délais échelonnés pour que le serveur traite l'image
-      setTimeout(() => {
-        console.log('Premier rafraîchissement après création service:', serviceId);
-        fetchData();
-      }, 1500);
-      
-      setTimeout(() => {
-        console.log('Deuxième rafraîchissement après création service:', serviceId);
-        fetchData();
-      }, 3000);
-      
-      setTimeout(() => {
-        console.log('Troisième rafraîchissement après création service:', serviceId);
-        fetchData();
-      }, 6000);
-    } else {
-      // Pour les modifications, un seul rafraîchissement supplémentaire
-      setTimeout(() => {
-        fetchData();
-      }, 2000);
+
+    // Clear any previous timeout
+    if (imageRefreshTimeout) {
+      clearTimeout(imageRefreshTimeout);
+      imageRefreshTimeout = null;
     }
+    // Only one delayed refresh for image processing
+    imageRefreshTimeout = setTimeout(() => {
+      setRefreshImages(false);
+      fetchData();
+    }, serviceId ? 2000 : 0); // 2s delay for new service, no delay for edit
   };
 
   const handleCancelDelete = () => {

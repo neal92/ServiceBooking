@@ -24,11 +24,14 @@ exports.register = async (req, res) => {
       role = "user",
       phone,
     } = req.body;
-    // Si lastName est vide, null ou non fourni, on force à null et on ne duplique pas le prénom
+    // Si lastName est vide, null ou non fourni, on force à null (ne pas dupliquer le prénom)
     if (!lastName || typeof lastName !== 'string' || lastName.trim() === '') {
       lastName = null;
     }
-    
+    // Si pseudo est vide, null ou non fourni, on force à 'aucun'
+    if (!rawPseudo || typeof rawPseudo !== 'string' || rawPseudo.trim() === '') {
+      rawPseudo = 'aucun';
+    }
     // Nettoyer l'email, le pseudo et le mot de passe (supprimer les espaces avant et après)
     const email = rawEmail.trim();
     const pseudo = rawPseudo ? rawPseudo.trim() : rawPseudo;

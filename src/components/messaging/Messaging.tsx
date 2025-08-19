@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { Service } from '../../types';
 import { useAuth } from '../../contexts/AuthContext';
 import { User } from '../../types';
 import { messagingService } from '../../services/api/messagingService';
@@ -15,21 +16,25 @@ interface Message {
 
 interface MessagingProps {
   usersList: User[];
+  servicesList?: Service[];
 }
 
-const Messaging: React.FC<MessagingProps> = ({ usersList }) => {
+const Messaging: React.FC<MessagingProps> = ({ usersList, servicesList = [] }) => {
   const { user } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [selectedUserId, setSelectedUserId] = useState<string>('');
   const [input, setInput] = useState('');
+  // menu principal (true/false) + sous-menu prestation (true/false)
+  const [mainMenuOpen, setMainMenuOpen] = useState(false);
+  const [prestationMenuOpen, setPrestationMenuOpen] = useState(false);
   const [unread, setUnread] = useState<{ [key: string]: number }>({});
   const [searchTerm, setSearchTerm] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // adminUser et recipients sont déclarés AVANT tous les hooks pour éviter ReferenceError
   const recipients: User[] = user?.role === 'admin'
-    ? usersList.filter(u => u.role !== 'admin')
-    : usersList.filter(u => u.role === 'admin');
+    ? usersList.filter(u => u.role !== 'admin' && u.pseudo !== 'aucun')
+    : usersList.filter(u => u.role === 'admin' && u.pseudo !== 'aucun');
 
   const adminUser: User | undefined = user?.role !== 'admin'
     ? usersList.find(u => u.role === 'admin')
@@ -133,9 +138,9 @@ const Messaging: React.FC<MessagingProps> = ({ usersList }) => {
   );
 
   return (
-    <div className="w-[90vw] max-w-7xl mx-auto bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8 flex h-[700px]">
+  <div className="w-full max-w-[1300px] mx-auto bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4 sm:p-8 flex flex-col sm:flex-row h-auto sm:h-[750px] min-h-[400px]">
       {/* Liste des destinataires (admin: tous les clients, client: admin uniquement) */}
-      <div className="w-1/3 border-r border-gray-200 dark:border-gray-700 pr-4 flex flex-col overflow-y-auto">
+  <div className="w-full sm:w-1/3 border-b sm:border-b-0 sm:border-r border-gray-200 dark:border-gray-700 pr-0 sm:pr-4 flex flex-row sm:flex-col overflow-x-auto sm:overflow-y-auto">
         {user?.role === 'admin' ? (
           <>
             <div className="px-4 pt-2 pb-2">
@@ -187,15 +192,17 @@ const Messaging: React.FC<MessagingProps> = ({ usersList }) => {
                 )}
                 <span className="font-semibold text-lg text-blue-800 dark:text-blue-200">{adminUser.pseudo}</span>
                 <span className="text-xs bg-blue-200 text-blue-800 px-2 py-1 rounded-full">Prestataire</span>
-                <span className="text-xs text-gray-500 dark:text-gray-400 mt-2">Vous ne pouvez discuter qu'avec le prestataire.</span>
+                <span className="text-sm text-blue-600 dark:text-blue-300 italic font-medium px-3 py-1 rounded w-full text-center block">
+                  Vous pouvez seulement envoyer un message au prestataire
+                </span>
               </div>
             )}
           </>
         )}
       </div>
       {/* Zone de messages */}
-      <div className="flex-1 flex flex-col pl-4">
-        <div className="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-900 rounded-md p-2 mb-2 border border-gray-200 dark:border-gray-700">
+  <div className="flex-1 flex flex-col pl-0 sm:pl-4">
+  <div className="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-900 rounded-md p-2 mb-2 border border-gray-200 dark:border-gray-700 min-h-[350px]" style={{height: '100%'}}>
           {chatMessages.length === 0 ? (
             <div className="text-center text-gray-400 mt-10">Aucun message</div>
           ) : (
@@ -214,21 +221,102 @@ const Messaging: React.FC<MessagingProps> = ({ usersList }) => {
                     )}
                     <div className={`mb-2 flex flex-col ${msg.from === String(user?.id) ? 'items-end' : 'items-start'}`}>
                       <span className="text-xs text-gray-500 mb-1">{new Date(msg.timestamp).toLocaleTimeString()}</span>
-                      <div className={`max-w-[70%] px-3 py-2 rounded-lg shadow text-sm ${msg.from === String(user?.id) ? 'bg-blue-500 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-100'}`}>
-                        {msg.text}
+                      <div className={`max-w-[70%] px-3 py-2 rounded-lg text-sm ${msg.from === String(user?.id) ? 'text-white' : 'dark text-gray-800 dark:text-gray-100'}`}
+                        style={{wordBreak: 'break-word'}}>
+                        {msg.text.split(/(\[.*?\])/g).map((part, i) => {
+                          if (/^\[.*\]$/.test(part)) {
+                            const name = part.replace(/\[|\]/g, '');
+                            const service = servicesList?.find(s => s.name === name);
+                            return (
+                              <span key={i} className="inline-flex items-center gap-2 px-2 py-1 rounded-full font-semibold text-xs mr-1 sm border bg-blue-500 text-white border-blue-600">
+                                {service && (
+                                  <img
+                                    src={service.image ? `/images/${service.image}` : '/placeholder-service.svg'}
+                                    alt={service.name}
+                                    className="w-9 h-9 rounded-full object-cover border border-blue-300 bg-white dark:bg-gray-900"
+                                  />
+                                )}
+                                {name}
+                              </span>
+                            );
+                          }
+                          return part;
+                        })}
                       </div>
                     </div>
+
                   </React.Fragment>
+
+                  
                 );
               });
             })()
           )}
           <div ref={messagesEndRef} />
         </div>
-        <div className="flex gap-2">
+  <div className="flex flex-col sm:flex-row gap-2 items-center relative w-full">
+          <button
+            type="button"
+            className="px-2 py-2 bg-blue-600 text-white rounded-full shadow hover:bg-blue-700 focus:outline-none"
+            onClick={() => {
+              setMainMenuOpen(v => !v);
+              if (mainMenuOpen) setPrestationMenuOpen(false);
+            }}
+            title="Ajouter une prestation ou une photo"
+          >
+            <span className="text-xl font-bold">+</span>
+          </button>
+          {mainMenuOpen && (
+            <div className="absolute left-0 bottom-12 z-10 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg w-64">
+              <div className="flex flex-col">
+                <div className="px-4 py-2 font-semibold text-gray-700 dark:text-gray-200 border-b border-gray-100 dark:border-gray-700 cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-900"
+                  onClick={() => setPrestationMenuOpen(v => !v)}
+                >
+                  Prestation
+                </div>
+                {prestationMenuOpen && (
+                  <ul className="w-64 max-h-72 overflow-y-auto flex flex-col">
+                    {servicesList.length === 0 ? (
+                      <li className="px-4 py-2 text-gray-400">Aucune prestation disponible</li>
+                    ) : (
+                      servicesList.map(service => (
+                        <li
+                          key={service.id}
+                          className="flex items-center gap-4 px-4 py-3 bg-white dark:bg-gray-900 rounded-xl shadow-sm hover:bg-blue-50 dark:hover:bg-blue-800 cursor-pointer transition-all duration-150 group"
+                          style={{ minHeight: 56 }}
+                          onClick={() => {
+                            setInput(prev => prev + (prev ? ' ' : '') + `[${service.name}] `);
+                            setMainMenuOpen(false);
+                            setPrestationMenuOpen(false);
+                          }}
+                        >
+                          <img
+                            src={service.image ? `/images/${service.image}` : '/placeholder-service.svg'}
+                            alt={service.name}
+                            className="w-10 h-10 rounded-full object-cover border-2 border-blue-400 shadow group-hover:scale-105 transition-transform duration-150 bg-white dark:bg-gray-900"
+                          />
+                          <span className="font-bold text-base text-blue-700 dark:text-blue-300 truncate group-hover:text-blue-900 dark:group-hover:text-white transition-colors duration-150">{service.name}</span>
+                        </li>
+                      ))
+                    )}
+                  </ul>
+                )}
+                <div className="px-4 py-2 font-semibold text-gray-700 dark:text-gray-200 border-t border-gray-100 dark:border-gray-700 flex items-center gap-2 cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-900"
+                  onClick={() => {
+                    // TODO: ouvrir le sélecteur de fichier ou d'image
+                    alert('Fonction ajout de photo à implémenter');
+                    setMainMenuOpen(false);
+                    setPrestationMenuOpen(false);
+                  }}
+                >
+                  Photo
+                </div>
+              </div>
+            </div>
+          )}
           <input
             type="text"
-            className="flex-1 px-3 py-2 rounded-md border border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-white focus:outline-none"
+            className="w-full sm:flex-1 px-3 py-2 rounded-md border border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-white focus:outline-none"
             placeholder="Écrire un message..."
             value={input}
             onChange={e => setInput(e.target.value)}

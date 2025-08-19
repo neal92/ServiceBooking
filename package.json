@@ -8,7 +8,8 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "start-dev": "node start-dev.js"
+    "start-dev": "node start-dev.js",
+    "init-db": "node server/config/init-db.js"
   },
   "dependencies": {
     "axios": "^1.9.0",

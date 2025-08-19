@@ -17,6 +17,16 @@ const AdminUsersPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [confirmUser, setConfirmUser] = useState<User | null>(null);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [formData, setFormData] = useState({
+    firstName: '',
+    email: '',
+    password: '',
+    pseudo: '',
+    role: 'client',
+  });
+  const [formError, setFormError] = useState<string | null>(null);
+  const [formStep, setFormStep] = useState(0);
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -73,47 +83,132 @@ const AdminUsersPage: React.FC = () => {
 
   return (
     <div className="p-6">
-      <h1 className="text-2xl font-bold mb-4">Gestion des utilisateurs</h1>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold">Gestion des utilisateurs</h1>
+        <button
+          className="bg-blue-600 hover:bg-blue-800 text-white px-4 py-2 rounded font-semibold shadow transition-all"
+          onClick={() => setShowAddModal(true)}
+        >
+          Ajouter
+        </button>
+      </div>
+  <div className="my-8"></div>
+
+      {/* Modal d'ajout utilisateur - step by step */}
+      {showAddModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8 w-full max-w-md relative" onClick={e => e.stopPropagation()}>
+            <button className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" onClick={() => { setShowAddModal(false); setFormStep(0); setFormError(null); setFormData({ firstName: '', email: '', password: '', pseudo: '', role: 'client' }); }}>
+              &times;
+            </button>
+            <h2 className="text-xl font-bold mb-6 text-blue-700 dark:text-blue-300">Inscription nouvel utilisateur</h2>
+            {formError && <div className="mb-4 text-red-600 text-sm">{formError}</div>}
+            <form onSubmit={async e => {
+              e.preventDefault();
+              setFormError(null);
+              if (formStep === 0) {
+                if (!formData.firstName) {
+                  setFormError('Le prénom est obligatoire.');
+                  return;
+                }
+                setFormStep(1);
+                return;
+              }
+              if (formStep === 1) {
+                if (!formData.email) {
+                  setFormError('L\'email est obligatoire.');
+                  return;
+                }
+                // Création utilisateur directement
+                try {
+                  const token = localStorage.getItem('token');
+                  const payload = {
+                    firstName: formData.firstName || '',
+                    lastName: '', // toujours chaîne vide, jamais le prénom
+                    email: formData.email || '',
+                    pseudo: '',
+                    password: 'admin123',
+                    role: 'user',
+                  };
+                  const res = await axios.post('/api/auth/register', payload, {
+                    headers: { Authorization: `Bearer ${token}` }
+                  });
+                  setUsers([...users, res.data]);
+                  setShowAddModal(false);
+                  setFormStep(0);
+                  setFormData({ firstName: '', email: '', password: '', pseudo: '', role: 'client' });
+                } catch (err) {
+                  // Cast en AxiosError pour accéder à response.data
+                  const error = err as any;
+                  if (error?.response?.data) {
+                    setFormError(
+                      error.response.data.message ||
+                      (error.response.data.errors ? JSON.stringify(error.response.data.errors) : "Erreur lors de l'inscription.")
+                    );
+                  } else {
+                    setFormError("Erreur lors de l'inscription.");
+                  }
+                }
+              }
+            }}>
+              {/* Prénom */}
+              {formStep === 0 && (
+                <>
+                  <input type="text" placeholder="Prénom *" className="w-full px-3 py-2 border rounded-full bg-white dark:bg-gray-700 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all" value={formData.firstName} onChange={e => setFormData(f => ({ ...f, firstName: e.target.value }))} required />
+                  <button type="submit" className="mt-6 w-full py-2 bg-blue-600 text-white rounded-full font-semibold hover:bg-blue-700 transition-colors">Suivant</button>
+                </>
+              )}
+              {/* Email */}
+              {formStep === 1 && (
+                <>
+                  <input type="email" placeholder="Email *" className="w-full px-3 py-2 border rounded-full bg-white dark:bg-gray-700 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all" value={formData.email} onChange={e => setFormData(f => ({ ...f, email: e.target.value }))} required />
+                  <button type="submit" className="mt-6 w-full py-2 bg-blue-600 text-white rounded-full font-semibold hover:bg-blue-800 transition-colors">Créer l'utilisateur</button>
+                </>
+              )}
+            </form>
+          </div>
+        </div>
+      )}
       {loading ? (
         <div>Chargement...</div>
       ) : error ? (
         <div className="text-red-500">{error}</div>
       ) : (
-        <table className="min-w-full border bg-white dark:bg-gray-800 dark:border-gray-700">
-          <thead>
-            <tr className="bg-gray-100 dark:bg-gray-700">
-              {/* <th className="py-2 px-4 border dark:border-gray-700 text-gray-700 dark:text-gray-200">ID</th> */}
-              <th className="py-2 px-4 border dark:border-gray-700 text-gray-700 dark:text-gray-200">Nom</th>
-              <th className="py-2 px-4 border dark:border-gray-700 text-gray-700 dark:text-gray-200">Prénom</th>
-              <th className="py-2 px-4 border dark:border-gray-700 text-gray-700 dark:text-gray-200">Email</th>
-              <th className="py-2 px-4 border dark:border-gray-700 text-gray-700 dark:text-gray-200">Pseudo</th>
-              <th className="py-2 px-4 border dark:border-gray-700 text-gray-700 dark:text-gray-200">Rôle</th>
-              <th className="py-2 px-4 border dark:border-gray-700 text-gray-700 dark:text-gray-200">Nb rendez-vous complétés</th>
-              <th className="py-2 px-4 border dark:border-gray-700 text-gray-700 dark:text-gray-200">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {users.filter(user => user.role !== 'admin').map((user) => (
-              <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-gray-900">
-                {/* <td className="py-2 px-4 border dark:border-gray-700 text-gray-900 dark:text-gray-100">{user.id}</td> */}
-                <td className="py-2 px-4 border dark:border-gray-700 text-gray-900 dark:text-gray-100">{user.lastName}</td>
-                <td className="py-2 px-4 border dark:border-gray-700 text-gray-900 dark:text-gray-100">{user.firstName}</td>
-                <td className="py-2 px-4 border dark:border-gray-700 text-gray-900 dark:text-gray-100">{user.email}</td>
-                <td className="py-2 px-4 border dark:border-gray-700 text-gray-900 dark:text-gray-100">{user.pseudo || '-'}</td>
-                <td className="py-2 px-4 border dark:border-gray-700 text-gray-900 dark:text-gray-100">{user.role}</td>
-                <td className="py-2 px-4 border dark:border-gray-700 text-gray-900 dark:text-gray-100">{user.total_rendezvous ?? 0}</td>
-                <td className="py-2 px-4 border dark:border-gray-700 text-center">
-                  <button
-                    className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm font-semibold"
-                    onClick={() => handleDeleteUser(user.id)}
-                  >
-                    Supprimer
-                  </button>
-                </td>
+        <>
+          <div className="mb-8"></div>
+          <table className="min-w-full border bg-white dark:bg-gray-800 dark:border-gray-700">
+            <thead>
+              <tr className="bg-gray-100 dark:bg-gray-700">
+                {/* <th className="py-2 px-4 border dark:border-gray-700 text-gray-700 dark:text-gray-200">ID</th> */}
+                <th className="py-2 px-4 border dark:border-gray-700 text-gray-700 dark:text-gray-200">Prénom</th>
+                <th className="py-2 px-4 border dark:border-gray-700 text-gray-700 dark:text-gray-200">Email</th>
+                <th className="py-2 px-4 border dark:border-gray-700 text-gray-700 dark:text-gray-200">Pseudo</th>
+                <th className="py-2 px-4 border dark:border-gray-700 text-gray-700 dark:text-gray-200">Rôle</th>
+                <th className="py-2 px-4 border dark:border-gray-700 text-gray-700 dark:text-gray-200">Nb rendez-vous complétés</th>
+                <th className="py-2 px-4 border dark:border-gray-700 text-gray-700 dark:text-gray-200">Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {users.filter(user => user.role !== 'admin').map((user, idx) => (
+                <tr key={user.id ? user.id : idx} className="hover:bg-gray-50 dark:hover:bg-gray-900">
+                  <td className="py-2 px-4 border dark:border-gray-700 text-gray-900 dark:text-gray-100">{user.firstName}</td>
+                  <td className="py-2 px-4 border dark:border-gray-700 text-gray-900 dark:text-gray-100">{user.email}</td>
+                  <td className="py-2 px-4 border dark:border-gray-700 text-gray-900 dark:text-gray-100">{user.pseudo || '-'}</td>
+                  <td className="py-2 px-4 border dark:border-gray-700 text-gray-900 dark:text-gray-100">{user.role}</td>
+                  <td className="py-2 px-4 border dark:border-gray-700 text-gray-900 dark:text-gray-100">{user.total_rendezvous ?? 0}</td>
+                  <td className="py-2 px-4 border dark:border-gray-700 text-center">
+                    <button
+                      className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm font-semibold"
+                      onClick={() => handleDeleteUser(user.id)}
+                    >
+                      Supprimer
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </>
       )}
 
       {/* Pop-up de confirmation */}

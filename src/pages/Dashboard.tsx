@@ -120,10 +120,10 @@ const Dashboard = () => {
             </div>
             <div className="p-6">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">                {/* Confirmés aujourd'hui */}
-                <div className="bg-gradient-to-br from-blue-500 to-blue-600 dark:from-blue-600 dark:to-blue-700 rounded-xl p-6 transform transition-all duration-200 hover:scale-[1.02] hover:shadow-lg">
+                <div className="bg-white dark:bg-gray-800 border border-blue-200 dark:border-blue-700 rounded-xl p-6 transform transition-all duration-200 hover:scale-[1.02] hover:shadow-lg">
                   <div className="flex flex-col h-full">
-                    <dt className="text-sm font-medium text-blue-50 truncate">Confirmés aujourd'hui</dt>
-                    <dd className="mt-2 text-4xl font-bold text-white">
+                    <dt className="text-sm font-medium text-blue-700 dark:text-blue-300 truncate">Confirmés aujourd'hui</dt>
+                    <dd className="mt-2 text-4xl font-bold text-blue-700 dark:text-blue-300">
                       {appointments.filter(a => {
                         const appointmentDate = new Date(a.date);
                         const today = new Date();
@@ -137,10 +137,10 @@ const Dashboard = () => {
                     </div>
                   </div>
                 </div>                {/* En attente */}
-                <div className="bg-gradient-to-br from-amber-500 to-amber-600 dark:from-amber-600 dark:to-amber-700 rounded-xl p-6 transform transition-all duration-200 hover:scale-[1.02] hover:shadow-lg">
+                <div className="bg-white dark:bg-gray-800 border border-amber-200 dark:border-amber-700 rounded-xl p-6 transform transition-all duration-200 hover:scale-[1.02] hover:shadow-lg">
                   <div className="flex flex-col h-full">
-                    <dt className="text-sm font-medium text-amber-50 truncate">En attente</dt>
-                    <dd className="mt-2 text-4xl font-bold text-white">
+                    <dt className="text-sm font-medium text-amber-700 dark:text-amber-300 truncate">En attente</dt>
+                    <dd className="mt-2 text-4xl font-bold text-amber-700 dark:text-amber-300">
                       {appointments.filter(a => a.status === 'pending').length}
                     </dd>                    <div className="mt-4">                      <Link
                       to="/app/appointments?statusFilter=pending"
@@ -151,10 +151,10 @@ const Dashboard = () => {
                     </div>
                   </div>
                 </div>{/* Taux de complétion */}
-                <div className="bg-gradient-to-br from-green-500 to-green-600 dark:from-green-600 dark:to-green-700 rounded-xl p-6 transform transition-all duration-200 hover:scale-[1.02] hover:shadow-lg">
+                <div className="bg-white dark:bg-gray-800 border border-green-200 dark:border-green-700 rounded-xl p-6 transform transition-all duration-200 hover:scale-[1.02] hover:shadow-lg">
                   <div className="flex flex-col h-full">
-                    <dt className="text-sm font-medium text-green-50 truncate">Taux de complétion</dt>
-                    <dd className="mt-2 text-4xl font-bold text-white">
+                    <dt className="text-sm font-medium text-green-700 dark:text-green-300 truncate">Taux de complétion</dt>
+                    <dd className="mt-2 text-4xl font-bold text-green-700 dark:text-green-300">
                       {Math.round((appointments.filter(a => a.status === 'completed').length / appointments.length) * 100) || 0}%
                     </dd>
                   </div>

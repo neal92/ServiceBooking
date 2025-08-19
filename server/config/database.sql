@@ -22,10 +22,10 @@ USE servicebooking;
 CREATE TABLE IF NOT EXISTS users (
     id INT AUTO_INCREMENT PRIMARY KEY,
     firstName VARCHAR(50) NOT NULL,
-    lastName VARCHAR(50) NOT NULL,
+    lastName VARCHAR(50),
     email VARCHAR(100) NOT NULL UNIQUE,
     pseudo VARCHAR(50) UNIQUE,
-    password VARCHAR(255) NOT NULL,
+    password VARCHAR(255) ,
     role ENUM('admin', 'user') DEFAULT 'user',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,

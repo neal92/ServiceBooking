@@ -74,35 +74,32 @@ exports.getServicesByCategory = async (req, res) => {
 exports.createService = async (req, res) => {
   try {
     const { name, description, price, duration, categoryId } = req.body;
-    
+    console.log('--- Création service ---');
+    console.log('Reçu:', { name, description, price, duration, categoryId });
+    console.log('Fichiers reçus:', req.files);
     if (!name || !price || !duration || !categoryId) {
+      console.log('❌ Champs manquants');
       return res.status(400).json({ 
         message: 'Name, price, duration and categoryId are required fields' 
       });
     }
-    
     let imageName = null;
-    
-    // Handle image upload if present
     if (req.files && req.files.image) {
       const imageFile = req.files.image;
-      
-      // Validate file type
+      console.log('Image reçue:', imageFile.name, imageFile.mimetype, imageFile.size);
       const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
       if (!allowedTypes.includes(imageFile.mimetype)) {
+        console.log('❌ Type de fichier non autorisé:', imageFile.mimetype);
         return res.status(400).json({ 
           message: 'Invalid file type. Only JPEG, PNG, GIF and WebP are allowed.' 
         });
       }
-      
-      // Validate file size (max 10MB avant redimensionnement)
       if (imageFile.size > 10 * 1024 * 1024) {
+        console.log('❌ Fichier trop volumineux:', imageFile.size);
         return res.status(400).json({ 
           message: 'File size too large. Maximum size is 10MB.' 
         });
       }
-      
-      // Créer d'abord le service pour avoir un ID
       const serviceId = await Service.create({ 
         name, 
         description, 
@@ -111,19 +108,16 @@ exports.createService = async (req, res) => {
         categoryId,
         image: null // Temporairement null
       });
-      
+      console.log('Service créé, id:', serviceId);
       try {
-        // Traiter l'image avec redimensionnement
         const uploadDir = path.join(__dirname, '..', 'public', 'images', 'services');
         const imageResult = await processServiceImage(imageFile, serviceId, uploadDir);
-        
+        console.log('Résultat traitement image:', imageResult);
         if (imageResult.success) {
-          // Mettre à jour le service avec le nom de l'image
           const updateResult = await Service.update(serviceId, { image: imageResult.mainImage });
-          
-          // Vérifier que la mise à jour a bien fonctionné
+          console.log('Service mis à jour avec image:', updateResult);
           const updatedService = await Service.getById(serviceId);
-          
+          console.log('Service final:', updatedService);
           const responseData = { 
             message: 'Service created successfully with image', 
             serviceId,
@@ -134,38 +128,31 @@ exports.createService = async (req, res) => {
               compressionRatio: ((1 - imageResult.processedImages.main.size / imageFile.size) * 100).toFixed(1) + '%'
             }
           };
-          
-          // Créer des notifications pour tous les utilisateurs
           try {
             console.log('🔔 Tentative de création des notifications (avec image)...');
             console.log('Service data:', { id: serviceId, name });
             console.log('User:', req.user ? req.user.id : 'AUCUN');
-            
             await notificationController.createServiceNotificationForAll(
               { id: serviceId, name },
               'created',
               req.user ? req.user.id : null
             );
-            
             console.log('✅ Notifications créées avec succès (avec image)');
           } catch (notifError) {
             console.error('❌ Erreur lors de la création des notifications:', notifError);
             console.error('Stack:', notifError.stack);
-            // Ne pas faire échouer la création du service pour une erreur de notification
           }
-          
           return res.status(201).json(responseData);
         }
       } catch (imageError) {
         console.error('Erreur traitement image:', imageError);
-        // Supprimer le service si l'image a échoué
         await Service.delete(serviceId);
         return res.status(500).json({ 
           message: 'Error processing image: ' + imageError.message 
         });
       }
     } else {
-      // Pas d'image, création normale
+      console.log('Aucune image reçue');
       const serviceId = await Service.create({ 
         name, 
         description, 
@@ -174,31 +161,25 @@ exports.createService = async (req, res) => {
         categoryId,
         image: imageName
       });
-      
+      console.log('Service créé sans image, id:', serviceId);
       const responseData = { 
         message: 'Service created successfully', 
         serviceId 
       };
-      
-      // Créer des notifications pour tous les utilisateurs
       try {
         console.log('🔔 Tentative de création des notifications...');
         console.log('Service data:', { id: serviceId, name });
         console.log('User:', req.user ? req.user.id : 'AUCUN');
-        
         await notificationController.createServiceNotificationForAll(
           { id: serviceId, name },
           'created',
           req.user ? req.user.id : null
         );
-        
         console.log('✅ Notifications créées avec succès');
       } catch (notifError) {
         console.error('❌ Erreur lors de la création des notifications:', notifError);
         console.error('Stack:', notifError.stack);
-        // Ne pas faire échouer la création du service pour une erreur de notification
       }
-      
       return res.status(201).json(responseData);
     }
   } catch (error) {

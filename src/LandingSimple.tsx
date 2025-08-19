@@ -3,7 +3,9 @@ import { Link } from 'react-router-dom';
 
 const LandingSimple: React.FC = () => {
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen relative bg-white">
+      {/* Background image */}
+      <div className="absolute inset-0 w-full h-full bg-[url('/images/slides/slide-4.jpg')] bg-cover bg-center opacity-60 -z-10" />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="pt-20 pb-16 text-center">
           <h1 className="text-4xl font-bold text-gray-900 mb-4">

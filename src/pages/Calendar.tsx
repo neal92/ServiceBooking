@@ -27,6 +27,23 @@ const Calendar: React.FC = () => {
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [actionLoading, setActionLoading] = useState<number | null>(null); // id du rendez-vous en cours de modification
+
+  // Fonction pour changer le statut d'un rendez-vous
+  const handleStatusChange = async (appointmentId: number, newStatus: 'pending' | 'confirmed' | 'in-progress' | 'completed' | 'cancelled') => {
+    setActionLoading(appointmentId);
+    try {
+      // Appel du service pour mettre à jour le statut
+      // @ts-ignore
+      await import('../services/appointmentService').then(mod => mod.updateAppointmentStatus(appointmentId, newStatus));
+      await fetchData();
+    } catch (error) {
+      console.error('Erreur lors du changement de statut:', error);
+      alert('Erreur lors du changement de statut');
+    } finally {
+      setActionLoading(null);
+    }
+  };
 
   // Noms des mois et jours en français
   const monthNames = [
@@ -207,7 +224,7 @@ const Calendar: React.FC = () => {
 
   return (
     <PageTransition>
-      <div className="container mx-auto px-4 py-8">
+  <div className="container mx-auto px-2 py-4 sm:px-4 sm:py-8">
         {/* En-tête */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center space-x-2">
@@ -223,11 +240,11 @@ const Calendar: React.FC = () => {
           </Link>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+  <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
           {/* Calendrier principal */}
-          <div className="lg:col-span-2">
-            <div className="bg-white dark:bg-gray-900 rounded-lg shadow-md overflow-hidden calendar-fade-in">
-              <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+          <div className="lg:col-span-2 w-full">
+            <div className="bg-white dark:bg-gray-900 rounded-lg shadow-md overflow-hidden calendar-fade-in w-full">
+              <div className="flex flex-col sm:flex-row items-center justify-between px-2 py-2 sm:px-6 sm:py-4 border-b border-gray-200 dark:border-gray-700 gap-2">
                 <button
                   onClick={previousMonth}
                   className="month-nav-button dark:hover:bg-gray-800"
@@ -246,7 +263,7 @@ const Calendar: React.FC = () => {
               </div>
 
               {/* En-têtes des jours */}
-              <div className="grid grid-cols-7">
+              <div className="grid grid-cols-7 text-xs sm:text-base">
                 {dayNames.map((day) => (
                   <div
                     key={day}
@@ -264,8 +281,8 @@ const Calendar: React.FC = () => {
                     key={index}
                     className={
                       date
-                        ? getDayStatus(date) + ' bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 flex flex-col justify-between items-center min-h-[90px] h-[90px]'
-                        : 'calendar-day bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 flex flex-col justify-between items-center min-h-[90px] h-[90px]'
+                        ? getDayStatus(date) + ' bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 flex flex-col justify-between items-center min-h-[48px] h-[48px] sm:min-h-[90px] sm:h-[90px]'
+                        : 'calendar-day bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 flex flex-col justify-between items-center min-h-[48px] h-[48px] sm:min-h-[90px] sm:h-[90px]'
                     }
                     onClick={() => date && setSelectedDate(date)}
                   >
@@ -277,44 +294,37 @@ const Calendar: React.FC = () => {
                           </span>
                         </div>
 
-                        {/* Indicateurs de rendez-vous */}
-                        <div className="px-1 pb-1 w-full flex flex-col items-center">
+                        {/* Indicateurs de rendez-vous (points colorés) */}
+                        <div className="px-1 pb-1 w-full flex flex-row flex-wrap items-center justify-center gap-1">
                           {(() => {
                             const dayAppointments = getAppointmentsForDate(date);
-                            return dayAppointments.slice(0, 2).map((appointment, idx) => {
-                              const service = services.find(s => s.id === appointment.serviceId);
-                              let statusBg = '';
-                              let statusText = '';
+                            return dayAppointments.slice(0, 4).map((appointment, idx) => {
+                              let dotColor = '';
                               switch (appointment.status) {
                                 case 'pending':
-                                  statusBg = 'bg-yellow-400 dark:bg-yellow-500'; statusText = 'text-yellow-900 dark:text-yellow-100'; break;
+                                  dotColor = 'bg-yellow-400'; break;
                                 case 'confirmed':
-                                  statusBg = 'bg-green-400 dark:bg-green-600'; statusText = 'text-green-900 dark:text-green-100'; break;
+                                  dotColor = 'bg-green-400'; break;
                                 case 'in-progress':
-                                  statusBg = 'bg-orange-400 dark:bg-orange-500'; statusText = 'text-orange-900 dark:text-orange-100'; break;
+                                  dotColor = 'bg-orange-400'; break;
                                 case 'completed':
-                                  statusBg = 'bg-blue-400 dark:bg-blue-600'; statusText = 'text-blue-900 dark:text-blue-100'; break;
+                                  dotColor = 'bg-blue-400'; break;
                                 case 'cancelled':
-                                  statusBg = 'bg-red-400 dark:bg-red-600'; statusText = 'text-red-900 dark:text-red-100'; break;
+                                  dotColor = 'bg-red-400'; break;
                                 default:
-                                  statusBg = 'bg-gray-100 dark:bg-gray-800'; statusText = 'text-gray-700 dark:text-gray-300';
+                                  dotColor = 'bg-gray-300';
                               }
                               return (
-                                <div
+                                <span
                                   key={idx}
-                                  className={`appointment-indicator ${appointment.status} ${statusBg} ${statusText} w-full text-center`}
-                                  title={`${appointment.time} - ${service?.name || 'Service'}`}
-                                >
-                                  <span>{appointment.time} {service?.name?.substring(0, 10)}</span>
-                                </div>
+                                  className={`inline-block w-2 h-2 rounded-full ${dotColor}`}
+                                  title={appointment.status}
+                                />
                               );
                             });
                           })()}
-
-                          {getAppointmentsForDate(date).length > 2 && (
-                            <div className="text-xs text-gray-500 dark:text-gray-400 px-1 w-full text-center">
-                              +{getAppointmentsForDate(date).length - 2} autres
-                            </div>
+                          {getAppointmentsForDate(date).length > 4 && (
+                            <span className="text-xs text-gray-500 dark:text-gray-400 px-1">+{getAppointmentsForDate(date).length - 4}</span>
                           )}
                         </div>
                       </>
@@ -328,13 +338,22 @@ const Calendar: React.FC = () => {
           {/* Panneau latéral - détails de la date sélectionnée */}
           <div className="lg:col-span-1">
             <div
-              className={`calendar-sidebar border border-gray-200 dark:border-gray-700${!selectedDate ? (darkMode ? ' calendar-date-section--fixed-dark bg-gray-900 text-white' : ' calendar-date-section--fixed-light bg-white text-gray-900') : (darkMode ? ' dark:bg-gray-900 dark:text-white' : ' bg-white text-gray-900')}`}
+              className={`calendar-sidebar border border-gray-200 dark:border-gray-700${!selectedDate ? ' calendar-date-section--fixed-light' : (darkMode ? ' dark:bg-gray-900 dark:text-white' : ' bg-white text-gray-900')}`}
+              style={!selectedDate ? { background: '#fff', color: '#1a202c', borderRadius: '0.5rem' } : {}}
             >
               <div className="sidebar-header">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                <h3
+                  className="text-lg font-semibold"
+                  style={!selectedDate ? {
+                    color: darkMode ? '#fff' : '#1a202c',
+                    background: darkMode ? '#1e293b' : '#fff',
+                    borderRadius: '0.5rem',
+                    padding: '0.5rem 1rem'
+                  } : {}}
+                >
                   {selectedDate
                     ? `${selectedDate.getDate()} ${monthNames[selectedDate.getMonth()]}`
-                    : 'Sélectionnez une date'
+                    : <span style={{ color: darkMode ? '#fff' : '#1a202c' }}>Sélectionnez une date</span>
                   }
                 </h3>
               </div>
@@ -383,6 +402,33 @@ const Calendar: React.FC = () => {
                               <User className="h-4 w-4 mr-1" />
                               {appointment.clientName}
                             </div>
+
+                            {/* Boutons d'action pour changer le statut */}
+                            {isAdmin && (
+                              <div className="flex gap-2 mt-2">
+                                {appointment.status !== 'confirmed' && (
+                                  <button
+                                    className="px-2 py-1 text-xs rounded bg-green-600 text-white hover:bg-green-700 disabled:opacity-50"
+                                    disabled={actionLoading === appointment.id}
+                                    onClick={() => handleStatusChange(appointment.id, 'confirmed')}
+                                  >{actionLoading === appointment.id ? '...' : 'Confirmer'}</button>
+                                )}
+                                {appointment.status !== 'cancelled' && (
+                                  <button
+                                    className="px-2 py-1 text-xs rounded bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
+                                    disabled={actionLoading === appointment.id}
+                                    onClick={() => handleStatusChange(appointment.id, 'cancelled')}
+                                  >{actionLoading === appointment.id ? '...' : 'Annuler'}</button>
+                                )}
+                                {appointment.status !== 'completed' && (
+                                  <button
+                                    className="px-2 py-1 text-xs rounded bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
+                                    disabled={actionLoading === appointment.id}
+                                    onClick={() => handleStatusChange(appointment.id, 'completed')}
+                                  >{actionLoading === appointment.id ? '...' : 'Terminer'}</button>
+                                )}
+                              </div>
+                            )}
                           </div>
                         );
                       })}
@@ -421,27 +467,27 @@ const Calendar: React.FC = () => {
               </div>
 
               {/* Légende */}
-              <div className="mt-6 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-md p-4">
+              <div className="mt-6 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg p-4">
                 <h4 className="font-semibold text-gray-900 dark:text-white mb-3">Légende</h4>
                 <div className="space-y-2 text-sm">
-                  <div className="legend-item">
-                    <div className="legend-color bg-yellow-400" />
+                  <div className="legend-item flex items-center gap-2">
+                    <div className="legend-color bg-yellow-400 rounded-full w-3 h-3 border border-yellow-300" />
                     <span className="text-gray-700 dark:text-gray-300">En attente</span>
                   </div>
-                  <div className="legend-item">
-                    <div className="legend-color bg-green-400" />
+                  <div className="legend-item flex items-center gap-2">
+                    <div className="legend-color bg-green-400 rounded-full w-3 h-3 border border-green-300" />
                     <span className="text-gray-700 dark:text-gray-300">Confirmé</span>
                   </div>
-                  <div className="legend-item">
-                    <div className="legend-color bg-orange-400" />
+                  <div className="legend-item flex items-center gap-2">
+                    <div className="legend-color bg-orange-400 rounded-full w-3 h-3 border border-orange-300" />
                     <span className="text-gray-700 dark:text-gray-300">En cours</span>
                   </div>
-                  <div className="legend-item">
-                    <div className="legend-color bg-blue-400" />
+                  <div className="legend-item flex items-center gap-2">
+                    <div className="legend-color bg-blue-400 rounded-full w-3 h-3 border border-blue-300" />
                     <span className="text-gray-700 dark:text-gray-300">Terminé</span>
                   </div>
-                  <div className="legend-item">
-                    <div className="legend-color bg-red-400" />
+                  <div className="legend-item flex items-center gap-2">
+                    <div className="legend-color bg-red-400 rounded-full w-3 h-3 border border-red-300" />
                     <span className="text-gray-700 dark:text-gray-300">Annulé</span>
                   </div>
                 </div>

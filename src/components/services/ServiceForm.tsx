@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-// import ImageUpload from '../ui/ImageUpload';  // Temporairement commenté pour éviter l'erreur
+import ImageUpload from '../ui/ImageUpload';
 
 interface ServiceFormData {
   name: string;
@@ -11,7 +11,7 @@ interface ServiceFormData {
 }
 
 interface ServiceFormProps {
-  onSubmit: (data: ServiceFormData) => void;
+  onSubmit: (data: ServiceFormData | FormData) => void;
   categories: Array<{ id: number; name: string }>;
   initialData?: Partial<ServiceFormData>;
   isEditing?: boolean;
@@ -42,27 +42,33 @@ const ServiceForm: React.FC<ServiceFormProps> = ({
     }));
   };
 
-  /* Temporairement commenté car ImageUpload est désactivé
   const handleImageChange = (file: File | null) => {
     setFormData(prev => ({
       ...prev,
       image: file
     }));
   };
-  */
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
     if (!formData.name || !formData.price || !formData.duration || !formData.categoryId) {
       alert('Veuillez remplir tous les champs obligatoires');
       return;
     }
 
     setIsSubmitting(true);
-    
     try {
-      await onSubmit(formData);
+      // Préparer les données pour l'envoi, incluant le fichier image
+      const data = new FormData();
+      data.append('name', formData.name);
+      data.append('description', formData.description);
+      data.append('price', formData.price);
+      data.append('duration', formData.duration);
+      data.append('categoryId', formData.categoryId);
+      if (formData.image) {
+        data.append('image', formData.image);
+      }
+      await onSubmit(data);
     } catch (error) {
       console.error('Erreur lors de la soumission:', error);
     } finally {
@@ -161,14 +167,16 @@ const ServiceForm: React.FC<ServiceFormProps> = ({
         </select>
       </div>
 
-      {/* Temporairement commenté pour éviter l'erreur
       <ImageUpload
-        onImageChange={handleImageChange}
-        placeholder="Ajouter une image pour ce service"
-        imageType="services"
-        enableResize={true}
+        value={formData.image}
+        onChange={handleImageChange}
+        accept="image/*"
+        maxSize={5}
+        preview={true}
+        allowManualResize={true}
+        className="mt-2"
+        disabled={isSubmitting}
       />
-      */}
 
       <div className="flex justify-end space-x-3">
         <button
